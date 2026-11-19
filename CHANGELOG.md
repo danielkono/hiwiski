@@ -12,6 +12,8 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
 
 ## Unreleased
 
+## 2026.1.14 — 2026-11-19 {#2026.1.14}
+
 ### Fixed
 
 - **2026.1.13 comes out with this version.** Its server image went out without its
