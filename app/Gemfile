@@ -6,4 +6,4 @@
 # app/android and app/ios upwards.
 source "https://rubygems.org"
 
-gem "fastlane", "2.241.1"
+gem "fastlane", "2.242.0"
