@@ -12,6 +12,13 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+    # setup-gradle stays on v5. From v6 on its caching is a separate component that is
+    # not open source and comes with Gradle's terms of use. v5 caches the CI build with
+    # open-source code and checks the Gradle wrapper in every job that uses it; its minor
+    # and patch releases still come.
+    ignore:
+      - dependency-name: "gradle/actions*"
+        update-types: ["version-update:semver-major"]
 
   # One pull request for all gems: they are released for each other, and the release
   # workflow installs exactly what the lockfile names.
