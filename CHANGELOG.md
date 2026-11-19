@@ -12,6 +12,13 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
 
 ## Unreleased
 
+### Fixed
+
+- **2026.1.13 comes out with this version.** Its server image went out without its
+  build provenance, so that release stopped halfway: no GitHub release. Everything
+  listed under 2026.1.13 arrives with this version — update to this one rather than
+  to 2026.1.13.
+
 ## 2026.1.13 — 2026-11-19 {#2026.1.13}
 
 ### Added
