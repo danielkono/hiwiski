@@ -209,6 +209,16 @@ jobs:
           echo "Image: \`ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/hiwiski:$VERSION\`" >> "$GITHUB_STEP_SUMMARY"
           echo "digest=$(cat app/build/jib-image.digest)" >> "$GITHUB_OUTPUT"
 
+      # The attestation is pushed next to the image with Docker's credentials, which
+      # Jib neither needs nor leaves behind: without this login the step below finds
+      # none for ghcr.io. After the build, so Gradle never ran beside them.
+      - name: Registry login for the attestation
+        if: ${{ !github.event.repository.private }}
+        env:
+          REGISTRY_USER: ${{ github.actor }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io -u "$REGISTRY_USER" --password-stdin
+
       # Signed by this workflow, kept next to the image in the registry: where it was
       # built, from which commit and tag. GitHub offers it to public repositories
       # only (and to paid organisations); while this one is private there is none.
