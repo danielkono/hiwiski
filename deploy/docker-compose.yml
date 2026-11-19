@@ -77,7 +77,7 @@ services:
   # server, not what lies around it -- a USB disk or a NAS share keeps its other
   # files as they are.
   init:
-    image: busybox:1.37
+    image: busybox:1.38
     user: root
     command: >-
       sh -c "mkdir -p /data/media
