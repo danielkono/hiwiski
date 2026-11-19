@@ -1,0 +1,8 @@
+# The UI comes from ARB files; log and console stay English. The template
+# is English, the second language German.
+arb-dir: lib/core/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: L
+output-dir: lib/core/l10n/generated
+nullable-getter: false

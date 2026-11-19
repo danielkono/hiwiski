@@ -1,0 +1,166 @@
+name: hiwiski
+description: >-
+  Self-hosted app for one family: calendar, tasks including the shopping list, a
+  wiki with the recipes, a search across everything, a start board and a dashboard
+  for the wall tablet.
+publish_to: none
+
+# Not maintained here: every release build passes --build-name and --build-number, from
+# the tags. The value only names local builds.
+version: 0.0.0+1
+
+environment:
+  sdk: ^3.13.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  # For `usePathUrlStrategy`: the dashboard address is `/board/<token>` and not
+  # `/#/board/<token>` -- it is typed in by hand on a wall tablet.
+  flutter_web_plugins:
+    sdk: flutter
+
+  # --- State and navigation ---
+  # State that survives a screen change belongs in a notifier, not in a stream from the
+  # database.
+  # Pinned to 3.4.x: the views run commands through Riverpod's Mutation, which is
+  # still `experimental` and may change in a minor release.
+  flutter_riverpod: ">=3.4.3 <3.5.0"
+  riverpod: ">=3.4.3 <3.5.0"
+  riverpod_annotation: ^4.0.7
+  # Typed routes: a typo in the path is a compile error, not an empty screen.
+  go_router: ^18.0.1
+
+  # --- Local database ---
+  # The client always reads and writes against the local database, never directly
+  # against the API.
+  drift: ^2.35.0
+  drift_flutter: ^0.3.1
+  sqlite3: ^3.6.0
+  sqlite3_flutter_libs: ^0.6.0
+
+  # --- HTTP ---
+  # The actual client is generated from the OpenAPI spec.
+  dio: ^5.11.1
+  retrofit: ^4.10.0
+
+  # --- Domain ---
+  # UUIDv7 is assigned on the device so that items can be created offline.
+  uuid: ^4.6.0
+  # RRULE on both sides against the same golden file.
+  rrule: ^0.2.18
+  timezone: ^0.11.1
+  flutter_timezone: ^5.1.0
+  # Markdown with an insert toolbar -- no WYSIWYG.
+  flutter_markdown_plus: ^1.0.12
+  # The parser behind it, directly: a reference is recognized as its own inline rule --
+  # BEFORE Markdown's link rule, so that `[Title](hiwiski://...)` never becomes an
+  # ordinary link that points nowhere.
+  markdown: ^7.3.1
+  # Reminders are local notifications, without a service and without a network.
+  flutter_local_notifications: ^22.3.1
+  # The start board needs a masonry layout: its tiles have different heights, and
+  # GridView forces equal heights (pitfall 4). A deliberate dependency,
+  # not a trifle.
+  flutter_staggered_grid_view: ^0.7.0
+  # The wall tablet keeps the screen awake.
+  wakelock_plus: ^1.4.0
+  qr_flutter: ^4.1.0
+
+  # --- Device and storage ---
+  path: ^1.9.1
+  path_provider: ^2.1.6
+  shared_preferences: ^2.5.5
+  flutter_secure_storage: ^11.2.0
+  device_info_plus: ^13.2.0
+  package_info_plus: ^10.2.1
+  file_picker: ^13.1.0
+  # Directly, only for its web options: Safari reports the dialog's focus before the
+  # selection (lib/core/ui/pick_files_web.dart).
+  file_picker_web: ^4.0.0
+
+  # --- Odds and ends ---
+  # The time as `clock.now()`, never `DateTime.now()` (rule `clock_now`): a test can
+  # then fix the day, and the store screenshots show the same dates every time.
+  clock: ^1.1.3
+  collection: ^1.19.1
+  freezed_annotation: ^3.1.0
+  intl: ^0.20.3
+  json_annotation: ^4.12.0
+  logging: ^1.3.0
+  meta: ^1.19.0
+  web: ^1.1.1
+  # The jump to the map at an event's location — the device's map app,
+  # not an embedded map service.
+  url_launcher: ^6.3.2
+  # The invitation QR code is read by the phone's own camera app, which opens its
+  # `hiwiski://invite` link; this brings the link into the app. There is no scanner
+  # in the app: the usual package builds the Android app on Google's closed-source
+  # ML Kit, and the code can always be typed in.
+  app_links: ^7.2.1
+  # The sync runs without the app: WorkManager on Android,
+  # BGTaskScheduler on iOS.
+  workmanager: ^0.10.10
+
+  # --- Markdown export and import ---
+  # An export with subpages or images is a zip archive, and an import reads one —
+  # in the browser too, so in pure Dart.
+  archive: ^4.6.0
+  # The front matter of an exported file, also when a person wrote it by hand.
+  yaml: ^3.1.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_driver:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  vm_service: any
+  flutter_lints: ^6.0.0
+
+  build_runner: ^2.16.1
+  drift_dev: ^2.35.0
+  freezed: ^4.0.2
+  go_router_builder: ^4.5.0
+  json_serializable: ^6.14.1
+  retrofit_generator: ^10.2.11
+  riverpod_generator: ^4.0.9
+  swagger_parser: ^1.44.3
+
+flutter:
+  uses-material-design: true
+  # Generates the localization classes from lib/core/l10n/*.arb
+  generate: true
+
+  # The fonts' licenses, for "Licenses of the packages used" (app/font_licenses.dart).
+  assets:
+    - fonts/licenses/
+    # The native libraries' licenses, for the same page (app/native_licenses.dart):
+    # Flutter lists only the Dart packages' and its own.
+    - assets/licenses/
+    # The catalogue a device without a server starts from -- the server's own seed,
+    # kept identical by test/catalog_seed_test.dart.
+    - assets/catalog/
+    # The demo's sample data, one file per language.
+    - assets/demo/
+    # The app icon for the logo on the sign-in and setup screens.
+    - assets/brand/
+
+  fonts:
+    # The fonts ship as assets and are not loaded via the google_fonts package: that
+    # package fetches them from fonts.gstatic.com at runtime -- doubly wrong in an app
+    # that has to work offline and makes no third-party calls.
+    - family: Roboto
+      fonts:
+        - asset: fonts/Roboto.ttf
+    - family: RobotoMono
+      fonts:
+        - asset: fonts/RobotoMono.ttf
+    # Material Symbols Rounded as a variable font. Flutter's built-in `Icons` are
+    # *Material Icons* -- a different set, without the FILL, wght, GRAD, opsz axes.
+    - family: MaterialSymbolsRounded
+      fonts:
+        - asset: fonts/MaterialSymbolsRounded.ttf

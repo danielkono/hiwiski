@@ -1,0 +1,870 @@
+name: Release
+
+# A release tag `v<version>` releases everything: the server image (with the web build inside),
+# the demo image and the website's image go to ghcr.io, the Android app to Play's internal
+# test track, the iOS app to TestFlight, the store listings follow (their pictures only
+# when they changed), and a GitHub release carries the files an
+# instance is set up with and the version's section of CHANGELOG.md. The product comes
+# as one: without both apps there is no GitHub release. The maintainer's servers follow
+# (the job deploy).
+#
+# The tags are the only place a version is kept (tool/version.sh). The build number is
+# the run's number plus a fixed offset (the job version), the same for every build of a
+# run -- web app, Android, iOS -- so one build is found on every platform by it. The
+# stores take each number once and only rising, which the run number does: every upload
+# goes through this workflow, and running its failed jobs again keeps the number.
+# Renamed or moved to another repository, the workflow counts from 1 again: the offset
+# then has to lift it above what the stores already have.
+# Started by hand, it publishes an intermediate `<next>-dev.<commits>.g<sha>` of what is
+# ticked -- no release, and the versions of real releases stay untouched. Nothing runs on
+# a push to main: every run is one somebody asked for, which keeps the Actions minutes
+# and the test devices' updates in check.
+#
+# What other people wrote -- pub packages, build_runner, Hugo -- runs in jobs that hold
+# no token to push with; the images are put together in jobs that only take the result
+# as an artifact. No job restores a cache: a cache is written by CI runs, where tests
+# and every dependency ran, and what a release signs and publishes is built from the
+# checkout and the lockfiles alone.
+on:
+  push:
+    # Dev tags (`v2026.2.0-dev`) only mark where the next version begins.
+    tags: ["v*", "!v*-dev"]
+  workflow_dispatch:
+    inputs:
+      server:
+        description: Server image with the web app
+        type: boolean
+        default: true
+      demo:
+        description: Demo image (the web app without a server)
+        type: boolean
+        default: true
+      android:
+        description: Android app to the internal test track
+        type: boolean
+        default: true
+      ios:
+        description: iOS app to TestFlight
+        type: boolean
+        default: true
+      site:
+        description: The website, with its scenes
+        type: boolean
+        default: true
+
+# Two releases never race for the same tag.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+# Every job asks for the write access it needs itself.
+permissions:
+  contents: read
+
+env:
+  JAVA_VERSION: "25"
+  # For fastlane: the runners' own Ruby differs between Linux and macOS and moves with
+  # their images, and Gemfile.lock holds gems that need a recent one.
+  RUBY_VERSION: "3.4"
+
+jobs:
+  # The small jobs run on the 1-vCPU runner; the builds need a full one.
+  version:
+    name: Version
+    runs-on: ubuntu-slim
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build-number: ${{ steps.build-number.outputs.build-number }}
+    steps:
+      # The whole history with its tags: the version is read from them.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+
+      - name: Version
+        id: version
+        run: |
+          version=$(tool/version.sh)
+          if [[ "$GITHUB_REF_TYPE" == "tag" && "$GITHUB_REF_NAME" != "v$version" ]]; then
+            echo "::error::Tag $GITHUB_REF_NAME is not a release tag v<major>.<minor>.<patch>"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Version: $version" >> "$GITHUB_STEP_SUMMARY"
+
+      # The stores already hold builds numbered up to 12, uploaded by this workflow's
+      # runs in the repository before this one; here the run number starts at 1 again.
+      # The offset puts the first run here at build 20, above all of them. It may grow,
+      # never shrink: the stores refuse a number below one they have.
+      - name: Build number
+        id: build-number
+        run: |
+          build_number=$((GITHUB_RUN_NUMBER + 19))
+          echo "build-number=$build_number" >> "$GITHUB_OUTPUT"
+          echo "Build number: $build_number" >> "$GITHUB_STEP_SUMMARY"
+
+  # The web app for the server image, built in a job that can push nothing, like the
+  # website below: pub packages and build_runner run here, and none of them gets a token
+  # with `packages: write`. The checkout keeps no credentials either. The build goes to
+  # the next job as an artifact.
+  web-build:
+    name: Web app
+    needs: version
+    if: github.ref_type == 'tag' || inputs.server
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      BUILD_NUMBER: ${{ needs.version.outputs.build-number }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      # The Flutter version is pinned once, in app/.fvmrc, for local FVM and CI alike.
+      - name: Flutter version
+        id: flutter-version
+        run: echo "version=$(jq -r .flutter app/.fvmrc)" >> "$GITHUB_OUTPUT"
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ steps.flutter-version.outputs.version }}
+          channel: stable
+
+      # The generated client is not checked in.
+      - name: Web build
+        working-directory: app
+        run: |
+          flutter pub get --enforce-lockfile
+          dart run swagger_parser
+          dart run build_runner build --delete-conflicting-outputs
+          # CanvasKit from here, not from Google's CDN: no calls to third parties
+          # (web/flutter_bootstrap.js).
+          flutter build web --release --tree-shake-icons --no-web-resources-cdn \
+            --build-name="${VERSION%%-*}" --build-number="$BUILD_NUMBER"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: web-app
+          path: app/build/web/
+          if-no-files-found: error
+          retention-days: 1
+
+  # Skipped with `web-build` when the server is not ticked. Gradle and its plugins still
+  # run next to the push token: Jib builds and pushes in one step.
+  server-image:
+    name: Server image
+    needs: [version, web-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+      # The build provenance: a server can refuse an image without it
+      # (`gh attestation verify`).
+      id-token: write
+      attestations: write
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      # The web build goes into the server image: that way the UI always matches the
+      # server version exactly. Gradle takes it from where `flutter build web` leaves it.
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: web-app
+          path: app/build/web
+
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      # Every action is pinned to a commit, GitHub's own too: a tag can be moved to
+      # other code. Without the Gradle cache, like every job here (see the top).
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4.4.3
+        with:
+          cache-disabled: true
+
+      # The tests ran in CI for this commit; the release does not run them again. Jib
+      # builds amd64 and arm64 and pushes without a Docker daemon. The token comes in
+      # through the environment, not the command line.
+      - name: Push image
+        id: push
+        working-directory: server
+        env:
+          REGISTRY_USER: ${{ github.actor }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./gradlew :app:jib --no-daemon \
+            -Phiwiski.version="$VERSION" \
+            -Phiwiski.revision="$GITHUB_SHA" \
+            -Djib.to.auth.username="$REGISTRY_USER" \
+            -Djib.to.auth.password="$REGISTRY_TOKEN"
+          echo "Image: \`ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/hiwiski:$VERSION\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "digest=$(cat app/build/jib-image.digest)" >> "$GITHUB_OUTPUT"
+
+      # Signed by this workflow, kept next to the image in the registry: where it was
+      # built, from which commit and tag. GitHub offers it to public repositories
+      # only (and to paid organisations); while this one is private there is none.
+      - name: Attest
+        if: ${{ !github.event.repository.private }}
+        uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
+        with:
+          subject-name: ghcr.io/danielkono/hiwiski
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+  # The public demo: the web app built without a server, as a small image
+  # of static files. amd64 only: it runs on a hosted server, not on a family's NAS.
+  #
+  # Built in a job that can push nothing, like the server's web app above; the files go
+  # to the next job as an artifact.
+  demo-build:
+    name: Demo build
+    needs: version
+    if: github.ref_type == 'tag' || inputs.demo
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      BUILD_NUMBER: ${{ needs.version.outputs.build-number }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Flutter version
+        id: flutter-version
+        run: echo "version=$(jq -r .flutter app/.fvmrc)" >> "$GITHUB_OUTPUT"
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ steps.flutter-version.outputs.version }}
+          channel: stable
+
+      # The legal pages are relative: whoever hosts the demo serves them under every
+      # name it has, so it moves to another domain without a new build.
+      - name: Web build
+        working-directory: app
+        run: |
+          flutter pub get --enforce-lockfile
+          dart run swagger_parser
+          dart run build_runner build --delete-conflicting-outputs
+          flutter build web --release --tree-shake-icons --no-web-resources-cdn \
+            --dart-define=HIWISKI_DEMO=true \
+            --dart-define=HIWISKI_LEGAL_NOTICE_URL=/impressum \
+            --dart-define=HIWISKI_PRIVACY_URL=/datenschutz \
+            --dart-define=HIWISKI_APP_PRIVACY_BASE=/app/ \
+            --build-name="${VERSION%%-*}" --build-number="$BUILD_NUMBER" \
+            --output ../deploy/demo-image/web
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: demo-web
+          path: deploy/demo-image/web/
+          if-no-files-found: error
+          retention-days: 1
+
+  # Only Docker and the registry here, as for the website's image: the Caddy base, the
+  # Caddyfile and the files built above.
+  demo-image:
+    name: Demo image
+    needs: [version, demo-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      IMAGE: ghcr.io/danielkono/hiwiski-demo
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          sparse-checkout: deploy/demo-image
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: demo-web
+          path: deploy/demo-image/web
+
+      - name: Push image
+        id: push
+        env:
+          REGISTRY_USER: ${{ github.actor }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io -u "$REGISTRY_USER" --password-stdin
+          docker build --platform linux/amd64 \
+            --label org.opencontainers.image.source="https://github.com/$GITHUB_REPOSITORY" \
+            --label org.opencontainers.image.revision="$GITHUB_SHA" \
+            --label org.opencontainers.image.version="$VERSION" \
+            --tag "$IMAGE:$VERSION" deploy/demo-image
+          docker push "$IMAGE:$VERSION"
+          digest=$(docker image inspect --format '{{index .RepoDigests 0}}' "$IMAGE:$VERSION")
+          echo "digest=${digest#*@}" >> "$GITHUB_OUTPUT"
+          echo "Image: \`$IMAGE:$VERSION\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Attest
+        if: ${{ !github.event.repository.private }}
+        uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
+        with:
+          subject-name: ghcr.io/danielkono/hiwiski-demo
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+  # The website: the scenes' screenshots from the app's own test, the
+  # Hugo build with its search index, and the scenes' web build under /embed/ -- all
+  # from this tag, so the views match the released app. amd64 only, like the demo.
+  #
+  # Built in a job that can push nothing: pub packages, build_runner and Hugo run
+  # here, and none of them gets a token with `packages: write`. The checkout keeps no
+  # credentials either. The pages go to the next job as an artifact.
+  site-build:
+    name: Site build
+    needs: version
+    if: github.ref_type == 'tag' || inputs.site
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      BUILD_NUMBER: ${{ needs.version.outputs.build-number }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Flutter version
+        id: flutter-version
+        run: echo "version=$(jq -r .flutter app/.fvmrc)" >> "$GITHUB_OUTPUT"
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ steps.flutter-version.outputs.version }}
+          channel: stable
+
+      - name: Generate code
+        working-directory: app
+        run: |
+          flutter pub get --enforce-lockfile
+          dart run swagger_parser
+          dart run build_runner build --delete-conflicting-outputs
+
+      # In the zone the tests expect (test/flutter_test_config.dart).
+      - name: Screenshots
+        working-directory: app
+        env:
+          TZ: Europe/Berlin
+          SCENES_OUT: ${{ github.workspace }}/site/static/scenes
+        run: flutter test test/scenes
+
+      - name: Hugo and Pagefind
+        run: |
+          tool/site_tools.sh "$RUNNER_TEMP/bin"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      # The pages first, the search index over them, then the scenes' build beside them.
+      - name: Site
+        env:
+          HUGO_PARAMS_VERSION: ${{ env.VERSION }}
+        run: |
+          (cd site && hugo --panicOnWarning --destination ../deploy/site-image/public)
+          pagefind --site deploy/site-image/public
+
+      - name: Scenes
+        working-directory: app
+        run: |
+          flutter build web --release --tree-shake-icons --no-web-resources-cdn \
+            -t lib/app/scenes/main.dart \
+            --dart-define=HIWISKI_DEMO=true \
+            --build-name="${VERSION%%-*}" --build-number="$BUILD_NUMBER" \
+            --output ../deploy/site-image/public/embed
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: site-public
+          path: deploy/site-image/public/
+          if-no-files-found: error
+          retention-days: 1
+
+  # Only Docker and the registry here: the image is the Caddy base, the Caddyfile and
+  # the pages built above -- no third-party code runs next to the push token.
+  site-image:
+    name: Site image
+    needs: [version, site-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      IMAGE: ghcr.io/danielkono/hiwiski-site
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          sparse-checkout: deploy/site-image
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: site-public
+          path: deploy/site-image/public
+
+      - name: Push image
+        id: push
+        env:
+          REGISTRY_USER: ${{ github.actor }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io -u "$REGISTRY_USER" --password-stdin
+          docker build --platform linux/amd64 \
+            --label org.opencontainers.image.source="https://github.com/$GITHUB_REPOSITORY" \
+            --label org.opencontainers.image.revision="$GITHUB_SHA" \
+            --label org.opencontainers.image.version="$VERSION" \
+            --tag "$IMAGE:$VERSION" deploy/site-image
+          docker push "$IMAGE:$VERSION"
+          digest=$(docker image inspect --format '{{index .RepoDigests 0}}' "$IMAGE:$VERSION")
+          echo "digest=${digest#*@}" >> "$GITHUB_OUTPUT"
+          echo "Image: \`$IMAGE:$VERSION\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Attest
+        if: ${{ !github.event.repository.private }}
+        uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
+        with:
+          subject-name: ghcr.io/danielkono/hiwiski-site
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+  android:
+    name: Android
+    needs: version
+    if: github.ref_type == 'tag' || inputs.android
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    # The upload key and the Play service account live in this environment, which
+    # admits release tags and main only: a run
+    # started from another branch does not reach them.
+    environment: play
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      BUILD_NUMBER: ${{ needs.version.outputs.build-number }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Flutter version
+        id: flutter-version
+        run: echo "version=$(jq -r .flutter app/.fvmrc)" >> "$GITHUB_OUTPUT"
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ steps.flutter-version.outputs.version }}
+          channel: stable
+
+      # The Android build targets Java 17 (android/app/build.gradle.kts).
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4.4.3
+        with:
+          cache-disabled: true
+
+      - name: Generate code
+        working-directory: app
+        run: |
+          flutter pub get --enforce-lockfile
+          dart run swagger_parser
+          dart run build_runner build --delete-conflicting-outputs
+
+      # The upload key and the Play service account come from the `play` environment
+      # and only ever exist in the runner's temp folder.
+      - name: Keys
+        env:
+          UPLOAD_KEYSTORE: ${{ secrets.ANDROID_UPLOAD_KEYSTORE }}
+          UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_PASSWORD }}
+          UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+          PLAY_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          # printf, not echo: a value that happens to read `-n` or `-e` would be taken
+          # for an option by echo. Everything goes into files, nothing to the log.
+          umask 077
+          printf '%s' "$UPLOAD_KEYSTORE" | base64 --decode > "$RUNNER_TEMP/upload.jks"
+          printf '%s' "$PLAY_SERVICE_ACCOUNT" > "$RUNNER_TEMP/play.json"
+          printf '%s\n' \
+            "storeFile=$RUNNER_TEMP/upload.jks" \
+            "storePassword=$UPLOAD_KEYSTORE_PASSWORD" \
+            "keyAlias=$UPLOAD_KEY_ALIAS" \
+            "keyPassword=$UPLOAD_KEY_PASSWORD" \
+            > app/android/key.properties
+          printf '%s\n' "HIWISKI_PLAY_KEY=$RUNNER_TEMP/play.json" >> "$GITHUB_ENV"
+
+      # fastlane and every gem under it as app/Gemfile.lock names them, checksums
+      # included; `frozen` fails the run rather than resolve anything anew.
+      - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+          working-directory: app
+
+      - name: fastlane
+        working-directory: app
+        run: |
+          bundle config set --global path "$RUNNER_TEMP/bundle"
+          bundle config set --global frozen true
+          bundle install
+
+      # The project's heap (android/gradle.properties) is sized for a Mac. The runner of a
+      # private repository has 2 cores and 8 GB: the Gradle daemon with 8 GB, a Kotlin
+      # daemon that takes the same arguments unless told otherwise, gen_snapshot and R8
+      # drive it into swap, and the build stalls until the job's time runs out. The
+      # Gradle home's properties win over the project's, so only CI gets one heap of
+      # 3 GB, with the Kotlin compiler inside it instead of in a second JVM.
+      - name: Gradle memory
+        run: |
+          mkdir -p "${GRADLE_USER_HOME:=$HOME/.gradle}"
+          printf '%s\n' \
+            "org.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=1g" \
+            "kotlin.compiler.execution.strategy=in-process" \
+            >> "$GRADLE_USER_HOME/gradle.properties"
+
+      # The memory and swap in use every 30 seconds, next to the build's output: should
+      # the build stall again, the log shows whether memory was the reason.
+      - name: Build and upload
+        working-directory: app/android
+        run: |
+          (while sleep 30; do
+            free -m | awk '/^Mem:/ { m = $3 " of " $2 } /^Swap:/ { s = $3 } END { print "memory: " m " MB used, swap: " s " MB" }'
+          done) &
+          trap 'kill $!' EXIT
+          bundle exec fastlane internal version:"$VERSION" build:"$BUILD_NUMBER"
+
+  # On macOS, whose minutes count ten times while the repository is private. Signing
+  # needs no Apple ID: match reads the distribution certificate and profile from the
+  # maintainer's private repository, and the App Store Connect key does the rest
+  # (docs/releasing.md, "Signing and store credentials").
+  ios:
+    name: iOS
+    needs: version
+    if: github.ref_type == 'tag' || inputs.ios
+    runs-on: macos-latest
+    timeout-minutes: 40
+    # Like play: release tags and main only, so a run from another branch does not
+    # reach the keys.
+    environment: apple
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      BUILD_NUMBER: ${{ needs.version.outputs.build-number }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Flutter version
+        id: flutter-version
+        run: echo "version=$(jq -r .flutter app/.fvmrc)" >> "$GITHUB_OUTPUT"
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ steps.flutter-version.outputs.version }}
+          channel: stable
+
+      - name: Generate code
+        working-directory: app
+        run: |
+          flutter pub get --enforce-lockfile
+          dart run swagger_parser
+          dart run build_runner build --delete-conflicting-outputs
+          # The home screen widgets' Swift client, from the same contract.
+          tool/generate_widget_client.sh
+
+      # The App Store Connect key in the format the lane reads, and the deploy key that
+      # may only read the match repository -- files in the runner's temp folder,
+      # nothing in the log. GitHub's host key is pinned rather than learnt on first
+      # contact (docs.github.com, "GitHub's SSH key fingerprints").
+      - name: Keys
+        env:
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          MATCH_DEPLOY_KEY: ${{ secrets.MATCH_DEPLOY_KEY }}
+        run: |
+          umask 077
+          printf '%s\n' "$APP_STORE_CONNECT_KEY" > "$RUNNER_TEMP/app-store-connect.p8"
+          jq -n --arg id "$APP_STORE_CONNECT_KEY_ID" --arg issuer "$APP_STORE_CONNECT_ISSUER_ID" \
+            --arg path "$RUNNER_TEMP/app-store-connect.p8" \
+            '{key_id: $id, issuer_id: $issuer, key_filepath: $path}' \
+            > "$RUNNER_TEMP/app-store-connect.json"
+          printf '%s\n' "$MATCH_DEPLOY_KEY" > "$RUNNER_TEMP/match_key"
+          printf '%s\n' \
+            "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" \
+            > "$RUNNER_TEMP/known_hosts"
+          printf '%s\n' \
+            "HIWISKI_APP_STORE_KEY=$RUNNER_TEMP/app-store-connect.json" \
+            "GIT_SSH_COMMAND=ssh -i $RUNNER_TEMP/match_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$RUNNER_TEMP/known_hosts" \
+            >> "$GITHUB_ENV"
+
+      - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+          working-directory: app
+
+      - name: fastlane
+        working-directory: app
+        run: |
+          bundle config set --global path "$RUNNER_TEMP/bundle"
+          bundle config set --global frozen true
+          bundle install
+
+      # Apple takes only numbers: an intermediate build goes up as the next version,
+      # as tool/version.sh --numeric says.
+      - name: Build and upload
+        working-directory: app/ios
+        env:
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+        run: bundle exec fastlane beta version:"${VERSION%%-*}" build:"$BUILD_NUMBER"
+
+  # The store listing: texts and pictures in the App Store and on Google Play, from
+  # this tag (docs/development/store.md). The pictures are drawn and uploaded only
+  # when something they show changed since the last release -- the goldens, the store
+  # texts or the icon; Apple gets the texts and release notes of every new version.
+  #
+  # The pictures are drawn in a job without any keys, like the website's; the uploads
+  # get them as an artifact.
+  store-pictures:
+    name: Store pictures
+    needs: version
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.changed.outputs.changed }}
+    steps:
+      # The whole history: the last release tag is compared with this one.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Changed since the last release
+        id: changed
+        run: |
+          previous=$(git describe --tags --abbrev=0 --match 'v*' --exclude 'v*-dev' \
+            "$GITHUB_REF_NAME^" 2>/dev/null || true)
+          if [[ -z "$previous" ]] || ! git diff --quiet "$previous" HEAD -- \
+              app/test/store/goldens app/ios/fastlane/metadata \
+              app/android/fastlane/metadata app/assets/app_icon/google_play_icon_512.png; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Store pictures and texts changed since ${previous:-the beginning}: they are uploaded." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Store pictures and texts unchanged since $previous." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Flutter version
+        if: steps.changed.outputs.changed == 'true'
+        id: flutter-version
+        run: echo "version=$(jq -r .flutter app/.fvmrc)" >> "$GITHUB_OUTPUT"
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        if: steps.changed.outputs.changed == 'true'
+        with:
+          flutter-version: ${{ steps.flutter-version.outputs.version }}
+          channel: stable
+
+      - name: Generate code
+        if: steps.changed.outputs.changed == 'true'
+        working-directory: app
+        run: |
+          flutter pub get --enforce-lockfile
+          dart run swagger_parser
+          dart run build_runner build --delete-conflicting-outputs
+
+      # The same test that checks the goldens draws the pictures at full size; a
+      # picture that no longer matches its golden stops the upload here.
+      - name: Pictures
+        if: steps.changed.outputs.changed == 'true'
+        working-directory: app
+        env:
+          TZ: Europe/Berlin
+          STORE_OUT: ${{ runner.temp }}/store
+        run: |
+          flutter test test/store
+          ../tool/store_pictures.py "$STORE_OUT"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: steps.changed.outputs.changed == 'true'
+        with:
+          name: store-pictures
+          path: |
+            app/ios/fastlane/screenshots/
+            app/android/fastlane/metadata/android/*/images/
+
+  store-play:
+    name: Store listing, Google Play
+    needs: [version, store-pictures, android]
+    if: github.ref_type == 'tag' && needs.store-pictures.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: play
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      # The artifact's root is app/, the folders' common parent.
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: store-pictures
+          path: app
+
+      - name: Keys
+        env:
+          PLAY_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          umask 077
+          printf '%s' "$PLAY_SERVICE_ACCOUNT" > "$RUNNER_TEMP/play.json"
+          printf '%s\n' "HIWISKI_PLAY_KEY=$RUNNER_TEMP/play.json" >> "$GITHUB_ENV"
+
+      - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+          working-directory: app
+
+      - name: fastlane
+        working-directory: app
+        run: |
+          bundle config set --global path "$RUNNER_TEMP/bundle"
+          bundle config set --global frozen true
+          bundle install
+
+      - name: Upload
+        working-directory: app/android
+        run: bundle exec fastlane metadata
+
+  # On Linux: the listing needs no Xcode, only the App Store Connect key.
+  store-apple:
+    name: Store listing, App Store
+    needs: [version, store-pictures, ios]
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: apple
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      CHANGED: ${{ needs.store-pictures.outputs.changed }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        if: env.CHANGED == 'true'
+        with:
+          name: store-pictures
+          path: app
+
+      - name: Keys
+        env:
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          umask 077
+          printf '%s\n' "$APP_STORE_CONNECT_KEY" > "$RUNNER_TEMP/app-store-connect.p8"
+          jq -n --arg id "$APP_STORE_CONNECT_KEY_ID" --arg issuer "$APP_STORE_CONNECT_ISSUER_ID" \
+            --arg path "$RUNNER_TEMP/app-store-connect.p8" \
+            '{key_id: $id, issuer_id: $issuer, key_filepath: $path}' \
+            > "$RUNNER_TEMP/app-store-connect.json"
+          printf '%s\n' "HIWISKI_APP_STORE_KEY=$RUNNER_TEMP/app-store-connect.json" >> "$GITHUB_ENV"
+
+      - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+          working-directory: app
+
+      - name: fastlane
+        working-directory: app
+        run: |
+          bundle config set --global path "$RUNNER_TEMP/bundle"
+          bundle config set --global frozen true
+          bundle install
+
+      # The version as the iOS build went up: numbers only.
+      - name: Upload
+        working-directory: app/ios
+        run: bundle exec fastlane metadata version:"${VERSION%%-*}" screenshots:"$CHANGED"
+
+  # The maintainer's servers follow every release, once the images are pushed.
+  deploy:
+    name: Deploy
+    needs: [version, server-image, demo-image, site-image]
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    # The token may start one workflow in one other repository and nothing else. The
+    # environment admits release tags only, so no branch and no pull request reaches it.
+    environment: vps
+    permissions: {}
+    steps:
+      # Where the release goes is the maintainer's: the repository that knows the
+      # servers and their keys. Both are secrets, so neither shows in this log. Without
+      # them -- in a fork, say -- there is nothing to deploy to.
+      - name: Request the deployment
+        env:
+          GH_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+          DEPLOY_REPO: ${{ secrets.DEPLOY_REPO }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          if [[ -z "$GH_TOKEN" || -z "$DEPLOY_REPO" ]]; then
+            echo "No DEPLOY_REPO or DEPLOY_TOKEN -- nothing to deploy to."
+            exit 0
+          fi
+          gh workflow run deploy.yml --repo "$DEPLOY_REPO" --ref main \
+            -f version="$VERSION" -f target=all > /dev/null
+          echo "Deployment of $VERSION requested." >> "$GITHUB_STEP_SUMMARY"
+
+  release:
+    name: GitHub release
+    needs: [version, server-image, android, ios]
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-slim
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      # The files an instance is set up with. The
+      # example environment carries the version it was released with.
+      - name: Release
+        run: |
+          mkdir -p dist
+          cp deploy/docker-compose.yml deploy/Caddyfile dist/
+          sed "s/^HIWISKI_VERSION=.*/HIWISKI_VERSION=$VERSION/" deploy/.env.example > dist/env.example
+          # The notes are the version's section of the changelog: a release without one
+          # stops here (tool/changelog.sh release, before the tag).
+          tool/changelog.sh notes "$VERSION" > "$RUNNER_TEMP/notes.md"
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "Hiwiski $VERSION" \
+            --notes-file "$RUNNER_TEMP/notes.md" \
+            --verify-tag

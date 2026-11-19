@@ -1,0 +1,75 @@
+# The public website. Built with `hugo` in this directory; the
+# release workflow sets HUGO_PARAMS_VERSION to the released version.
+
+# The site's one address. The earlier hiwiski.danielkononov.de still serves the same
+# pages, but every page's canonical link names this one, so search engines list the
+# pages here and not twice.
+baseURL = 'https://hiwiski.app/'
+title = 'Hiwiski'
+disableKinds = ['taxonomy', 'term', 'rss']
+enableRobotsTXT = true
+
+defaultContentLanguage = 'de'
+defaultContentLanguageInSubdir = true
+
+[params]
+  # Whether search engines may index the site. A page can still keep itself out with
+  # `noindex` in its front matter.
+  indexable = true
+  # The released version, shown on the download page. Empty for a local build.
+  version = ''
+  # Where the scenes' web build is served.
+  embedBase = '/embed/'
+  demo = 'https://demo.hiwiski.app/'
+  github = 'https://github.com/danielkono/hiwiski'
+
+[languages.de]
+  label = 'Deutsch'
+  locale = 'de'
+  contentDir = 'content/de'
+  weight = 1
+  [languages.de.params]
+    ogLocale = 'de_DE'
+    privacy = '/datenschutz'
+    appPrivacy = '/app/datenschutz'
+
+[languages.en]
+  label = 'English'
+  locale = 'en'
+  contentDir = 'content/en'
+  weight = 2
+  [languages.en.params]
+    ogLocale = 'en_US'
+    privacy = '/privacy'
+    appPrivacy = '/app/privacy'
+
+# The search page is for people on the site, not for search engines.
+[[cascade]]
+  [cascade.params]
+    noindex = true
+  [cascade.sitemap]
+    disable = true
+  [cascade.target]
+    path = '/search'
+
+# The changelog and the license are the repository's own files, not copies.
+[[module.mounts]]
+  source = 'assets'
+  target = 'assets'
+[[module.mounts]]
+  source = '../CHANGELOG.md'
+  target = 'assets/CHANGELOG.md'
+[[module.mounts]]
+  source = '../LICENSE.md'
+  target = 'assets/LICENSE.md'
+
+[markup.goldmark.renderer]
+  # A how-to's text is Markdown rendered by its shortcode, with the scenes in it
+  # already HTML. Every word here is the repository's own.
+  unsafe = true
+[markup.highlight]
+  noClasses = false
+  style = 'github'
+[markup.tableOfContents]
+  startLevel = 2
+  endLevel = 3

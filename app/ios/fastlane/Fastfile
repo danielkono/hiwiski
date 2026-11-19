@@ -1,0 +1,141 @@
+default_platform(:ios)
+
+APP_DIR = File.expand_path("../..", __dir__)
+
+# The App Store Connect API key: a JSON file with key_id, issuer_id and key_filepath,
+# outside the repository.
+API_KEY = File.expand_path(ENV.fetch("HIWISKI_APP_STORE_KEY", "~/.config/hiwiski/app-store-connect.json"))
+
+# One version for server, web app and apps, read from the tags.
+def tagged_version(*args)
+  Dir.chdir(File.join(APP_DIR, "..")) do
+    # Tags set on another machine or on GitHub count too.
+    sh("git", "fetch", "--tags", "--quiet", log: false) { |status| UI.important("git fetch --tags failed") unless status.success? }
+    version = `tool/version.sh #{args.join(" ")}`.strip
+    UI.user_error!("No version") unless $?.success?
+    version
+  end
+end
+
+# Signs the lane in to App Store Connect with the API key: loaded once, the actions
+# after it take it from there.
+def sign_in
+  UI.user_error!("#{API_KEY} is missing") unless File.exist?(API_KEY)
+  key = JSON.parse(File.read(API_KEY))
+  app_store_connect_api_key(
+    key_id: key.fetch("key_id"),
+    issuer_id: key.fetch("issuer_id"),
+    key_filepath: File.expand_path(key.fetch("key_filepath")),
+  )
+end
+
+# The store build signs manually with what match keeps (Matchfile): the
+# certificate and one profile per bundle -- the app and its home screen widgets --
+# whose names ios/ExportOptions.plist repeats. Each target picks its own by its bundle
+# identifier.
+PROFILE = "match AppStore $(PRODUCT_BUNDLE_IDENTIFIER)"
+SIGNING_XCCONFIG = File.join(APP_DIR, "ios/Flutter/Signing.xcconfig")
+
+platform :ios do
+  # fastlane beta version:2026.2.0 build:57
+  #
+  # Run by the release workflow, which passes the version it read from the tags,
+  # without the dev part, and its run number.
+  #
+  # Signing needs no Apple ID in Xcode: the certificate and the profile come from
+  # match, the App Store Connect key answers everything else (docs/releasing.md,
+  # "Signing and store credentials"). The same lane runs on a Mac and on a CI runner.
+  desc "Build the app and upload it to TestFlight"
+  lane :beta do |options|
+    sign_in
+
+    # Apple takes only numbers here: between releases the next version, whose builds
+    # then count up until it is released.
+    UI.user_error!("No version:<version> -- the release run passes it") unless options[:version]
+    version_name = options[:version]
+    unless version_name.match?(/\A\d+\.\d+\.\d+\z/)
+      UI.user_error!("iOS takes a version of three numbers, not #{version_name}")
+    end
+
+    # The release run's build number, the same for the web app, Android and iOS, so one
+    # build is found on every platform by it. Apple takes each build number of a version
+    # once and only rising; the run number it comes from rises with every run, so it
+    # does as long as every upload comes from one.
+    UI.user_error!("No build:<number> -- the release run passes its build number") unless options[:build]
+    build_number = Integer(options[:build].to_s, 10, exception: false)
+    UI.user_error!("build:#{options[:build]} is not a build number") unless build_number&.positive?
+    UI.message("Version #{version_name} (#{build_number})")
+
+    # On a runner a keychain of its own, gone with the runner; on this Mac the login
+    # keychain. Read-only: creating or renewing is done once, by hand.
+    setup_ci if ENV["CI"]
+    match(readonly: true)
+
+    # flutter build ipa exits with 0 when only the export fails: the archive is
+    # there, the .ipa is not. An .ipa left from an earlier build would then be
+    # uploaded instead, so the folder starts empty.
+    ipa_dir = File.join(APP_DIR, "build/ios/ipa")
+    FileUtils.rm_rf(ipa_dir)
+
+    # Manual signing for the app's own targets only -- Runner and its widgets, both
+    # built on ios/Flutter/Release.xcconfig -- and only for this build: the pods sign
+    # nothing, and a Release build for a device keeps signing automatically for
+    # development.
+    File.write(SIGNING_XCCONFIG, <<~XCCONFIG)
+      CODE_SIGN_STYLE = Manual
+      DEVELOPMENT_TEAM = 2JZ6NF8U9U
+      CODE_SIGN_IDENTITY = Apple Distribution
+      CODE_SIGN_IDENTITY[sdk=iphoneos*] = Apple Distribution
+      PROVISIONING_PROFILE_SPECIFIER = #{PROFILE}
+    XCCONFIG
+    begin
+      Dir.chdir(APP_DIR) do
+        sh("flutter", "build", "ipa", "--release",
+           "--build-name=#{version_name}", "--build-number=#{build_number}",
+           "--export-options-plist=ios/ExportOptions.plist")
+      end
+    ensure
+      FileUtils.rm_f(SIGNING_XCCONFIG)
+    end
+
+    ipa = Dir[File.join(ipa_dir, "*.ipa")].first
+    UI.user_error!("No .ipa under build/ios/ipa: the export failed, see above") unless ipa
+
+    # Internal testers get the build as soon as Apple has processed it; there is no
+    # need to wait for that here.
+    upload_to_testflight(
+      ipa: ipa,
+      skip_waiting_for_build_processing: true,
+    )
+  end
+
+  # fastlane metadata                       -- texts and release notes of the tagged version
+  # fastlane metadata screenshots:true      -- and the screenshots
+  # fastlane metadata version:2026.2.0
+  #
+  # The store listing, no build: the texts and release notes from fastlane/metadata,
+  # with screenshots:true the pictures from fastlane/screenshots (drawn by
+  # app/test/store, laid out by tool/store_pictures.py). Apple keeps most of it per
+  # version, so it goes to the version being released, which is made if App Store
+  # Connect has none to edit yet; a new version takes the previous one's screenshots
+  # over. Nothing is submitted for review -- that stays by hand.
+  desc "Upload the App Store listing: texts, release notes and screenshots"
+  lane :metadata do |options|
+    sign_in
+    version_name = options[:version] || tagged_version("--numeric")
+    screenshots = options[:screenshots].to_s == "true"
+    deliver(
+      app_version: version_name,
+      # The texts and pictures come from deliver's own defaults, fastlane/metadata and
+      # fastlane/screenshots: given the same folders explicitly, it uploaded nothing.
+      skip_binary_upload: true,
+      skip_screenshots: !screenshots,
+      overwrite_screenshots: screenshots,
+      submit_for_review: false,
+      automatic_release: false,
+      # No HTML preview to confirm: the lane runs on CI.
+      force: true,
+      precheck_include_in_app_purchases: false,
+    )
+  end
+end

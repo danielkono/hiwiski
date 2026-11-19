@@ -1,0 +1,12 @@
+{{ define "main" }}
+<div class="page">
+  <article class="prose">
+    <h1>{{ .Title }}</h1>
+    {{ .Content }}
+    {{- with resources.Get "LICENSE.md" }}
+    {{- partial "no-raw-html.html" (dict "name" "LICENSE.md" "text" .Content "page" $.Page) }}
+    <section lang="en">{{ .Content | $.Page.RenderString (dict "display" "block") }}</section>
+    {{- end }}
+  </article>
+</div>
+{{ end }}

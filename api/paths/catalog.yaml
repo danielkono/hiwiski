@@ -1,0 +1,186 @@
+# The shopping list's categories and the catalog's assignment to them.
+#
+# REST and not sync: the catalog has no owner and no share, and sync is built on both
+# (F).
+
+Aisles:
+  get:
+    tags: [catalog]
+    operationId: listAisles
+    summary: The categories, in the family's order
+    description: |
+      Hidden ones included -- the app needs them to keep their products under "Other"
+      and to offer them in "Edit categories".
+    responses:
+      '200':
+        description: All categories
+        content:
+          application/json:
+            schema:
+              $ref: '../components/catalog.yaml#/AisleList'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+  post:
+    tags: [catalog]
+    operationId: createAisle
+    summary: Add a category of the family's own
+    description: Appended at the end of the order.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/catalog.yaml#/CreateAisleRequest'
+    responses:
+      '201':
+        description: Created
+        content:
+          application/json:
+            schema:
+              $ref: '../components/catalog.yaml#/Aisle'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+      '409':
+        $ref: '../components/errors.yaml#/responses/Conflict'
+
+Aisle:
+  patch:
+    tags: [catalog]
+    operationId: updateAisle
+    summary: Rename a category or hide it
+    description: |
+      Only own categories have a name to change (`catalog.aisle_builtin`); built-in
+      ones can only be hidden.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/catalog.yaml#/UpdateAisleRequest'
+    responses:
+      '200':
+        description: Changed
+        content:
+          application/json:
+            schema:
+              $ref: '../components/catalog.yaml#/Aisle'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+      '409':
+        $ref: '../components/errors.yaml#/responses/Conflict'
+  delete:
+    tags: [catalog]
+    operationId: deleteAisle
+    summary: Delete a category of the family's own
+    description: |
+      Its products lose their category and go under "Other". Built-in categories are
+      never deleted (`catalog.aisle_builtin`): a product may point at them, and an older
+      app knows them by key.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Deleted
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+
+AisleOrder:
+  put:
+    tags: [catalog]
+    operationId: reorderAisles
+    summary: Put the categories in a new order
+    description: |
+      The IDs in their new order. Categories missing from the list keep their relative
+      order after the named ones -- one added on another device meanwhile is not lost.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/catalog.yaml#/AisleOrderRequest'
+    responses:
+      '200':
+        description: All categories in the new order
+        content:
+          application/json:
+            schema:
+              $ref: '../components/catalog.yaml#/AisleList'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+
+ProductAisle:
+  put:
+    tags: [catalog]
+    operationId: assignProductAisle
+    summary: Put a product into a category
+    description: |
+      The product with exactly this name (ignoring case) is moved; if there is none, it
+      is created. From then on every shopping row with this product lands there.
+      `aisleId: null` takes the category away.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/catalog.yaml#/AssignProductAisleRequest'
+    responses:
+      '200':
+        description: The product as it is now
+        content:
+          application/json:
+            schema:
+              $ref: '../components/catalog.yaml#/Product'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+
+Products:
+  get:
+    tags: [catalog]
+    operationId: listProducts
+    summary: The product catalog
+    description: |
+      The catalog grows from what people enter and **belongs to everyone** -- the only
+      domain entity without an owner and without a share.
+    parameters:
+      - name: query
+        in: query
+        required: false
+        schema:
+          type: string
+    responses:
+      '200':
+        description: |
+          The products by name -- without a query all of them, for the app's offline
+          copy; with one, a suggestion list.
+        content:
+          application/json:
+            schema:
+              $ref: '../components/catalog.yaml#/ProductList'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'

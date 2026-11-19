@@ -1,0 +1,6 @@
+{{- /* A how-to on a feature page: its own anchor, so it can be sent on by itself.
+       {{< steps id="sort-shopping-list" title="…" >}}…{{< /steps >}} */ -}}
+<section class="howto" id="{{ .Get "id" }}">
+  <h3><a href="#{{ .Get "id" }}">{{ .Get "title" }}</a></h3>
+  {{ .Inner | .Page.RenderString (dict "display" "block") }}
+</section>

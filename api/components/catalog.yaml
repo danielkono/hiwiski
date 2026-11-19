@@ -1,0 +1,111 @@
+# The shopping list's categories (catalog).
+
+Aisle:
+  type: object
+  description: |
+    A category of the shopping list. Exactly one of `key` and `name` is set: a built-in
+    one is shown in the app's language, an own one as written. A client that does not
+    know a key shows it under "Other" rather than failing.
+  required: [id, position, hidden]
+  properties:
+    id:
+      type: string
+      format: uuid
+    key:
+      type: string
+      nullable: true
+      description: |
+        A built-in category: `produce`, `bakery`, `meat_seafood`, `deli`,
+        `dairy_eggs`, `breakfast`, `pantry`, `spices_condiments`, `snacks_sweets`,
+        `beverages`, `frozen`, `baby`, `personal_care`, `household`, `pet`. More may
+        come.
+      example: produce
+    name:
+      type: string
+      nullable: true
+      description: One of the family's own.
+      example: Asia shop
+    position:
+      type: integer
+      description: The order in the shopping list, the same for the whole family.
+    hidden:
+      type: boolean
+      description: Hidden ones are neither shown nor offered; their products go under "Other".
+
+AisleList:
+  type: object
+  required: [aisles]
+  properties:
+    aisles:
+      type: array
+      description: In their order.
+      items:
+        $ref: '#/Aisle'
+
+CreateAisleRequest:
+  type: object
+  required: [name]
+  properties:
+    name:
+      type: string
+
+UpdateAisleRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      description: Only for own categories.
+    hidden:
+      type: boolean
+
+AisleOrderRequest:
+  type: object
+  required: [ids]
+  properties:
+    ids:
+      type: array
+      items:
+        type: string
+        format: uuid
+
+AssignProductAisleRequest:
+  type: object
+  required: [name]
+  properties:
+    name:
+      type: string
+      description: The product's name, as it stands on the shopping row.
+    aisleId:
+      type: string
+      format: uuid
+      nullable: true
+
+Product:
+  type: object
+  required: [id, name]
+  properties:
+    id:
+      type: string
+      format: uuid
+    name:
+      type: string
+    aisleId:
+      type: string
+      format: uuid
+      nullable: true
+      description: |
+        The category (`Aisle`) the shopping list groups it under, or none -- then "Other".
+    defaultUnit:
+      type: string
+      nullable: true
+    usageCount:
+      type: integer
+
+ProductList:
+  type: object
+  required: [products]
+  properties:
+    products:
+      type: array
+      items:
+        $ref: '#/Product'

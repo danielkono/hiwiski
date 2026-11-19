@@ -1,0 +1,297 @@
+# The sync protocol.
+#
+# The client **always** reads and writes against the local database, never directly
+# against the API. Everything that lives on the device goes exclusively
+# through these two endpoints -- for synced entities there is deliberately no CRUD over
+# REST.
+
+SyncOp:
+  type: string
+  description: |
+    Four operations. The last two are **synthetic**: the server writes them when a
+    share changes, so that the change takes effect retroactively.
+
+    If someone gets access today to a calendar that was filled last month, those
+    changes lie *before* their position -- they would never receive them. So
+    `access_granted` triggers a full catch-up of the container, `access_revoked` a
+    local deletion.
+  enum: [upsert, delete, access_granted, access_revoked]
+
+ChangeEnvelope:
+  type: object
+  description: |
+    The envelope is strictly typed; `fields` is free-form in the spec, the schemas per
+    type sit next to it as components. A handwritten dispatcher in the client decodes
+    based on `entityType`.
+  required: [seq, entityType, entityId, op, version]
+  properties:
+    seq:
+      type: integer
+      format: int64
+      description: |
+        Monotonically increasing per family. More robust than timestamps across device
+        clocks.
+    entityType:
+      type: string
+      description: |
+        Deliberately **not an enum**: an older app must be able to skip an unknown
+        type and, after an update, pull everything once from scratch. That is the
+        price for property 2, and it is low.
+      example: TODO
+    entityId:
+      type: string
+      format: uuid
+    containerType:
+      type: string
+      description: The container the item inherits its share from.
+      example: TODO_LIST
+    containerId:
+      type: string
+      format: uuid
+    op:
+      $ref: './sync.yaml#/SyncOp'
+    fields:
+      type: object
+      additionalProperties: true
+      description: |
+        Only the changed fields. **Not an optimization but a requirement**: otherwise
+        an older app blanks out fields it does not know and wipes out the work of a
+        newer device.
+        A snapshot (`snapshot`) contains all fields the server knows.
+    version:
+      type: integer
+      format: int64
+      description: |
+        The entity's version **after** this change. The client remembers it and sends
+        it back as `baseVersion`; whoever increments it locally makes every later
+        change run into a conflict.
+    entityKey:
+      type: string
+      description: |
+        The readable key, if this type gets one. It is assigned exactly once, on the
+        first sync to the server.
+      example: TD-14
+    ownerId:
+      type: string
+      format: uuid
+      description: |
+        Who owns the item — whoever created it. Set on every upsert. Without it the
+        client cannot tell its own comments from someone else's, or show the owner
+        in the info bar.
+
+PullRequest:
+  type: object
+  required: [lastSeq, deviceId]
+  properties:
+    lastSeq:
+      type: integer
+      format: int64
+    deviceId:
+      type: string
+      format: uuid
+    pendingCount:
+      type: integer
+      description: |
+        How many changes are still waiting on the device. Reported by the device with
+        every pull -- only this way can the device list show "3 changes waiting -
+        offline for 12 days".
+    limit:
+      type: integer
+      description: At most this many entries per response.
+      default: 500
+    snapshot:
+      type: boolean
+      default: false
+      description: |
+        The **state** instead of the log: every live, visible item once, with all
+        fields, containers before their content. For a device's first sync and for the
+        rebuild after `resyncRequired`. The log is cleaned up after the retention
+        period; whoever replayed it from 0 would afterwards only get what someone has
+        touched since -- and of that only the changed fields.
+        `lastSeq` is not read in this case.
+    snapshotCursor:
+      type: string
+      description: |
+        Where the snapshot continues -- the `snapshotCursor` of the previous response,
+        unchanged. If it is missing, a new snapshot starts.
+
+PullResponse:
+  type: object
+  required: [changes, latestSeq, hasMore, instanceId, resyncRequired]
+  properties:
+    changes:
+      type: array
+      items:
+        $ref: './sync.yaml#/ChangeEnvelope'
+    latestSeq:
+      type: integer
+      format: int64
+      description: The position the client remembers once it has processed everything.
+    hasMore:
+      type: boolean
+      description: There are more entries; pull again right away.
+    instanceId:
+      type: string
+      format: uuid
+      description: |
+        Identifier of the instance. Regenerated on restore -- if it differs from the
+        remembered one, your own sequence numbers no longer apply.
+    resyncRequired:
+      type: boolean
+      description: |
+        `lastSeq` lies before the oldest log entry, or the instance identifier has
+        changed. The client **first** tries to push its outbox; whatever is rejected
+        ends up in a visible list to copy from instead of silently disappearing. Then
+        it discards its local data and reloads.
+    snapshotCursor:
+      type: string
+      description: |
+        Only for a snapshot and only while `hasMore` holds: the cursor for the next
+        page. During a snapshot `latestSeq` is the same on every page -- the position
+        at its start. After the last page the log continues from there; whatever
+        happened during the snapshot thus arrives a second time, which does no harm.
+
+Mutation:
+  type: object
+  required: [mutationId, entityType, entityId, op]
+  properties:
+    mutationId:
+      type: string
+      format: uuid
+      description: |
+        Client-generated idempotency key. Otherwise retries after a dropped connection
+        would create things twice.
+    entityType:
+      type: string
+    entityId:
+      type: string
+      format: uuid
+      description: UUIDv7, generated by the client -- with auto-increment nothing could be created offline.
+    containerType:
+      type: string
+    containerId:
+      type: string
+      format: uuid
+    op:
+      type: string
+      enum: [upsert, delete]
+    baseVersion:
+      type: integer
+      format: int64
+      description: |
+        The version this mutation builds on. Comes from the last pull and is **never
+        incremented locally**. If it is missing, this is a creation.
+    fields:
+      type: object
+      additionalProperties: true
+      description: Only the changed fields. Never whole objects.
+
+PushRequest:
+  type: object
+  required: [deviceId, mutations]
+  properties:
+    deviceId:
+      type: string
+      format: uuid
+    pendingCount:
+      type: integer
+    mutations:
+      type: array
+      maxItems: 200
+      description: |
+        At most 200 per push (the app sends 50); more is a `400` for the whole call.
+        Each mutation holds the instance's writer lock, so an unbounded push would stall
+        every other device's sync. Values have limits too: a text
+        field at most 200,000 characters, a list of ids at most 500 entries, a JSON field
+        at most 256 KiB, a merged map (an event's exceptions) at most 5,000 keys. A value
+        beyond them rejects that one mutation with `sync.value_too_large`. The request
+        body as a whole may be at most 32 MiB (`413`, `request.too_large`).
+      items:
+        $ref: './sync.yaml#/Mutation'
+
+MutationStatus:
+  type: string
+  description: |
+    | Result | Meaning | Consequence in the client |
+    | --- | --- | --- |
+    | `applied` | accepted | outbox entry gone, remember new `version` |
+    | `conflict` | field conflict, server value attached | banner above the content |
+    | `rejected` | permanently rejected | blocks the chain, becomes visible |
+    | `duplicate` | already processed | counts as success |
+
+    A mutation id already processed gets the answer it got the first time: only an
+    applied one is `duplicate`. A rejected one is `rejected` again with its `code`,
+    a conflict is `conflict` again with the current `serverFields` (and no
+    `baseFields`).
+  enum: [applied, conflict, rejected, duplicate]
+
+MutationResult:
+  type: object
+  required: [mutationId, status]
+  properties:
+    mutationId:
+      type: string
+      format: uuid
+    status:
+      $ref: './sync.yaml#/MutationStatus'
+    entityId:
+      type: string
+      format: uuid
+    version:
+      type: integer
+      format: int64
+    entityKey:
+      type: string
+      description: The readable key assigned on the first sync.
+    conflictFields:
+      type: array
+      description: |
+        The fields that were discarded because someone else changed them in the
+        meantime. **A conflict is always shown** -- in an earlier version it silently discarded the
+        change, and that is the worst kind of bug: one nobody notices.
+      items:
+        type: string
+    serverFields:
+      type: object
+      additionalProperties: true
+      description: The current server state of the discarded fields.
+    baseFields:
+      type: object
+      additionalProperties: true
+      description: |
+        For `conflict`: the discarded fields as they were at the mutation's
+        `baseVersion` — what both sides started from. The conflict view shows it
+        next to the server's and the device's version. A field is missing when the log
+        no longer reaches back that far.
+    code:
+      type: string
+      description: For `rejected`, the error code the client translates.
+      example: todo.list_not_found
+
+PushResponse:
+  type: object
+  required: [results, latestSeq]
+  properties:
+    results:
+      type: array
+      items:
+        $ref: './sync.yaml#/MutationResult'
+    latestSeq:
+      type: integer
+      format: int64
+
+EventTicket:
+  type: object
+  description: |
+    Short-lived ticket for the SSE stream.
+
+    `EventSource` in the browser cannot send a header, so in an earlier version this endpoint was
+    the only one without login -- it gave away *that* something had changed. Instead,
+    the app requests a ticket beforehand and appends it as a query parameter.
+  required: [ticket, expiresAt]
+  properties:
+    ticket:
+      type: string
+    expiresAt:
+      type: string
+      format: date-time

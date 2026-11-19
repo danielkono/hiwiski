@@ -1,0 +1,71 @@
+Shares:
+  get:
+    tags: [access]
+    operationId: getShares
+    summary: The share sheet of an item
+    parameters:
+      - name: itemType
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Owner, assignees, inherited and own shares
+        content:
+          application/json:
+            schema:
+              $ref: '../components/access.yaml#/ShareSheet'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+  put:
+    tags: [access]
+    operationId: setShares
+    summary: Set the own shares of an item
+    description: |
+      Owner only. *Write* allows creating, changing and deleting within the container
+      — **not** changing the share. Whoever sees the item but does not
+      own it gets `403`; whoever does not see it gets `404`, the same as for an id that
+      does not exist.
+
+      A board (`BOARD`), its tiles (`WIDGET`), a calendar feed (`CALENDAR_FEED`) and a
+      member's list order (`LIST_ORDER`) belong to one member and cannot be shared:
+      `400` with `access.not_shareable`. A board's or feed's token is a session of its
+      owner; sync delivers it to the owner's devices only.
+    parameters:
+      - name: itemType
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/access.yaml#/WriteSharesRequest'
+    responses:
+      '200':
+        description: The new sheet
+        content:
+          application/json:
+            schema:
+              $ref: '../components/access.yaml#/ShareSheet'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'

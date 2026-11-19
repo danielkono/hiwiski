@@ -1,0 +1,189 @@
+RefreshResult:
+  type: object
+  required: [subscriptionId, ok]
+  properties:
+    subscriptionId:
+      type: string
+      format: uuid
+    ok:
+      type: boolean
+      description: |
+        Whether the file could be fetched and imported. `false` does **not** mean the
+        call failed -- the subscription still stands, with `error` attached to it.
+    importedCount:
+      type: integer
+      description: How many events are attached to the subscription after the sync.
+    error:
+      type: string
+      nullable: true
+      description: The note on the subscription, if one came up.
+    lastSyncAt:
+      type: string
+      format: date-time
+      nullable: true
+
+SubscriptionPreviewRequest:
+  type: object
+  description: An address to fetch, or the content of a file — one of the two.
+  properties:
+    url:
+      type: string
+      nullable: true
+    ics:
+      type: string
+      nullable: true
+      description: The content of an `.ics` file, for the preview before an import.
+
+SubscriptionPreview:
+  type: object
+  required: [eventCount, upcoming]
+  properties:
+    name:
+      type: string
+      nullable: true
+      description: The calendar's own name (`X-WR-CALNAME`), as a suggestion for ours.
+    eventCount:
+      type: integer
+    upcoming:
+      type: array
+      description: The next events from today on (up to twenty) — by their first date.
+      items:
+        $ref: './calendar.yaml#/PreviewEvent'
+
+PreviewEvent:
+  type: object
+  required: [title, allDay]
+  properties:
+    title:
+      type: string
+    allDay:
+      type: boolean
+    startsAt:
+      type: string
+      format: date-time
+      nullable: true
+    startDate:
+      type: string
+      format: date
+      nullable: true
+    recurring:
+      type: boolean
+
+IcsImportRequest:
+  type: object
+  description: |
+    The file's content, or an address fetched **once** — one of the two. A link is not
+    a subscription: nothing is fetched again later.
+  properties:
+    ics:
+      type: string
+      nullable: true
+      description: The content of the `.ics` file.
+    url:
+      type: string
+      nullable: true
+      description: An address to fetch the file from, once.
+    newCalendar:
+      $ref: './calendar.yaml#/ImportCalendar'
+
+ImportCalendar:
+  type: object
+  description: |
+    Import into a **new** calendar under the id in the path, created by the import. Without
+    it the calendar must exist.
+  required: [name, colorToken, locked]
+  properties:
+    name:
+      type: string
+    colorToken:
+      $ref: './identity.yaml#/ColorToken'
+    locked:
+      type: boolean
+      description: |
+        Locked like a subscription: the calendar's kind is `IMPORTED`, its events are read
+        only and it takes no new ones — only a further import updates it.
+
+IcsImportResult:
+  type: object
+  required: [importedCount, updatedCount]
+  properties:
+    importedCount:
+      type: integer
+      description: Events that were new in the calendar.
+    updatedCount:
+      type: integer
+      description: Events already there (same UID) that were brought up to date.
+
+Agenda:
+  type: object
+  description: |
+    The coming occurrences for a home screen widget.
+
+    **No enums in here**, on purpose: the widgets' clients are generated in Swift and
+    Kotlin, and theirs throw on a value they do not know -- where the Dart client maps it
+    to a placeholder. A field that would be an enum is a string, and the widget falls
+    back on an unknown one.
+  required: [position, timeZone, from, to, occurrences, truncated]
+  properties:
+    position:
+      type: integer
+      format: int64
+      description: |
+        The server's change position when it answered. The widget keeps the newer of
+        this answer and the app's own picture of the same calendars.
+    timeZone:
+      type: string
+      description: The zone the window and the times are read in.
+    from:
+      type: string
+      description: The window's start, local time without zone (`yyyy-MM-ddTHH:mm`).
+      example: "2026-11-12T14:05"
+    to:
+      type: string
+      description: The window's end, exclusive -- midnight after the last day.
+      example: "2026-11-19T00:00"
+    occurrences:
+      type: array
+      items:
+        $ref: './calendar.yaml#/AgendaOccurrence'
+    truncated:
+      type: boolean
+      description: Whether there were more occurrences than the limit let through.
+
+AgendaOccurrence:
+  type: object
+  required: [eventId, calendarId, title, start, end, allDay]
+  properties:
+    eventId:
+      type: string
+      format: uuid
+    calendarId:
+      type: string
+      format: uuid
+    title:
+      type: string
+    location:
+      type: string
+      nullable: true
+    colorToken:
+      type: string
+      description: |
+        The calendar's color token (`BLUE`, `RUST`, …), as a string. An unknown one
+        falls back to `SLATE`, as everywhere.
+    start:
+      type: string
+      description: |
+        Local time without zone (`yyyy-MM-ddTHH:mm`), in the window's zone. A series
+        hangs on the wall clock of its own zone and is shown at that time, as in the
+        app. For an all-day event the day at `00:00`.
+      example: "2026-11-12T08:00"
+    end:
+      type: string
+      description: |
+        Local time without zone. For an all-day event the last day at `00:00`,
+        **inclusive**: 29.09.–10.10. ends on 10.10., as people read it.
+    allDay:
+      type: boolean
+    moved:
+      type: boolean
+      description: An occurrence of a series that was moved away from its rule.

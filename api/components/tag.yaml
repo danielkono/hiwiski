@@ -1,0 +1,23 @@
+# Tags (tag).
+
+TagFields:
+  type: object
+  description: |
+    Entity type `TAG`. An item of its own with owner and share -- there is no
+    family-wide "manage tags".
+  properties:
+    name:
+      type: string
+    colorToken:
+      type: string
+      description: One of `RED`, `BLUE`, `AMBER`, `VIOLET`, `GREEN`, `PINK`.
+      example: BLUE
+
+TagIds:
+  type: array
+  description: |
+    The tags on an item, as IDs. Stored on the item and synced with its share. An ID
+    whose tag the reader cannot see or that has been deleted is skipped.
+  items:
+    type: string
+    format: uuid

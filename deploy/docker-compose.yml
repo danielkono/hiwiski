@@ -1,0 +1,189 @@
+# The whole instance. A family does not need to understand more.
+#
+#   1. Fetch this file and .env.example, fill in .env
+#   2. docker compose up -d
+#   3. Open the address in the browser -- the setup wizard is running. It asks for the
+#      setup code from `docker compose logs app | grep "Setup code"`.
+#
+# Version tags, no `latest`: otherwise a rollback is not possible, and
+# that is exactly what you need on the evening the update goes wrong.
+
+name: hiwiski
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    # Two roles: the image's superuser, which
+    # creates the database and nothing else, and the server's own role, which owns the
+    # database but is no superuser. A flaw that let SQL through would otherwise reach
+    # `COPY ... PROGRAM` -- a shell in this container.
+    #
+    # An .env from before has no HIWISKI_DB_ADMIN_*: the server's role is the superuser
+    # there, as it always was, and nothing changes.
+    environment:
+      POSTGRES_DB: ${HIWISKI_DB_NAME:?HIWISKI_DB_NAME is missing}
+      POSTGRES_USER: ${HIWISKI_DB_ADMIN_USER:-${HIWISKI_DB_USER:?HIWISKI_DB_USER is missing}}
+      POSTGRES_PASSWORD: ${HIWISKI_DB_ADMIN_PASSWORD:-${HIWISKI_DB_PASSWORD:?HIWISKI_DB_PASSWORD is missing}}
+      HIWISKI_DB_USER: ${HIWISKI_DB_USER}
+      HIWISKI_DB_PASSWORD: ${HIWISKI_DB_PASSWORD}
+    # The server's role is created once, with the database: the image runs what lies in
+    # /docker-entrypoint-initdb.d only while the volume is empty. Written here rather
+    # than mounted, so that the compose file stays the one file that needs fetching --
+    # a missing mount would leave the server without its role and say nothing.
+    entrypoint:
+      - sh
+      - -c
+      - |
+        cat > /docker-entrypoint-initdb.d/10-hiwiski-role.sh <<'EOF'
+        if [ "$$HIWISKI_DB_USER" != "$$POSTGRES_USER" ]; then
+          psql -v ON_ERROR_STOP=1 --no-psqlrc --username "$$POSTGRES_USER" --dbname "$$POSTGRES_DB" \
+            --set role="$$HIWISKI_DB_USER" --set password="$$HIWISKI_DB_PASSWORD" --set db="$$POSTGRES_DB" <<'SQL'
+        create role :"role" login password :'password'
+          nosuperuser nocreatedb nocreaterole noreplication nobypassrls;
+        alter database :"db" owner to :"role";
+        SQL
+        fi
+        EOF
+        exec docker-entrypoint.sh "$$@"
+      - postgres-entrypoint
+    command: [postgres]
+    # The Postgres 18 layout: the volume is /var/lib/postgresql, the data lives in the
+    # image's version directory beneath it (PGDATA=/var/lib/postgresql/18/docker). The
+    # old mount at .../data left the image's own volume unmounted -- an anonymous
+    # volume more on every recreate -- and leaves no room for an upgrade side by side.
+    # Installs from before: see the website's update guide (setup/updates).
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    networks:
+      - net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # A fresh Docker volume belongs to root. The server runs as uid 1000 and could not
+  # write into it otherwise -- in an earlier version this caused a server error for a user while the
+  # mounted volume next to it stayed empty. This belongs in the Compose file, not in a
+  # footnote.
+  #
+  # Recursively only once, while /data is not yet the server's: after years of photos
+  # and nightly backups a recursive chown on every start walked every file before the
+  # server could start -- minutes on an SD card or a spinning disk.
+  #
+  # The backup directory is the host's (HIWISKI_BACKUP_DIR): only it is given to the
+  # server, not what lies around it -- a USB disk or a NAS share keeps its other
+  # files as they are.
+  init:
+    image: busybox:1.37
+    user: root
+    command: >-
+      sh -c "mkdir -p /data/media
+      && if [ \"$$(stat -c %u /data)\" != 1000 ]; then chown -R 1000:1000 /data;
+      else chown 1000:1000 /data /data/media; fi
+      && chown 1000:1000 /backup"
+    volumes:
+      - hiwiski-data:/data
+      - ${HIWISKI_BACKUP_DIR:?HIWISKI_BACKUP_DIR is missing -- the directory on this machine the backups go to}:/backup
+    network_mode: none
+    restart: "no"
+
+  app:
+    image: ghcr.io/danielkono/hiwiski:${HIWISKI_VERSION:?HIWISKI_VERSION is missing -- no latest, so that a rollback stays possible}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      init:
+        condition: service_completed_successfully
+    environment:
+      HIWISKI_DB_URL: jdbc:postgresql://postgres:5432/${HIWISKI_DB_NAME}
+      HIWISKI_DB_USER: ${HIWISKI_DB_USER}
+      HIWISKI_DB_PASSWORD: ${HIWISKI_DB_PASSWORD}
+      # Every path is set; none has a silent default.
+      # The server does not start if one of these variables is missing.
+      HIWISKI_MEDIA_PATH: /data/media
+      HIWISKI_BACKUP_PATH: /data/backup
+      HIWISKI_MEDIA_QUOTA_PER_MEMBER: ${HIWISKI_MEDIA_QUOTA_PER_MEMBER:-5GB}
+      HIWISKI_MEDIA_PARALLEL_UPLOADS: ${HIWISKI_MEDIA_PARALLEL_UPLOADS:-4}
+      TZ: ${HIWISKI_TIMEZONE:-Europe/Berlin}
+      # The one proxy whose X-Forwarded-For the server believes: Caddy, at the address
+      # it has below. Nothing else on the network -- and on a server run without Caddy
+      # nothing but loopback -- can name another client address.
+      HIWISKI_TRUSTED_PROXIES: ${HIWISKI_NETWORK_PREFIX:-10.217.84}.2
+      # Optional, both empty unless .env sets them (.env.example): a fixed setup code
+      # for an automated install, and a regular expression that replaces the trusted
+      # proxy above. Listed here because only what is listed reaches the server.
+      HIWISKI_SETUP_CODE: ${HIWISKI_SETUP_CODE:-}
+      SERVER_TOMCAT_REMOTEIP_INTERNALPROXIES: ${SERVER_TOMCAT_REMOTEIP_INTERNALPROXIES:-}
+    volumes:
+      - hiwiski-data:/data
+      # On the host, not in a volume: a backup on the disk it protects is not a
+      # backup, and `docker compose down -v` takes a volume with it.
+      # Getting it further -- Hyper
+      # Backup, rsync, restic -- is the host's.
+      - ${HIWISKI_BACKUP_DIR}:/data/backup
+    networks:
+      - net
+    # The server needs no Linux capability and must never gain one (setuid).
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    # bash's /dev/tcp, not wget: the eclipse-temurin JRE image has neither wget nor curl, and
+    # the check could never pass. Healthy only while readiness says "UP".
+    healthcheck:
+      test:
+        - CMD
+        - bash
+        - -c
+        - >-
+          exec 3<>/dev/tcp/localhost/8080
+          && printf 'GET /actuator/health/readiness HTTP/1.0\r\nHost: localhost\r\n\r\n' >&3
+          && grep -q '"UP"' <&3
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      # Room for the backup before an update: readiness stays down while it copies
+      # years of photos, and Docker must not call that unhealthy.
+      start_period: 30m
+
+  caddy:
+    # A minor, not `2`: the same Caddy as the images in deploy/, and
+    # one that does not change under the family with every pull.
+    image: caddy:2.11-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    # The host ports are set in .env: on a NAS, 80 and 443 often belong to its own
+    # admin interface already.
+    ports:
+      - "${HIWISKI_HTTP_PORT:?HIWISKI_HTTP_PORT is missing}:80"
+      - "${HIWISKI_HTTPS_PORT:?HIWISKI_HTTPS_PORT is missing}:443"
+    environment:
+      HIWISKI_HOSTNAME: ${HIWISKI_HOSTNAME:?HIWISKI_HOSTNAME is missing}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    # A fixed address, the one the server trusts (HIWISKI_TRUSTED_PROXIES above).
+    networks:
+      net:
+        ipv4_address: ${HIWISKI_NETWORK_PREFIX:-10.217.84}.2
+
+# The stack's own network, with a fixed range so that Caddy's address is known in
+# advance: the other containers get theirs from the upper half, .2 stays Caddy's. If
+# Docker says the range overlaps another network, set HIWISKI_NETWORK_PREFIX in .env to
+# three other numbers (for example 10.218.84).
+networks:
+  net:
+    ipam:
+      config:
+        - subnet: ${HIWISKI_NETWORK_PREFIX:-10.217.84}.0/24
+          ip_range: ${HIWISKI_NETWORK_PREFIX:-10.217.84}.128/25
+
+volumes:
+  postgres-data:
+  hiwiski-data:
+  caddy-data:
+  caddy-config:

@@ -1,0 +1,2316 @@
+{
+  "me": "Anna Sonnenberg",
+  "family": [
+    {
+      "name": "Markus Sonnenberg",
+      "color": "RUST"
+    },
+    {
+      "name": "Lena",
+      "color": "VIOLET"
+    },
+    {
+      "name": "Paul",
+      "color": "GREEN"
+    },
+    {
+      "name": "Mia",
+      "color": "PINK"
+    },
+    {
+      "name": "Grandma Gisela",
+      "color": "OCHRE"
+    },
+    {
+      "name": "Grandpa Heinz",
+      "color": "TEAL"
+    },
+    {
+      "name": "Aunt Sabine",
+      "color": "SLATE"
+    },
+    {
+      "name": "Jonas (au pair)",
+      "color": "BLUE"
+    }
+  ],
+  "tags": [
+    {
+      "key": "school",
+      "name": "School",
+      "color": "VIOLET"
+    },
+    {
+      "key": "garden",
+      "name": "Garden",
+      "color": "GREEN"
+    },
+    {
+      "key": "sport",
+      "name": "Sport",
+      "color": "AMBER"
+    },
+    {
+      "key": "doctor",
+      "name": "Doctor",
+      "color": "RED"
+    },
+    {
+      "key": "kids",
+      "name": "Kids",
+      "color": "PINK"
+    },
+    {
+      "key": "house",
+      "name": "House",
+      "color": "SLATE"
+    },
+    {
+      "key": "money",
+      "name": "Money",
+      "color": "BLUE"
+    },
+    {
+      "key": "holiday",
+      "name": "Holiday",
+      "color": "TEAL"
+    },
+    {
+      "key": "important",
+      "name": "Important",
+      "color": "RUST"
+    },
+    {
+      "key": "vegetarian",
+      "name": "Vegetarian",
+      "color": "GREEN"
+    },
+    {
+      "key": "quick",
+      "name": "Quick",
+      "color": "OCHRE"
+    },
+    {
+      "key": "baking",
+      "name": "Baking",
+      "color": "AMBER"
+    }
+  ],
+  "lists": [
+    {
+      "key": "shopping",
+      "name": "Weekly shop",
+      "kind": "SHOPPING",
+      "color": "GREEN",
+      "items": [
+        {
+          "title": "Milk",
+          "amount": 2,
+          "unit": "l"
+        },
+        {
+          "title": "Bread"
+        },
+        {
+          "title": "Apples",
+          "amount": 1,
+          "unit": "kg"
+        },
+        {
+          "title": "Bananas"
+        },
+        {
+          "title": "Tomatoes",
+          "amount": 500,
+          "unit": "g"
+        },
+        {
+          "title": "Cucumber"
+        },
+        {
+          "title": "Cheese"
+        },
+        {
+          "title": "Yoghurt",
+          "amount": 4
+        },
+        {
+          "title": "Eggs",
+          "amount": 10
+        },
+        {
+          "title": "Pasta",
+          "amount": 2
+        },
+        {
+          "title": "Coffee"
+        },
+        {
+          "title": "Oats"
+        },
+        {
+          "title": "Butter",
+          "done": true
+        },
+        {
+          "title": "Sparkling water",
+          "amount": 2,
+          "done": true
+        }
+      ]
+    },
+    {
+      "key": "chemist",
+      "name": "Chemist",
+      "kind": "SHOPPING",
+      "color": "PINK",
+      "items": [
+        {
+          "title": "Toothpaste"
+        },
+        {
+          "title": "Children's sun cream"
+        },
+        {
+          "title": "Shampoo"
+        },
+        {
+          "title": "Plasters"
+        },
+        {
+          "title": "Washing-up liquid",
+          "done": true
+        }
+      ]
+    },
+    {
+      "name": "DIY store",
+      "kind": "SHOPPING",
+      "color": "RUST",
+      "items": [
+        {
+          "title": "Screws 4×40"
+        },
+        {
+          "title": "White silicone"
+        },
+        {
+          "title": "Potting soil",
+          "amount": 2,
+          "tags": [
+            "garden"
+          ]
+        },
+        {
+          "title": "LED bulb E27",
+          "amount": 3
+        }
+      ],
+      "tags": [
+        "house"
+      ]
+    },
+    {
+      "name": "Grandma's shopping",
+      "kind": "SHOPPING",
+      "color": "TEAL",
+      "items": [
+        {
+          "title": "Mild coffee",
+          "assignees": [
+            8
+          ]
+        },
+        {
+          "title": "Rusks",
+          "assignees": [
+            8
+          ]
+        },
+        {
+          "title": "Potatoes",
+          "amount": 2.5,
+          "unit": "kg",
+          "assignees": [
+            8
+          ]
+        },
+        {
+          "title": "Newspaper",
+          "assignees": [
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Household",
+      "kind": "STANDARD",
+      "color": "BLUE",
+      "items": [
+        {
+          "title": "Take out the bins",
+          "due": 1,
+          "rrule": "FREQ=WEEKLY",
+          "assignees": [
+            3
+          ]
+        },
+        {
+          "title": "Water the plants",
+          "due": 0,
+          "rrule": "FREQ=DAILY;INTERVAL=3",
+          "tags": [
+            "garden"
+          ]
+        },
+        {
+          "title": "Change the bed linen",
+          "due": 3,
+          "rrule": "FREQ=WEEKLY;INTERVAL=2"
+        },
+        {
+          "title": "Descale the coffee machine",
+          "due": 6,
+          "rrule": "FREQ=MONTHLY"
+        },
+        {
+          "title": "Test the smoke alarms",
+          "due": 14,
+          "assignees": [
+            1
+          ]
+        },
+        {
+          "title": "Clean the windows",
+          "due": 9
+        },
+        {
+          "title": "Clean the washing machine",
+          "done": true
+        }
+      ],
+      "tags": [
+        "house"
+      ]
+    },
+    {
+      "key": "chores",
+      "name": "Kids' chores",
+      "kind": "STANDARD",
+      "color": "GREEN",
+      "items": [
+        {
+          "title": "Lay the table",
+          "due": 0,
+          "rrule": "FREQ=DAILY",
+          "assignees": [
+            2
+          ]
+        },
+        {
+          "title": "Empty the dishwasher",
+          "due": 0,
+          "rrule": "FREQ=DAILY",
+          "assignees": [
+            3
+          ]
+        },
+        {
+          "title": "Tidy your room",
+          "due": 5,
+          "rrule": "FREQ=WEEKLY",
+          "assignees": [
+            2,
+            3
+          ]
+        },
+        {
+          "title": "Feed the cat",
+          "due": 0,
+          "rrule": "FREQ=DAILY",
+          "assignees": [
+            4
+          ]
+        },
+        {
+          "title": "Take the paper down",
+          "due": 2,
+          "rrule": "FREQ=WEEKLY",
+          "assignees": [
+            3
+          ]
+        }
+      ],
+      "tags": [
+        "kids"
+      ]
+    },
+    {
+      "key": "paperwork",
+      "name": "Paperwork",
+      "kind": "STANDARD",
+      "color": "VIOLET",
+      "items": [
+        {
+          "title": "File the tax return",
+          "due": 12,
+          "assignees": [
+            1
+          ],
+          "description": "The receipts are in the blue folder in the study."
+        },
+        {
+          "title": "File the child benefit notice",
+          "assignees": [
+            0
+          ]
+        },
+        {
+          "title": "Compare car insurance",
+          "due": 35,
+          "assignees": [
+            1
+          ]
+        },
+        {
+          "title": "Apply for a passport for Mia",
+          "due": 45,
+          "assignees": [
+            0
+          ]
+        },
+        {
+          "title": "Sign the after-school club contract",
+          "done": true
+        }
+      ],
+      "tags": [
+        "money",
+        "important"
+      ]
+    },
+    {
+      "key": "gardening",
+      "name": "Garden",
+      "kind": "STANDARD",
+      "color": "GREEN",
+      "items": [
+        {
+          "title": "Rake the leaves",
+          "due": 2,
+          "tags": [
+            "garden"
+          ],
+          "assignees": [
+            3,
+            6
+          ]
+        },
+        {
+          "title": "Plant tulip bulbs",
+          "due": 6,
+          "tags": [
+            "garden"
+          ],
+          "assignees": [
+            5
+          ]
+        },
+        {
+          "title": "Put the garden furniture away",
+          "due": 10,
+          "tags": [
+            "garden"
+          ],
+          "assignees": [
+            1
+          ]
+        },
+        {
+          "title": "Take the mower for a service",
+          "tags": [
+            "garden"
+          ]
+        },
+        {
+          "title": "Clear the raised bed",
+          "tags": [
+            "garden"
+          ],
+          "done": true
+        }
+      ],
+      "tags": [
+        "garden"
+      ]
+    },
+    {
+      "name": "Car & bikes",
+      "kind": "STANDARD",
+      "color": "SLATE",
+      "items": [
+        {
+          "title": "Fix the bike tyre",
+          "assignees": [
+            1
+          ]
+        },
+        {
+          "title": "Fix Paul's bike light",
+          "due": 4,
+          "assignees": [
+            1
+          ]
+        },
+        {
+          "title": "Book the MOT",
+          "due": 60
+        },
+        {
+          "title": "Adjust Mia's car seat",
+          "done": true
+        }
+      ]
+    },
+    {
+      "name": "Mia's birthday",
+      "kind": "STANDARD",
+      "color": "PINK",
+      "items": [
+        {
+          "title": "Make the guest list with Mia",
+          "assignees": [
+            0
+          ]
+        },
+        {
+          "title": "Make the invitations",
+          "assignees": [
+            2,
+            4
+          ]
+        },
+        {
+          "title": "Order the cake",
+          "assignees": [
+            1
+          ]
+        },
+        {
+          "title": "Prepare the treasure hunt",
+          "assignees": [
+            8
+          ]
+        },
+        {
+          "title": "Get party bags"
+        }
+      ],
+      "tags": [
+        "kids"
+      ]
+    },
+    {
+      "name": "Gift ideas",
+      "kind": "STANDARD",
+      "color": "VIOLET",
+      "items": [
+        {
+          "title": "Grandma Gisela: secateurs"
+        },
+        {
+          "title": "Grandpa Heinz: audiobook about seafaring"
+        },
+        {
+          "title": "Lena: music book and a piano lamp"
+        },
+        {
+          "title": "Paul: goalkeeper gloves"
+        },
+        {
+          "title": "Mia: balance bike"
+        }
+      ]
+    },
+    {
+      "name": "Lena's homework",
+      "kind": "STANDARD",
+      "color": "PINK",
+      "items": [
+        {
+          "title": "Maths: page 42, exercises 1–5",
+          "due": 1,
+          "tags": [
+            "school"
+          ],
+          "assignees": [
+            2
+          ]
+        },
+        {
+          "title": "Keep up the reading diary",
+          "due": 3,
+          "tags": [
+            "school"
+          ],
+          "assignees": [
+            2
+          ]
+        },
+        {
+          "title": "Prepare a talk about hedgehogs",
+          "due": 11,
+          "tags": [
+            "school"
+          ],
+          "assignees": [
+            2
+          ]
+        },
+        {
+          "title": "English vocabulary unit 3",
+          "tags": [
+            "school"
+          ],
+          "assignees": [
+            2
+          ],
+          "done": true
+        }
+      ],
+      "tags": [
+        "school",
+        "kids"
+      ]
+    },
+    {
+      "key": "aupair-plan",
+      "name": "Au pair weekly plan",
+      "kind": "KANBAN",
+      "color": "VIOLET",
+      "columns": [
+        {
+          "name": "This week",
+          "color": "BLUE"
+        },
+        {
+          "name": "Today",
+          "color": "OCHRE"
+        },
+        {
+          "name": "Done",
+          "color": "GREEN",
+          "done": true
+        }
+      ],
+      "items": [
+        {
+          "title": "Take Mia to toddler gym",
+          "column": 1,
+          "assignees": [
+            8
+          ]
+        },
+        {
+          "title": "Do the shopping for Grandma",
+          "column": 1,
+          "assignees": [
+            8
+          ]
+        },
+        {
+          "title": "Pick Paul up from practice",
+          "column": 0,
+          "assignees": [
+            8
+          ]
+        },
+        {
+          "title": "Do the children's laundry",
+          "column": 0,
+          "assignees": [
+            8
+          ]
+        },
+        {
+          "title": "Practise vocabulary with Lena",
+          "column": 0,
+          "assignees": [
+            8,
+            2
+          ]
+        },
+        {
+          "title": "Music group with Mia",
+          "column": 2,
+          "assignees": [
+            8
+          ],
+          "done": true
+        }
+      ],
+      "tags": [
+        "kids"
+      ]
+    },
+    {
+      "key": "bathroom",
+      "name": "Bathroom renovation",
+      "kind": "KANBAN",
+      "color": "TEAL",
+      "columns": [
+        {
+          "name": "Ideas",
+          "color": "SLATE"
+        },
+        {
+          "name": "Quotes",
+          "color": "BLUE"
+        },
+        {
+          "name": "In progress",
+          "color": "OCHRE"
+        },
+        {
+          "name": "Done",
+          "color": "GREEN",
+          "done": true
+        }
+      ],
+      "items": [
+        {
+          "title": "Walk-in shower",
+          "column": 0
+        },
+        {
+          "title": "Choose the tiles",
+          "column": 0,
+          "assignees": [
+            0
+          ]
+        },
+        {
+          "title": "Tiler's quote",
+          "column": 1,
+          "assignees": [
+            1
+          ],
+          "description": "Two quotes are in, one is still missing."
+        },
+        {
+          "title": "Karl's plumbing quote",
+          "column": 1
+        },
+        {
+          "title": "Knock off the old tiles",
+          "column": 2,
+          "assignees": [
+            1,
+            6
+          ]
+        },
+        {
+          "title": "Have the water turned off",
+          "column": 3,
+          "done": true
+        }
+      ],
+      "tags": [
+        "house"
+      ]
+    },
+    {
+      "key": "holiday",
+      "name": "Summer holiday on the Baltic",
+      "kind": "KANBAN",
+      "color": "BLUE",
+      "columns": [
+        {
+          "name": "To do",
+          "color": "BLUE"
+        },
+        {
+          "name": "Under way",
+          "color": "OCHRE"
+        },
+        {
+          "name": "Done",
+          "color": "GREEN",
+          "done": true
+        }
+      ],
+      "items": [
+        {
+          "title": "Book the flat",
+          "column": 1,
+          "assignees": [
+            0
+          ],
+          "due": 30
+        },
+        {
+          "title": "Write the packing list",
+          "column": 0
+        },
+        {
+          "title": "Ask Grandma and Grandpa about the cat",
+          "column": 0,
+          "assignees": [
+            1
+          ]
+        },
+        {
+          "title": "Borrow a bike rack",
+          "column": 0
+        },
+        {
+          "title": "Request leave at work",
+          "column": 2,
+          "assignees": [
+            0
+          ],
+          "done": true
+        }
+      ],
+      "tags": [
+        "holiday"
+      ]
+    },
+    {
+      "name": "Christmas",
+      "kind": "KANBAN",
+      "color": "RUST",
+      "columns": [
+        {
+          "name": "Ideas",
+          "color": "SLATE"
+        },
+        {
+          "name": "Bought",
+          "color": "OCHRE"
+        },
+        {
+          "name": "Wrapped",
+          "color": "GREEN",
+          "done": true
+        }
+      ],
+      "items": [
+        {
+          "title": "Advent calendars for the kids",
+          "column": 1,
+          "assignees": [
+            0
+          ]
+        },
+        {
+          "title": "Buy the Christmas tree",
+          "column": 0,
+          "assignees": [
+            1
+          ]
+        },
+        {
+          "title": "Bake biscuits with Grandma",
+          "column": 0,
+          "assignees": [
+            5,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Cards for the relatives",
+          "column": 0
+        }
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Welcome to the demo",
+      "content": "This is a demo: everything you create, change or delete here stays in this browser tab. Reload the page and the demo starts over.\n\nYou are **Anna Sonnenberg**. With Markus, Lena, Paul and Mia, Grandma Gisela and Grandpa Heinz, Aunt Sabine and Jonas, the au pair, you plan your days here.\n\nHave a look around:\n\n- [ ] Tick something off the {{list:shopping}}\n- [ ] Add an event to the week\n- [ ] Put the {{page:pumpkin}} on the shopping list\n- [ ] Move a card on the {{list:aupair-plan}}\n\nWorth knowing for everyone: {{page:emergency}} and {{page:pickup}}.\n\nThe full app runs with a server of your own: then the family shares lists, calendars and pages.",
+      "key": "welcome"
+    },
+    {
+      "title": "Family",
+      "content": "Everything the whole family needs to know: {{page:emergency}}, {{page:pickup}} and our {{page:rules}}.",
+      "key": "family",
+      "children": [
+        {
+          "title": "Emergency numbers",
+          "content": "| Who | Number |\n| --- | --- |\n| Emergency | 112 |\n| Paediatrician Dr Blümchen | 07231-12ABCD23 |\n| GP Dr Tierlieb | 07231-34EFGH45 |\n| Grandma Gisela | 07231-56IJKL67 |\n| Aunt Sabine | 07231-78MNOP89 |\n| Karl the keeper (plumbing) | 07231-90QRST12 |\n\nThe spare key is with Otto at number 12. More about the practices under {{page:doctors}}.",
+          "key": "emergency",
+          "tags": [
+            "important",
+            "doctor"
+          ]
+        },
+        {
+          "title": "Who picks up whom?",
+          "content": "| Day | Nursery (Mia) | School (Lena, Paul) |\n| --- | --- | --- |\n| Monday | Anna | Club until 4 pm |\n| Tuesday | Jonas | Jonas |\n| Wednesday | Jonas | Club until 4 pm |\n| Thursday | Grandma Gisela | Markus |\n| Friday | Markus | Markus |\n\nWhat else Jonas takes on is in the {{page:routine}} and on the {{list:aupair-plan}}.",
+          "key": "pickup",
+          "tags": [
+            "kids",
+            "school"
+          ]
+        },
+        {
+          "title": "Family rules",
+          "content": "1. Screen time: one hour on weekdays, two at the weekend.\n2. Whoever cooks doesn't wash up.\n3. On Sundays we have breakfast together.\n4. Arguments are settled before bedtime.\n\nWho does which chore is in {{list:chores}}.",
+          "key": "rules",
+          "tags": [
+            "kids"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "House & tech",
+      "content": "How things work in the house — and whom to call when they don't: {{page:emergency}}. What is being rebuilt right now: {{list:bathroom}}.",
+      "key": "house",
+      "children": [
+        {
+          "title": "Internet & Wi-Fi",
+          "content": "**Network:** Sonnenberg\n\nThe password is on the back of the router. Guests have their own network, *Sonnenberg Guest*.\n\nRestart: unplug, wait ten seconds, plug back in. If that doesn't help: hotline 07231-00WXYZ99.",
+          "key": "wifi",
+          "tags": [
+            "house"
+          ]
+        },
+        {
+          "title": "Restart the router",
+          "key": "router",
+          "tags": [
+            "house"
+          ],
+          "content": "From Dad – for when the internet is gone again. Read first, then pull.\n\n## Check first\n\n- [ ] Is it down on every device? If only one is acting up: switch Wi-Fi off and on there.\n- [ ] Is the **Internet** light on the router red, or off?\n\n## Restart\n\n1. The router is in the hallway, in the cupboard under the coat rack.\n2. Pull the **black** plug at the back – not the grey one, that's the phone.\n3. Wait ten seconds. Really ten.\n4. Plug it back in and touch nothing for five minutes. The lights blink for a while, that's normal.\n5. Once **Internet** is green, all is well.\n\n## If it still doesn't work\n\nThe hotline and the password are under {{page:wifi}}. And let me know.\n"
+        },
+        {
+          "title": "Heating",
+          "content": "The boiler is in the basement. If the pressure drops below 1 bar, top up the water — the hose hangs next to it.\n\nService once a year in September, Karl the keeper's plumbing. Meter readings are under {{page:meters}}, the service contract under {{page:contracts}}.",
+          "key": "heating",
+          "tags": [
+            "house"
+          ]
+        },
+        {
+          "title": "Meter readings",
+          "content": "| Date | Electricity (kWh) | Gas (m³) | Water (m³) |\n| --- | --- | --- | --- |\n| 15 Dec | 48,213 | 9,120 | 612 |\n| 15 Jun | 46,380 | 8,450 | 588 |\n\nFor the bill they go with the papers under {{page:tax}}.",
+          "key": "meters",
+          "tags": [
+            "house",
+            "money"
+          ]
+        }
+      ],
+      "tags": [
+        "house"
+      ]
+    },
+    {
+      "title": "Recipes",
+      "content": "What we eat. A recipe puts its ingredients on the {{list:shopping}} with one tap. Everyone's favourites are {{page:spaetzle}} and {{page:pancakes}}.",
+      "key": "recipes",
+      "children": [
+        {
+          "title": "Grandma's classics",
+          "content": "Just like Grandma Gisela makes them — her {{page:pumpkin}} comes every autumn.",
+          "children": [
+            {
+              "title": "Cheese spätzle",
+              "kind": "RECIPE",
+              "servings": 4,
+              "durationMinutes": 45,
+              "ingredients": [
+                {
+                  "label": "Flour",
+                  "amount": 400,
+                  "unit": "g"
+                },
+                {
+                  "label": "Eggs",
+                  "amount": 4
+                },
+                {
+                  "label": "Mountain cheese",
+                  "amount": 250,
+                  "unit": "g"
+                },
+                {
+                  "label": "Onions",
+                  "amount": 3
+                },
+                {
+                  "label": "Butter",
+                  "amount": 30,
+                  "unit": "g"
+                },
+                {
+                  "label": "Salt",
+                  "staple": true
+                },
+                {
+                  "label": "Pepper",
+                  "staple": true
+                }
+              ],
+              "content": "1. Beat the flour, eggs, a pinch of salt and about 150 ml of water into a sticky dough.\n2. Scrape the dough into boiling salted water in batches, let it float up, lift it out.\n3. Slice the onions into rings and fry them golden in butter.\n4. Layer the spätzle with grated cheese and serve with the onions.\n\nOn cold days {{page:lentils}} goes well before it.",
+              "key": "spaetzle",
+              "tags": [
+                "vegetarian"
+              ]
+            },
+            {
+              "title": "Lentil soup",
+              "kind": "RECIPE",
+              "servings": 6,
+              "durationMinutes": 60,
+              "ingredients": [
+                {
+                  "label": "Brown lentils",
+                  "amount": 300,
+                  "unit": "g"
+                },
+                {
+                  "label": "Potatoes",
+                  "amount": 400,
+                  "unit": "g"
+                },
+                {
+                  "label": "Carrots",
+                  "amount": 2
+                },
+                {
+                  "label": "Leek",
+                  "amount": 1
+                },
+                {
+                  "label": "Vegetable stock",
+                  "amount": 1.5,
+                  "unit": "l"
+                },
+                {
+                  "label": "Frankfurters",
+                  "amount": 4,
+                  "optional": true
+                },
+                {
+                  "label": "Vinegar",
+                  "staple": true
+                },
+                {
+                  "label": "Salt",
+                  "staple": true
+                }
+              ],
+              "content": "1. Clean and dice the vegetables.\n2. Bring the lentils and vegetables to the boil in the stock and simmer for 40 minutes.\n3. Add the sliced frankfurters and heat through.\n4. Season with vinegar and salt.",
+              "key": "lentils"
+            },
+            {
+              "title": "Pumpkin soup",
+              "kind": "RECIPE",
+              "servings": 4,
+              "durationMinutes": 40,
+              "ingredients": [
+                {
+                  "label": "Red kuri squash",
+                  "amount": 1
+                },
+                {
+                  "label": "Onion",
+                  "amount": 1
+                },
+                {
+                  "label": "Ginger",
+                  "amount": 20,
+                  "unit": "g"
+                },
+                {
+                  "label": "Vegetable stock",
+                  "amount": 750,
+                  "unit": "ml"
+                },
+                {
+                  "label": "Coconut milk",
+                  "amount": 200,
+                  "unit": "ml"
+                },
+                {
+                  "label": "Salt",
+                  "staple": true
+                }
+              ],
+              "content": "1. Wash, deseed and dice the squash — no need to peel it.\n2. Sweat the onion and ginger in a little oil, add the squash.\n3. Pour in the stock and simmer for twenty minutes.\n4. Add the coconut milk, blend until smooth and season with salt.",
+              "key": "pumpkin",
+              "tags": [
+                "vegetarian"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Quick meals",
+          "content": "On the table in half an hour — good for busy days. Ingredients go on the {{list:shopping}}.",
+          "children": [
+            {
+              "title": "Pancakes",
+              "kind": "RECIPE",
+              "servings": 4,
+              "durationMinutes": 30,
+              "ingredients": [
+                {
+                  "label": "Flour",
+                  "amount": 250,
+                  "unit": "g"
+                },
+                {
+                  "label": "Milk",
+                  "amount": 500,
+                  "unit": "ml"
+                },
+                {
+                  "label": "Eggs",
+                  "amount": 3
+                },
+                {
+                  "label": "Sugar",
+                  "amount": 1,
+                  "unit": "tbsp"
+                },
+                {
+                  "label": "Apple sauce",
+                  "amount": 1,
+                  "unit": "jar",
+                  "optional": true
+                },
+                {
+                  "label": "Salt",
+                  "staple": true
+                },
+                {
+                  "label": "Oil",
+                  "staple": true
+                }
+              ],
+              "content": "1. Whisk the flour, milk, eggs, sugar and a pinch of salt until smooth and leave for ten minutes.\n2. Heat a little oil in a pan, add a ladle of batter and cook both sides golden.\n3. Serve with apple sauce.",
+              "key": "pancakes",
+              "tags": [
+                "vegetarian",
+                "quick"
+              ]
+            },
+            {
+              "title": "Couscous salad",
+              "kind": "RECIPE",
+              "servings": 4,
+              "durationMinutes": 20,
+              "ingredients": [
+                {
+                  "label": "Couscous",
+                  "amount": 250,
+                  "unit": "g"
+                },
+                {
+                  "label": "Cucumber",
+                  "amount": 1
+                },
+                {
+                  "label": "Pepper",
+                  "amount": 1
+                },
+                {
+                  "label": "Cherry tomatoes",
+                  "amount": 250,
+                  "unit": "g"
+                },
+                {
+                  "label": "Feta",
+                  "amount": 200,
+                  "unit": "g"
+                },
+                {
+                  "label": "Lemon",
+                  "amount": 1
+                },
+                {
+                  "label": "Parsley",
+                  "amount": 1,
+                  "unit": "bunch"
+                },
+                {
+                  "label": "Oil",
+                  "staple": true
+                },
+                {
+                  "label": "Salt",
+                  "staple": true
+                }
+              ],
+              "content": "1. Pour 300 ml of boiling salted water over the couscous, leave for five minutes, fluff it up.\n2. Dice the vegetables, chop the parsley, crumble the feta.\n3. Mix everything with lemon juice and oil and season.",
+              "tags": [
+                "vegetarian",
+                "quick"
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Cakes & bakes",
+          "content": "For Sundays and birthdays.",
+          "children": [
+            {
+              "title": "Banana bread",
+              "kind": "RECIPE",
+              "servings": 12,
+              "durationMinutes": 75,
+              "ingredients": [
+                {
+                  "label": "Ripe bananas",
+                  "amount": 3
+                },
+                {
+                  "label": "Flour",
+                  "amount": 250,
+                  "unit": "g"
+                },
+                {
+                  "label": "Sugar",
+                  "amount": 100,
+                  "unit": "g"
+                },
+                {
+                  "label": "Butter",
+                  "amount": 80,
+                  "unit": "g"
+                },
+                {
+                  "label": "Eggs",
+                  "amount": 2
+                },
+                {
+                  "label": "Baking powder",
+                  "amount": 1,
+                  "unit": "sachet"
+                },
+                {
+                  "label": "Walnuts",
+                  "amount": 50,
+                  "unit": "g",
+                  "optional": true
+                }
+              ],
+              "content": "1. Preheat the oven to 180 °C.\n2. Mash the bananas and mix with the butter, sugar and eggs.\n3. Fold in the flour and baking powder, and the nuts if you like.\n4. Pour into a loaf tin and bake for an hour.",
+              "tags": [
+                "baking",
+                "vegetarian"
+              ]
+            },
+            {
+              "title": "Plaited sweet bread",
+              "kind": "RECIPE",
+              "servings": 12,
+              "durationMinutes": 150,
+              "ingredients": [
+                {
+                  "label": "Flour",
+                  "amount": 500,
+                  "unit": "g"
+                },
+                {
+                  "label": "Milk",
+                  "amount": 250,
+                  "unit": "ml"
+                },
+                {
+                  "label": "Fresh yeast",
+                  "amount": 1,
+                  "unit": "cube"
+                },
+                {
+                  "label": "Sugar",
+                  "amount": 80,
+                  "unit": "g"
+                },
+                {
+                  "label": "Butter",
+                  "amount": 80,
+                  "unit": "g"
+                },
+                {
+                  "label": "Eggs",
+                  "amount": 1
+                },
+                {
+                  "label": "Pearl sugar",
+                  "amount": 2,
+                  "unit": "tbsp"
+                }
+              ],
+              "content": "1. Dissolve the yeast in lukewarm milk with a little sugar.\n2. Knead with the flour, butter, the rest of the sugar and the egg into a smooth dough; leave to rise for an hour.\n3. Divide into three strands, plait them, leave to rise for another 30 minutes.\n4. Brush with milk, sprinkle with pearl sugar, bake at 180 °C for 30 minutes.",
+              "tags": [
+                "baking",
+                "vegetarian"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Health",
+      "content": "{{page:doctors}} and {{page:cabinet}}. In an emergency: {{page:emergency}}.",
+      "children": [
+        {
+          "title": "Doctors",
+          "content": "- **Paediatrician:** Dr Blümchen, 4 Zoo Lane — walk-in Mon–Fri 8–10 am, 07231-12ABCD23\n- **Dentist:** Dr Zwiebelschreck, 7 Castle Avenue, 07231-23UVWX34\n- **GP:** Dr Tierlieb, 21 Neustadt Road, 07231-34EFGH45\n\nWhat is in the cupboard at home: {{page:cabinet}}.",
+          "key": "doctors",
+          "tags": [
+            "doctor",
+            "important"
+          ]
+        },
+        {
+          "title": "Medicine cabinet",
+          "content": "- [x] Thermometer\n- [x] Plasters\n- [ ] Children's fever syrup (expired, buy new)\n- [x] Ice pack in the freezer\n- [ ] Tick remover\n\nWhatever is missing goes on the {{list:chemist}} list.",
+          "key": "cabinet",
+          "tags": [
+            "doctor"
+          ]
+        }
+      ],
+      "tags": [
+        "doctor"
+      ]
+    },
+    {
+      "title": "School & learning",
+      "content": "Lena and Paul at Park primary school: {{page:timetable}} and {{page:class}}.",
+      "children": [
+        {
+          "title": "Lena's timetable",
+          "content": "| | Mon | Tue | Wed | Thu | Fri |\n| --- | --- | --- | --- | --- | --- |\n| 1 | German | Maths | German | PE | Maths |\n| 2 | Maths | German | English | PE | Science |\n| 3 | Science | Music | Maths | German | Art |\n| 4 | RE | English | Science | Maths | Art |\n\nPiano on Tuesdays, swimming on Thursdays — who picks up is under {{page:pickup}}.",
+          "key": "timetable",
+          "tags": [
+            "school"
+          ]
+        },
+        {
+          "title": "Contacts class 3b",
+          "content": "Class teacher: Mrs Kolumna. Parent reps: Anna and Otto's dad.\n\nReport sickness to the office by 7:45 am: 07231-45SCHU67.",
+          "key": "class",
+          "tags": [
+            "school"
+          ]
+        }
+      ],
+      "tags": [
+        "school"
+      ]
+    },
+    {
+      "title": "Money & contracts",
+      "content": "Where things are and when they're due. What is open is in {{list:paperwork}}.",
+      "children": [
+        {
+          "title": "Contracts",
+          "content": "| Contract | Notice | Folder |\n| --- | --- | --- |\n| Electricity | 4 weeks | House |\n| Internet | 3 months before the term ends | House |\n| Car insurance | by 30 Nov | Car |\n| Music school (Lena) | 6 weeks before the half-year | Children |\n\nThe boiler service is described under {{page:heating}}.",
+          "key": "contracts",
+          "tags": [
+            "money",
+            "important"
+          ]
+        },
+        {
+          "title": "Tax",
+          "content": "Put receipts in the blue folder in the study all year. Keep childcare, tradespeople and donations separate. Filing it is on {{list:paperwork}}.",
+          "key": "tax",
+          "tags": [
+            "money"
+          ]
+        }
+      ],
+      "tags": [
+        "money"
+      ]
+    },
+    {
+      "title": "Garden",
+      "content": "What to do when — Grandpa Heinz knows anyway. The jobs are on the {{list:gardening}} list.",
+      "children": [
+        {
+          "title": "Raised bed",
+          "content": "**Spring:** radishes, lettuce, kohlrabi\n**Summer:** tomatoes, courgettes, beans\n**Autumn:** lamb's lettuce, spinach\n\nNever plant tomatoes in the same spot twice in a row. The squash ends up as {{page:pumpkin}}.",
+          "key": "raised-bed",
+          "tags": [
+            "garden"
+          ]
+        },
+        {
+          "title": "Lawn care",
+          "content": "- March: scarify\n- April and September: feed\n- In dry spells water in the morning, not the evening\n\nVegetables: see {{page:raised-bed}}.",
+          "tags": [
+            "garden"
+          ]
+        }
+      ],
+      "tags": [
+        "garden"
+      ]
+    },
+    {
+      "title": "Travel",
+      "content": "{{page:packing}} and memories. The next holiday: {{list:holiday}}.",
+      "children": [
+        {
+          "title": "Packing list",
+          "content": "- [ ] ID cards and health insurance cards\n- [ ] Chargers\n- [ ] Sun cream\n- [ ] Mia's cuddly toy\n- [ ] Swimming things\n- [ ] Games for the journey\n\nThe travel medicine kit: {{page:cabinet}}.",
+          "key": "packing",
+          "tags": [
+            "holiday"
+          ]
+        },
+        {
+          "title": "Baltic coast",
+          "content": "Holiday flat *Strandläufer* in Zingst, one street back from the beach; we can hire bikes there. Order bread rolls the evening before at the baker's on the corner.\n\nGetting ready: {{list:holiday}} and {{page:packing}}.",
+          "tags": [
+            "holiday"
+          ]
+        }
+      ],
+      "tags": [
+        "holiday"
+      ]
+    },
+    {
+      "title": "Au pair handbook",
+      "content": "For Jonas — and for anyone filling in. This week: {{list:aupair-plan}}.",
+      "key": "aupair",
+      "children": [
+        {
+          "title": "Daily routine",
+          "content": "- 7:00 breakfast, pack lunch boxes\n- 7:40 Lena and Paul leave for school\n- 8:15 take Mia to nursery\n- 9:00–12:00 German class (Mon, Wed)\n- 15:00 pick Mia up\n- 18:30 dinner\n\nWho picks up on which day: {{page:pickup}}. In an emergency: {{page:emergency}}.",
+          "key": "routine",
+          "tags": [
+            "kids"
+          ]
+        },
+        {
+          "title": "Useful words",
+          "content": "| German | English |\n| --- | --- |\n| Brotdose | lunch box |\n| Hausaufgaben | homework |\n| Kita | nursery |\n| Turnbeutel | PE bag |\n| Elternabend | parents' evening |\n\nMore school words in the {{page:timetable}}."
+        }
+      ],
+      "tags": [
+        "kids"
+      ]
+    },
+    {
+      "title": "Family history",
+      "content": "What Grandma and Grandpa tell us — and what we live through ourselves, see {{page:family}}.",
+      "children": [
+        {
+          "title": "How Grandma and Grandpa met",
+          "content": "In 1974, at the funfair in Bergheim. Grandpa Heinz won Grandma Gisela a rose at the shooting stall — on his third go."
+        }
+      ]
+    }
+  ],
+  "calendars": [
+    {
+      "name": "Family",
+      "color": "BLUE",
+      "events": [
+        {
+          "title": "Family breakfast",
+          "weekday": 7,
+          "start": "09:30",
+          "end": "10:30",
+          "rrule": "FREQ=WEEKLY",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Farmers market",
+          "weekday": 6,
+          "start": "09:00",
+          "end": "10:00",
+          "rrule": "FREQ=WEEKLY",
+          "location": "Market square",
+          "attendees": [
+            0
+          ]
+        },
+        {
+          "title": "Game night",
+          "weekday": 5,
+          "start": "19:00",
+          "end": "20:30",
+          "rrule": "FREQ=WEEKLY;INTERVAL=2",
+          "attendees": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "title": "Visiting Grandma and Grandpa",
+          "weekday": 7,
+          "start": "15:00",
+          "end": "18:00",
+          "rrule": "FREQ=WEEKLY;INTERVAL=4",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        },
+        {
+          "title": "Jonas: German class",
+          "weekday": 1,
+          "start": "09:00",
+          "end": "12:00",
+          "rrule": "FREQ=WEEKLY;BYDAY=MO,WE",
+          "location": "Adult education centre",
+          "attendees": [
+            8
+          ]
+        },
+        {
+          "title": "Anna's birthday",
+          "date": "03-14",
+          "allDay": true,
+          "rrule": "FREQ=YEARLY"
+        },
+        {
+          "title": "Markus's birthday",
+          "date": "07-02",
+          "allDay": true,
+          "rrule": "FREQ=YEARLY"
+        },
+        {
+          "title": "Lena's birthday",
+          "date": "05-09",
+          "allDay": true,
+          "rrule": "FREQ=YEARLY"
+        },
+        {
+          "title": "Paul's birthday",
+          "date": "11-21",
+          "allDay": true,
+          "rrule": "FREQ=YEARLY"
+        },
+        {
+          "title": "Mia's birthday",
+          "date": "09-17",
+          "allDay": true,
+          "rrule": "FREQ=YEARLY"
+        },
+        {
+          "title": "Grandma Gisela's birthday",
+          "date": "01-28",
+          "allDay": true,
+          "rrule": "FREQ=YEARLY"
+        },
+        {
+          "title": "Grandpa Heinz's birthday",
+          "date": "08-05",
+          "allDay": true,
+          "rrule": "FREQ=YEARLY"
+        },
+        {
+          "title": "Aunt Sabine's birthday",
+          "date": "04-23",
+          "allDay": true,
+          "rrule": "FREQ=YEARLY"
+        },
+        {
+          "title": "Wedding anniversary",
+          "date": "06-08",
+          "allDay": true,
+          "rrule": "FREQ=YEARLY",
+          "attendees": [
+            0,
+            1
+          ]
+        },
+        {
+          "title": "Paediatrician: vaccination",
+          "day": 23,
+          "start": "15:00",
+          "end": "15:30",
+          "tags": [
+            "doctor"
+          ],
+          "location": "Dr Blümchen's practice",
+          "attendees": [
+            0,
+            3
+          ]
+        },
+        {
+          "title": "Children's dental check-up",
+          "day": 64,
+          "start": "14:30",
+          "end": "15:30",
+          "tags": [
+            "doctor"
+          ],
+          "location": "Dr Zwiebelschreck's dental practice",
+          "attendees": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Christmas market",
+          "date": "12-06",
+          "start": "16:00",
+          "end": "19:00",
+          "location": "Old town",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            8
+          ]
+        },
+        {
+          "title": "New Year's Eve at Aunt Sabine's",
+          "date": "12-31",
+          "start": "19:00",
+          "end": "23:30",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            7
+          ]
+        },
+        {
+          "title": "Easter egg hunt in the garden",
+          "date": "04-05",
+          "start": "11:00",
+          "end": "12:30",
+          "tags": [
+            "garden"
+          ],
+          "attendees": [
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        },
+        {
+          "title": "Barbecue with the neighbours",
+          "date": "06-13",
+          "start": "18:00",
+          "end": "22:00",
+          "tags": [
+            "garden"
+          ]
+        },
+        {
+          "title": "Summer holiday on the Baltic coast",
+          "date": "07-25",
+          "allDay": true,
+          "days": 14,
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Autumn hike in the Harz",
+          "date": "10-10",
+          "allDay": true,
+          "days": 2,
+          "attendees": [
+            0,
+            1,
+            2,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Anna's work",
+      "color": "VIOLET",
+      "events": [
+        {
+          "title": "Team meeting",
+          "weekday": 1,
+          "start": "09:00",
+          "end": "10:00",
+          "rrule": "FREQ=WEEKLY;BYDAY=MO",
+          "attendees": [
+            0
+          ]
+        },
+        {
+          "title": "Homeoffice",
+          "weekday": 3,
+          "allDay": true,
+          "rrule": "FREQ=WEEKLY;BYDAY=WE,FR",
+          "attendees": [
+            0
+          ]
+        },
+        {
+          "title": "One-to-one with the boss",
+          "weekday": 4,
+          "start": "14:00",
+          "end": "14:30",
+          "rrule": "FREQ=WEEKLY;INTERVAL=2;BYDAY=TH",
+          "attendees": [
+            0
+          ]
+        },
+        {
+          "title": "Business trip to Hamburg",
+          "day": 40,
+          "allDay": true,
+          "days": 3,
+          "attendees": [
+            0
+          ]
+        },
+        {
+          "title": "Team day",
+          "day": 58,
+          "allDay": true,
+          "attendees": [
+            0
+          ]
+        },
+        {
+          "title": "Annual review",
+          "day": 80,
+          "start": "10:00",
+          "end": "11:00",
+          "attendees": [
+            0
+          ]
+        },
+        {
+          "title": "Trade fair in Cologne",
+          "day": 150,
+          "allDay": true,
+          "days": 2,
+          "attendees": [
+            0
+          ]
+        },
+        {
+          "title": "Company summer party",
+          "date": "06-26",
+          "start": "17:00",
+          "end": "22:00",
+          "attendees": [
+            0,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Markus",
+      "color": "RUST",
+      "events": [
+        {
+          "title": "Running",
+          "weekday": 2,
+          "start": "06:30",
+          "end": "07:15",
+          "rrule": "FREQ=WEEKLY;BYDAY=TU,TH",
+          "tags": [
+            "sport"
+          ],
+          "attendees": [
+            1
+          ]
+        },
+        {
+          "title": "Choir rehearsal",
+          "weekday": 3,
+          "start": "19:30",
+          "end": "21:00",
+          "rrule": "FREQ=WEEKLY",
+          "location": "Parish hall",
+          "attendees": [
+            1
+          ]
+        },
+        {
+          "title": "Fit the winter tyres",
+          "day": 5,
+          "start": "08:00",
+          "end": "09:00",
+          "location": "Zwiebelschreck garage",
+          "attendees": [
+            1
+          ]
+        },
+        {
+          "title": "Fit the summer tyres",
+          "date": "04-11",
+          "start": "08:00",
+          "end": "09:00",
+          "location": "Zwiebelschreck garage",
+          "attendees": [
+            1
+          ]
+        },
+        {
+          "title": "GP appointment",
+          "day": 18,
+          "start": "07:45",
+          "end": "08:15",
+          "tags": [
+            "doctor"
+          ],
+          "attendees": [
+            1
+          ]
+        },
+        {
+          "title": "Choir concert",
+          "date": "12-13",
+          "start": "18:00",
+          "end": "20:00",
+          "location": "Town church",
+          "attendees": [
+            1,
+            0,
+            5,
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Lena's school",
+      "color": "PINK",
+      "events": [
+        {
+          "title": "Piano lesson",
+          "weekday": 2,
+          "start": "16:00",
+          "end": "16:45",
+          "rrule": "FREQ=WEEKLY",
+          "location": "Music school",
+          "attendees": [
+            2
+          ]
+        },
+        {
+          "title": "Swimming lessons",
+          "weekday": 4,
+          "start": "15:30",
+          "end": "16:30",
+          "rrule": "FREQ=WEEKLY",
+          "tags": [
+            "sport"
+          ],
+          "location": "Swimming pool",
+          "attendees": [
+            2
+          ]
+        },
+        {
+          "title": "Parents' evening",
+          "day": 9,
+          "start": "19:30",
+          "end": "21:00",
+          "tags": [
+            "school"
+          ],
+          "location": "Park primary school",
+          "attendees": [
+            0,
+            1
+          ]
+        },
+        {
+          "title": "Parent-teacher day",
+          "day": 110,
+          "start": "15:00",
+          "end": "15:20",
+          "tags": [
+            "school"
+          ],
+          "location": "Park primary school",
+          "attendees": [
+            0
+          ]
+        },
+        {
+          "title": "Christmas holidays",
+          "date": "12-22",
+          "allDay": true,
+          "days": 14,
+          "tags": [
+            "school"
+          ],
+          "attendees": [
+            2,
+            3
+          ]
+        },
+        {
+          "title": "School reports",
+          "date": "01-30",
+          "allDay": true,
+          "tags": [
+            "school"
+          ],
+          "attendees": [
+            2,
+            3
+          ]
+        },
+        {
+          "title": "Easter holidays",
+          "date": "03-30",
+          "allDay": true,
+          "days": 12,
+          "tags": [
+            "school"
+          ],
+          "attendees": [
+            2,
+            3
+          ]
+        },
+        {
+          "title": "School trip",
+          "date": "05-18",
+          "allDay": true,
+          "days": 5,
+          "tags": [
+            "school"
+          ],
+          "attendees": [
+            2
+          ]
+        },
+        {
+          "title": "School fair",
+          "date": "06-27",
+          "start": "14:00",
+          "end": "18:00",
+          "tags": [
+            "school"
+          ],
+          "location": "Park primary school",
+          "attendees": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "title": "Summer holidays",
+          "date": "07-20",
+          "allDay": true,
+          "days": 42,
+          "tags": [
+            "school"
+          ],
+          "attendees": [
+            2,
+            3
+          ]
+        },
+        {
+          "title": "Autumn holidays",
+          "date": "10-12",
+          "allDay": true,
+          "days": 12,
+          "tags": [
+            "school"
+          ],
+          "attendees": [
+            2,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Paul's football",
+      "color": "GREEN",
+      "events": [
+        {
+          "title": "Football practice",
+          "weekday": 2,
+          "start": "17:00",
+          "end": "18:30",
+          "rrule": "FREQ=WEEKLY;BYDAY=TU,TH",
+          "tags": [
+            "sport"
+          ],
+          "location": "North sports ground",
+          "attendees": [
+            3
+          ]
+        },
+        {
+          "title": "League match",
+          "weekday": 6,
+          "start": "10:00",
+          "end": "12:00",
+          "rrule": "FREQ=WEEKLY;INTERVAL=2",
+          "tags": [
+            "sport"
+          ],
+          "location": "North sports ground",
+          "attendees": [
+            3,
+            1
+          ]
+        },
+        {
+          "title": "Indoor tournament",
+          "date": "01-17",
+          "allDay": true,
+          "tags": [
+            "sport"
+          ],
+          "location": "Sports hall",
+          "attendees": [
+            3,
+            1
+          ]
+        },
+        {
+          "title": "Whitsun tournament",
+          "date": "05-23",
+          "allDay": true,
+          "tags": [
+            "sport"
+          ],
+          "attendees": [
+            3,
+            1
+          ]
+        },
+        {
+          "title": "End-of-season party",
+          "date": "06-20",
+          "start": "15:00",
+          "end": "19:00",
+          "tags": [
+            "sport"
+          ],
+          "location": "Clubhouse",
+          "attendees": [
+            3,
+            0,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Mia's nursery",
+      "color": "OCHRE",
+      "events": [
+        {
+          "title": "Toddler gym",
+          "weekday": 3,
+          "start": "15:00",
+          "end": "16:00",
+          "rrule": "FREQ=WEEKLY",
+          "tags": [
+            "sport"
+          ],
+          "location": "Sports hall",
+          "attendees": [
+            4,
+            8
+          ]
+        },
+        {
+          "title": "Music group",
+          "weekday": 5,
+          "start": "10:00",
+          "end": "10:45",
+          "rrule": "FREQ=WEEKLY",
+          "location": "Music school",
+          "attendees": [
+            4,
+            8
+          ]
+        },
+        {
+          "title": "Lantern walk",
+          "date": "11-11",
+          "start": "17:00",
+          "end": "18:30",
+          "location": "Sunshine nursery",
+          "attendees": [
+            0,
+            4
+          ]
+        },
+        {
+          "title": "Nursery closed (planning day)",
+          "day": 33,
+          "allDay": true,
+          "attendees": [
+            4
+          ]
+        },
+        {
+          "title": "Health check-up",
+          "day": 51,
+          "start": "09:00",
+          "end": "10:00",
+          "tags": [
+            "doctor"
+          ],
+          "location": "Dr Blümchen's practice",
+          "attendees": [
+            0,
+            4
+          ]
+        },
+        {
+          "title": "Nursery summer party",
+          "date": "07-04",
+          "start": "14:00",
+          "end": "17:00",
+          "location": "Sunshine nursery",
+          "attendees": [
+            0,
+            1,
+            4
+          ]
+        },
+        {
+          "title": "Nursery summer closure",
+          "date": "08-03",
+          "allDay": true,
+          "days": 14,
+          "attendees": [
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Grandma & Grandpa",
+      "color": "TEAL",
+      "events": [
+        {
+          "title": "Grandma picks Mia up from nursery",
+          "weekday": 4,
+          "start": "15:00",
+          "end": "15:30",
+          "rrule": "FREQ=WEEKLY",
+          "location": "Sunshine nursery",
+          "attendees": [
+            5,
+            4
+          ]
+        },
+        {
+          "title": "Card evening",
+          "weekday": 1,
+          "start": "18:00",
+          "end": "21:00",
+          "rrule": "FREQ=WEEKLY",
+          "attendees": [
+            6
+          ]
+        },
+        {
+          "title": "Seniors’ exercise class",
+          "weekday": 2,
+          "start": "10:00",
+          "end": "11:00",
+          "rrule": "FREQ=WEEKLY",
+          "tags": [
+            "sport"
+          ],
+          "location": "Parish hall",
+          "attendees": [
+            5
+          ]
+        },
+        {
+          "title": "Grandpa: eye doctor",
+          "day": 27,
+          "start": "10:30",
+          "end": "11:15",
+          "tags": [
+            "doctor"
+          ],
+          "attendees": [
+            6
+          ]
+        },
+        {
+          "title": "Spa stay on the North Sea",
+          "day": 120,
+          "allDay": true,
+          "days": 21,
+          "attendees": [
+            5,
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Bins & house",
+      "color": "SLATE",
+      "events": [
+        {
+          "title": "General waste",
+          "weekday": 2,
+          "allDay": true,
+          "rrule": "FREQ=WEEKLY;INTERVAL=2"
+        },
+        {
+          "title": "Food waste",
+          "weekday": 4,
+          "allDay": true,
+          "rrule": "FREQ=WEEKLY"
+        },
+        {
+          "title": "Recycling",
+          "weekday": 5,
+          "allDay": true,
+          "rrule": "FREQ=WEEKLY;INTERVAL=2"
+        },
+        {
+          "title": "Paper",
+          "weekday": 3,
+          "allDay": true,
+          "rrule": "FREQ=WEEKLY;INTERVAL=4"
+        },
+        {
+          "title": "Chimney sweep",
+          "date": "03-05",
+          "start": "08:00",
+          "end": "09:00",
+          "rrule": "FREQ=YEARLY"
+        },
+        {
+          "title": "Boiler service",
+          "date": "09-22",
+          "start": "10:00",
+          "end": "12:00",
+          "rrule": "FREQ=YEARLY",
+          "attendees": [
+            1
+          ]
+        },
+        {
+          "title": "Read the meters",
+          "date": "12-15",
+          "allDay": true,
+          "rrule": "FREQ=YEARLY"
+        },
+        {
+          "title": "Trim the hedge",
+          "date": "06-24",
+          "start": "10:00",
+          "end": "12:00",
+          "rrule": "FREQ=YEARLY",
+          "tags": [
+            "garden"
+          ],
+          "attendees": [
+            1,
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Public holidays",
+      "color": "GREEN",
+      "events": [
+        {
+          "title": "New Year's Day",
+          "date": "01-01",
+          "allDay": true,
+          "rrule": "FREQ=YEARLY"
+        },
+        {
+          "title": "Labour Day",
+          "date": "05-01",
+          "allDay": true,
+          "rrule": "FREQ=YEARLY"
+        },
+        {
+          "title": "German Unity Day",
+          "date": "10-03",
+          "allDay": true,
+          "rrule": "FREQ=YEARLY"
+        },
+        {
+          "title": "All Saints' Day",
+          "date": "11-01",
+          "allDay": true,
+          "rrule": "FREQ=YEARLY"
+        },
+        {
+          "title": "Christmas Eve",
+          "date": "12-24",
+          "allDay": true,
+          "rrule": "FREQ=YEARLY"
+        },
+        {
+          "title": "Christmas Day",
+          "date": "12-25",
+          "allDay": true,
+          "rrule": "FREQ=YEARLY"
+        },
+        {
+          "title": "Boxing Day",
+          "date": "12-26",
+          "allDay": true,
+          "rrule": "FREQ=YEARLY"
+        },
+        {
+          "title": "New Year's Eve",
+          "date": "12-31",
+          "allDay": true,
+          "rrule": "FREQ=YEARLY"
+        }
+      ]
+    }
+  ],
+  "start": [
+    "CALENDAR_WEEK",
+    "TODO_LISTS"
+  ]
+}

@@ -1,0 +1,8 @@
+# Hugo's output and caches.
+/public/
+/resources/_gen/
+.hugo_build.lock
+# Built by the release workflow, not kept here: the scenes' web build and their
+# screenshots.
+/static/embed/
+/static/scenes/

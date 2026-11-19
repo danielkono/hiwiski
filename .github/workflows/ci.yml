@@ -1,0 +1,261 @@
+name: CI
+
+# No `pull_request`: in a public repository that would run the code of anybody's fork.
+# A push needs write access, so every run is one the maintainer asked for -- or
+# Dependabot, whose branches live in this repository and whose runs get a read-only
+# token and no secrets. A branch of one's own is checked by hand (workflow_dispatch).
+on:
+  push:
+    branches: [main, "dependabot/**"]
+  workflow_dispatch:
+
+# One running build per branch is enough.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# The jobs only read the repository; a compromised step gets no write token.
+permissions:
+  contents: read
+
+env:
+  JAVA_VERSION: "25"
+
+jobs:
+  server:
+    name: Server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      # Every action is pinned to a commit, GitHub's own too: a tag can be moved to
+      # other code.
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4.4.3
+
+      # Tests run against Testcontainers, never against an in-memory database.
+      # The jOOQ code generator needs the same Postgres.
+      # Gradle builds buildSrc along the way but does not run its tests. That is where
+      # the contract gate lives, and it runs without a baseline until the first release -- without this
+      # call it would go unchecked until the release.
+      - name: Build logic
+        working-directory: server
+        run: ./gradlew -p buildSrc test --no-daemon
+
+      - name: Build and tests
+        working-directory: server
+        run: ./gradlew build --no-daemon
+
+      # Whoever touches the spec and does not refresh the bundle gets caught here -- and
+      # not only at the next client build. The build above already rewrote the bundle
+      # (the contract checks depend on updateBundledSpec); a difference means the
+      # checked-in one was stale.
+      - name: Bundled spec is up to date
+        run: git diff --exit-code api/openapi.bundled.yaml
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: failure()
+        with:
+          name: server-test-reports
+          path: server/app/build/reports/tests/
+
+  client:
+    name: Client
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      # The Flutter version is pinned once, in app/.fvmrc, for local FVM and CI alike.
+      - name: Flutter version
+        id: flutter-version
+        run: echo "version=$(jq -r .flutter app/.fvmrc)" >> "$GITHUB_OUTPUT"
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ steps.flutter-version.outputs.version }}
+          channel: stable
+
+      # As pubspec.lock names them, with its checksums: a lockfile that no longer fits
+      # pubspec.yaml fails here instead of being resolved anew by the run.
+      - name: Dependencies
+        working-directory: app
+        run: flutter pub get --enforce-lockfile
+
+      # The Dart client is generated from the same spec as the server interfaces.
+      # The generated code is not checked in, so there is nothing to
+      # compare it with: this step generates it. That the spec itself is current is the
+      # server job's bundled-spec check; a client the spec breaks fails analyze and the
+      # tests below.
+      - name: Generate code
+        working-directory: app
+        run: |
+          dart run swagger_parser
+          dart run build_runner build --delete-conflicting-outputs
+
+      # The project's own analysis rules (app/tool/hiwiski_lints) are a package of their
+      # own, with their own tests.
+      - name: Lint rules
+        working-directory: app/tool/hiwiski_lints
+        run: |
+          dart pub get --enforce-lockfile
+          dart test
+
+      # `dart analyze`, not `flutter analyze`: only the former runs analyzer plugins,
+      # and with them hiwiski_lints. `--fatal-infos` keeps the strictness of
+      # `flutter analyze`.
+      - name: Analysis
+        working-directory: app
+        run: dart analyze --fatal-infos
+
+      # In a zone with clock changes: the runner is in UTC, where no day has 23 or 25
+      # hours, and the tests guarding against exactly that passed or were skipped there
+      # whatever the code did. The Linux Dart VM follows TZ.
+      - name: Tests
+        working-directory: app
+        env:
+          TZ: Europe/Berlin
+        run: flutter test
+
+      # The store pictures are goldens (test/store): when the app's look changed, the
+      # run fails here, and these are the pictures it drew and how they differ.
+      # tool/store_shots.sh --update draws them anew.
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: failure()
+        with:
+          name: store-picture-differences
+          path: app/test/store/failures/
+          if-no-files-found: ignore
+
+      # The same build as in the release, where it goes into the server image: that way
+      # the UI always matches the server version exactly. Without
+      # `--no-web-resources-cdn` the engine would load CanvasKit from www.gstatic.com,
+      # and every visitor's address would go to Google with it.
+      - name: Web build
+        working-directory: app
+        run: flutter build web --release --tree-shake-icons --no-web-resources-cdn
+
+      # The web engine asks for emoji under paths of its own list, which belongs to the
+      # Flutter version (fonts/README.md). After an update that moves them, emoji would
+      # turn into boxes without a word; here the build fails instead.
+      - name: Emoji fallback fonts match the engine
+        working-directory: app
+        run: python3 tool/emoji_fallback.py --check
+
+  # The home screen widgets are native code the Flutter jobs above never compile: without
+  # these, a broken widget would first show at the release (docs/development/home-widgets.md).
+  android:
+    name: Android widgets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Flutter version
+        id: flutter-version
+        run: echo "version=$(jq -r .flutter app/.fvmrc)" >> "$GITHUB_OUTPUT"
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ steps.flutter-version.outputs.version }}
+          channel: stable
+
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Generate code
+        working-directory: app
+        run: |
+          flutter pub get --enforce-lockfile
+          dart run swagger_parser
+          dart run build_runner build --delete-conflicting-outputs
+
+      # The widgets' Kotlin client is generated by the Gradle build itself.
+      - name: Build
+        working-directory: app
+        run: flutter build apk --debug
+
+      - name: Widget tests
+        working-directory: app/android
+        run: ./gradlew :app:testDebugUnitTest --no-daemon
+
+  # On macOS, whose minutes count ten times while the repository is private: a build for
+  # the simulator, without signing, and the widgets' unit tests.
+  ios:
+    name: iOS widgets
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Flutter version
+        id: flutter-version
+        run: echo "version=$(jq -r .flutter app/.fvmrc)" >> "$GITHUB_OUTPUT"
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ steps.flutter-version.outputs.version }}
+          channel: stable
+          cache: true
+
+      - name: Generate code
+        working-directory: app
+        run: |
+          flutter pub get --enforce-lockfile
+          dart run swagger_parser
+          dart run build_runner build --delete-conflicting-outputs
+          tool/generate_widget_client.sh
+
+      - name: Build
+        working-directory: app
+        run: flutter build ios --simulator --debug
+
+      - name: Widget tests
+        working-directory: app/ios
+        run: |
+          device="$(xcrun simctl list devices available -j \
+            | jq -r '[.devices[][] | select(.name | startswith("iPhone"))][0].udid')"
+          xcodebuild test -workspace Runner.xcworkspace -scheme Runner \
+            -destination "platform=iOS Simulator,id=$device" CODE_SIGNING_ALLOWED=NO
+
+  # The website: every page in both languages, a build that warns of
+  # nothing, and on main every merged branch saying in the changelog what it does.
+  site:
+    name: Site
+    runs-on: ubuntu-latest
+    steps:
+      # The whole history: the changelog check walks the merges of the push.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+
+      - name: Every page in both languages
+        run: tool/site_translations.sh
+
+      # A comment says its reason in place; nothing points at documents the repository
+      # does not hold.
+      - name: No references outside the repository
+        run: tool/check_references.sh
+
+      # The stores refuse a text over their limits only during the upload.
+      - name: Store texts within the stores' limits
+        run: tool/store_metadata.py
+
+      - name: Every branch says what it does
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.before != '0000000000000000000000000000000000000000'
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: tool/changelog.sh check "$BEFORE" "$GITHUB_SHA"
+
+      - name: Hugo
+        run: |
+          tool/site_tools.sh "$RUNNER_TEMP/bin"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: Build
+        working-directory: site
+        run: hugo --panicOnWarning

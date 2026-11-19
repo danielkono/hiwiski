@@ -1,0 +1,18 @@
+ImageInfo:
+  type: object
+  description: A stored image (`media`).
+  required: [id, contentType, byteSize]
+  properties:
+    id:
+      type: string
+      format: uuid
+    contentType:
+      type: string
+      example: image/jpeg
+    byteSize:
+      type: integer
+      format: int64
+    width:
+      type: integer
+    height:
+      type: integer

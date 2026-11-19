@@ -1,0 +1,28 @@
+{{- $current := . }}
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="{{ site.Home.RelPermalink }}">
+      <img src="/icon.svg" alt="" width="36" height="36">
+      <span>{{ site.Title }}</span>
+    </a>
+    <nav aria-label="{{ T "menu" }}">
+      {{- range $item := slice
+        (dict "path" "/features" "label" "navFeatures")
+        (dict "path" "/setup" "label" "navSetup")
+        (dict "path" "/why" "label" "navWhy")
+        (dict "path" "/whats-new" "label" "navWhatsNew")
+        (dict "path" "/search" "label" "navSearch") }}
+      {{- with site.GetPage $item.path }}
+      <a href="{{ .RelPermalink }}"{{ if or (eq $current .) ($current.IsDescendant .) }} aria-current="page"{{ end }}>{{ T $item.label }}</a>
+      {{- end }}
+      {{- end }}
+    </nav>
+    {{- range .Translations }}
+    <a class="icon-button wide" href="{{ .RelPermalink }}" hreflang="{{ .Language.Locale }}" lang="{{ .Language.Locale }}" title="{{ .Language.Label }}">{{ upper .Language.Lang }}</a>
+    {{- end }}
+    <button type="button" class="icon-button theme-toggle" aria-label="{{ T "toggleTheme" }}" title="{{ T "toggleTheme" }}">
+      <span class="dark-icon">{{ partial "icon.html" "dark_mode" }}</span>
+      <span class="light-icon">{{ partial "icon.html" "light_mode" }}</span>
+    </button>
+  </div>
+</header>

@@ -1,0 +1,91 @@
+# Errors go to the client as a code plus parameters, never as a finished German sentence.
+# The client translates via ARB; an unknown code is shown as the code --
+# ugly and honest, and better than an empty dialog.
+
+ApiError:
+  type: object
+  required: [code]
+  properties:
+    code:
+      type: string
+      description: Dot-separated key, e.g. `todo.list_not_found`.
+      example: todo.list_not_found
+    params:
+      type: object
+      additionalProperties:
+        type: string
+      description: Values to insert into the translated string.
+    correlationId:
+      type: string
+      description: |
+        The request's correlation ID. It is also in the server log -- a user who says
+        "error 8f3c" can be traced with it.
+      example: 8f3c1a92
+
+responses:
+  BadRequest:
+    description: Invalid in domain terms
+    content:
+      application/json:
+        schema:
+          $ref: './errors.yaml#/ApiError'
+  Unauthorized:
+    description: Not logged in
+    content:
+      application/json:
+        schema:
+          $ref: './errors.yaml#/ApiError'
+  Forbidden:
+    description: |
+      Not shared -- or `auth.password_change_required`: a session whose password
+      has to be changed first may call almost nothing (`Session.mustChangePassword`).
+    content:
+      application/json:
+        schema:
+          $ref: './errors.yaml#/ApiError'
+  NotFound:
+    description: |
+      Does not exist **or** is not visible. The same answer for both -- a `403` would
+      give away that it exists.
+    content:
+      application/json:
+        schema:
+          $ref: './errors.yaml#/ApiError'
+  Conflict:
+    description: Conflict
+    content:
+      application/json:
+        schema:
+          $ref: './errors.yaml#/ApiError'
+  PayloadTooLarge:
+    description: Too large -- `request.too_large`, past the upload limit of 25 MB.
+    content:
+      application/json:
+        schema:
+          $ref: './errors.yaml#/ApiError'
+  TooManyRequests:
+    description: |
+      Too many requests: `auth.too_many_attempts` after repeated failed logins. The
+      `Retry-After` header and the `retryAfterSeconds` parameter say when to try again.
+    headers:
+      Retry-After:
+        description: Seconds until the next attempt is accepted.
+        schema:
+          type: integer
+    content:
+      application/json:
+        schema:
+          $ref: './errors.yaml#/ApiError'
+  ServiceUnavailable:
+    description: |
+      Busy: `media.busy` when an upload found no free turn within half a minute. The
+      `Retry-After` header and the `retryAfterSeconds` parameter say when to try again.
+    headers:
+      Retry-After:
+        description: Seconds until the next attempt.
+        schema:
+          type: integer
+    content:
+      application/json:
+        schema:
+          $ref: './errors.yaml#/ApiError'

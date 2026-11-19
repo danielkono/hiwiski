@@ -1,0 +1,68 @@
+Handshake:
+  type: object
+  required:
+    - apiVersion
+    - serverVersion
+    - minClientVersion
+    - setupCompleted
+    - cleartext
+  properties:
+    apiVersion:
+      type: string
+      description: The contract's major version, e.g. `v1`.
+      example: v1
+    serverVersion:
+      type: string
+      description: The server's calendar version.
+      example: 2026.1.0
+    minClientVersion:
+      type: string
+      description: |
+        Oldest client version this server still serves. The client checks this on
+        startup and says so with a way to update, instead of failing at some random
+        spot.
+      example: 2026.1.0
+    familyName:
+      type: string
+      description: |
+        Missing as long as the instance is not set up -- before that there is no name,
+        and an empty placeholder would be a claim.
+      example: Familie Berger
+    setupCompleted:
+      type: boolean
+      description: If `false`, the app goes straight into the setup wizard.
+    restoring:
+      type: boolean
+      description: |
+        A backup is being restored right now. Until it is done every write is
+        `503 instance.restoring`; the app shows that it waits and asks again.
+        Absent or
+        `false` otherwise.
+    cleartext:
+      type: boolean
+      description: |
+        The connection runs without TLS. The app says plainly what applies right now,
+        instead of showing a lock that is not one.
+    instanceId:
+      type: string
+      format: uuid
+      description: |
+        Identifier of this instance. It is regenerated on restore; devices use it to
+        tell that their sequence numbers no longer apply, and sync from scratch.
+        Without this identifier devices would silently keep working on a state that
+        no longer exists.
+    legalNoticeUrl:
+      type: string
+      format: uri
+      description: |
+        Where the operator's legal notice (Impressum) is -- for an instance open to the
+        public, such as a review instance. Missing for a family's own server: a private
+        instance needs none, and the app then shows no "Legal" section.
+      example: https://hiwiski.example.org/impressum
+    privacyUrl:
+      type: string
+      format: uri
+      description: |
+        Where the operator's privacy policy for this instance is. Missing like
+        `legalNoticeUrl`.
+      example: https://hiwiski.example.org/datenschutz

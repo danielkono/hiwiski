@@ -1,0 +1,11 @@
+# The App Store distribution certificate and profile, encrypted with MATCH_PASSWORD in
+# the branch `signing` of a private repository (docs/releasing.md, "Signing and store
+# credentials"). Its URL comes from the environment: it is the maintainer's.
+git_url(ENV.fetch("MATCH_GIT_URL"))
+git_branch("signing")
+storage_mode("git")
+
+type("appstore")
+# The app and its home screen widgets: an extension signs with a profile of its own.
+app_identifier(["de.danielkononov.hiwiski", "de.danielkononov.hiwiski.widgets"])
+team_id("2JZ6NF8U9U")

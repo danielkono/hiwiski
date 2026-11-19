@@ -1,0 +1,103 @@
+# The configuration of the instance.
+#
+# Every path is set; none has a silent default. The empty defaults
+# below are intentional: if the variable is missing, binding fails on @NotBlank and the
+# server says at startup which one is missing -- instead of failing later at a place that
+# has nothing to do with the cause.
+
+spring:
+  application:
+    name: hiwiski
+  autoconfigure:
+    exclude:
+      # Without this exclusion Spring Boot creates a default user with a generated
+      # password and writes it to the log at startup. A login line that belongs to
+      # nothing invites people to try it -- and there is no login via Spring Security
+      # here: the session comes from the device token.
+      - org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
+  datasource:
+    url: ${HIWISKI_DB_URL:}
+    username: ${HIWISKI_DB_USER:}
+    password: ${HIWISKI_DB_PASSWORD:}
+    hikari:
+      pool-name: hiwiski
+      maximum-pool-size: 10
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    # A hard stop instead of a partial migration: better the server does not start than
+    # that it runs on half a schema.
+    validate-on-migrate: true
+    out-of-order: false
+  jooq:
+    sql-dialect: postgres
+  threads:
+    virtual:
+      enabled: true
+  mvc:
+    problemdetails:
+      # Errors go out as code plus parameters, not as an RFC 7807 problem.
+      enabled: false
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 25MB
+
+hiwiski:
+  media-path: ${HIWISKI_MEDIA_PATH:}
+  backup-path: ${HIWISKI_BACKUP_PATH:}
+  min-client-version: ${HIWISKI_MIN_CLIENT_VERSION:2026.1.0}
+  # How much one member may store in the media store (0 = no limit), and how many
+  # uploads are processed at once.
+  media-quota-per-member: ${HIWISKI_MEDIA_QUOTA_PER_MEMBER:5GB}
+  media-parallel-uploads: ${HIWISKI_MEDIA_PARALLEL_UPLOADS:4}
+  # Only for an instance open to the public; a family's server leaves
+  # them empty.
+  legal-notice-url: ${HIWISKI_LEGAL_NOTICE_URL:}
+  privacy-url: ${HIWISKI_PRIVACY_URL:}
+  # The code the setup wizard asks for. Empty: a new one at every start until the setup
+  # has run, printed to the log. Set only for an automated deployment.
+  setup-code: ${HIWISKI_SETUP_CODE:}
+  # Whose X-Forwarded-For the server believes, besides loopback: IP addresses, comma
+  # separated (TrustedProxies). The compose files name their Caddy;
+  # a server run without a proxy leaves it empty and believes nobody else.
+  trusted-proxies: ${HIWISKI_TRUSTED_PROXIES:}
+  # How often the server looks whether a scheduled backup is due; the schedule itself is a setting in the app.
+  backup-check-interval: PT5M
+
+server:
+  port: ${HIWISKI_PORT:8080}
+  # Behind Caddy. Without this the server considers every request cleartext and the
+  # handshake would report `cleartext: true` even though TLS was terminated.
+  #
+  # Tomcat's own handling, not Spring's filter: the filter believed `X-Forwarded-*`
+  # from anyone, so a client reaching the port directly could name any address and
+  # step around the sign-in budget per address. Tomcat believes them only from a
+  # trusted proxy: loopback and hiwiski.trusted-proxies -- Caddy's fixed address in
+  # the compose files -- and not, as Spring Boot would, every private range
+  # (TrustedProxies). SERVER_TOMCAT_REMOTEIP_INTERNALPROXIES, a regular expression,
+  # replaces that list when it is not empty.
+  forward-headers-strategy: native
+  error:
+    whitelabel:
+      enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  # English, structured, on stdout. Log lines end up in bug reports and are addressed to
+  # the person who runs the server.
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%X{correlationId:-........}] %logger{36} - %msg%n"
+  level:
+    root: INFO
+    de.danielkononov.hiwiski: INFO
+    org.jooq.Constants: WARN

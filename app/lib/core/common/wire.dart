@@ -1,0 +1,214 @@
+/// The vocabulary the client shares with the server: entity types, operations, field
+/// names and the values of the enumerated fields.
+///
+/// **Each of these strings exists once, here.** The codec reads with them what the
+/// repositories write with them; a typo in a second copy would not be a compile error
+/// but a field that silently never arrives.
+library;
+
+/// The `entityType` of a change -- what the hand-written dispatcher decodes by.
+/// Also the `itemType` of links, comments, shares and search hits.
+abstract final class EntityTypes {
+  static const todoList = 'TODO_LIST';
+  static const todo = 'TODO';
+  static const todoOccurrence = 'TODO_OCCURRENCE';
+  static const calendar = 'CALENDAR';
+  static const event = 'EVENT';
+  static const calendarSubscription = 'CALENDAR_SUBSCRIPTION';
+  static const calendarFeed = 'CALENDAR_FEED';
+  static const wikiPage = 'WIKI_PAGE';
+  static const comment = 'COMMENT';
+  static const board = 'BOARD';
+  static const widget = 'WIDGET';
+  static const tag = 'TAG';
+
+  /// A member's own order of the task lists — owned by them, shared with no one.
+  static const listOrder = 'LIST_ORDER';
+}
+
+/// The `op` of a mutation.
+abstract final class SyncOps {
+  static const upsert = 'upsert';
+  static const delete = 'delete';
+}
+
+/// The names of the fields in a change's `fields`.
+///
+/// One list for all entity types: the same name means the same thing everywhere
+/// (`title`, `tags`, `position`), and the version history labels them without
+/// knowing the type.
+abstract final class WireFields {
+  // Shared by several types.
+  static const name = 'name';
+  static const title = 'title';
+  static const description = 'description';
+  static const kind = 'kind';
+  static const colorToken = 'colorToken';
+  static const position = 'position';
+  static const tags = 'tags';
+  static const archivedAt = 'archivedAt';
+  static const archivedBy = 'archivedBy';
+  static const token = 'token';
+
+  // Lists and to-dos.
+  static const assignees = 'assignees';
+  static const columns = 'columns';
+  static const listIds = 'listIds';
+  static const listId = 'listId';
+  static const status = 'status';
+  static const dueDate = 'dueDate';
+  static const dueTime = 'dueTime';
+  static const rrule = 'rrule';
+  static const amount = 'amount';
+  static const unit = 'unit';
+  static const productId = 'productId';
+  static const columnId = 'columnId';
+  static const occurrenceDate = 'occurrenceDate';
+  static const doneAt = 'doneAt';
+  static const doneBy = 'doneBy';
+  static const skipped = 'skipped';
+
+  // Calendars and events.
+  static const calendarId = 'calendarId';
+  static const calendarIds = 'calendarIds';
+  static const location = 'location';
+  static const note = 'note';
+  static const timeForm = 'timeForm';
+  static const allDay = 'allDay';
+  static const startsAt = 'startsAt';
+  static const endsAt = 'endsAt';
+  static const startDate = 'startDate';
+  static const endDate = 'endDate';
+  static const localStart = 'localStart';
+  static const localEnd = 'localEnd';
+  static const timeZone = 'timeZone';
+  static const exceptions = 'exceptions';
+  static const attendees = 'attendees';
+  static const reminderMinutes = 'reminderMinutes';
+  static const defaultReminderMinutes = 'defaultReminderMinutes';
+  static const url = 'url';
+  static const targetKind = 'targetKind';
+  static const targetListId = 'targetListId';
+  static const syncInterval = 'syncInterval';
+  static const lastSyncAt = 'lastSyncAt';
+  static const lastError = 'lastError';
+  static const importedCount = 'importedCount';
+  static const contentMode = 'contentMode';
+
+  // Wiki pages and comments.
+  static const parentId = 'parentId';
+  static const content = 'content';
+  static const servings = 'servings';
+  static const ingredients = 'ingredients';
+  static const sourceUrl = 'sourceUrl';
+  static const imageId = 'imageId';
+  static const durationMinutes = 'durationMinutes';
+  static const itemType = 'itemType';
+  static const itemId = 'itemId';
+  static const body = 'body';
+
+  // Boards and widgets.
+  static const layout = 'layout';
+  static const config = 'config';
+  static const gridX = 'gridX';
+  static const gridY = 'gridY';
+  static const gridW = 'gridW';
+  static const gridH = 'gridH';
+}
+
+/// The fields of one entry in an event's `exceptions`, keyed by the occurrence.
+abstract final class EventExceptionFields {
+  static const cancelled = 'cancelled';
+  static const start = 'start';
+  static const end = 'end';
+}
+
+/// What is stored is a **token, not a hex value**; the client maps
+/// it to a color per theme.
+abstract final class ColorTokens {
+  static const blue = 'BLUE';
+  static const rust = 'RUST';
+  static const violet = 'VIOLET';
+  static const green = 'GREEN';
+  static const pink = 'PINK';
+  static const ochre = 'OCHRE';
+  static const teal = 'TEAL';
+  static const slate = 'SLATE';
+
+  // Tags only.
+  static const red = 'RED';
+  static const amber = 'AMBER';
+}
+
+/// The `kind` of a to-do list.
+abstract final class ListKinds {
+  static const standard = 'STANDARD';
+  static const shopping = 'SHOPPING';
+  static const kanban = 'KANBAN';
+}
+
+/// The `status` of a to-do.
+abstract final class TodoStatuses {
+  static const open = 'OPEN';
+  static const done = 'DONE';
+}
+
+/// The `kind` of a calendar.
+/// Special values of an event's `reminderMinutes`.
+abstract final class ReminderMinutes {
+  /// "No reminder" chosen on the event — it does not take its calendar's default.
+  /// `null` instead means "none of its own", and the default applies.
+  static const none = -1;
+}
+
+abstract final class CalendarKinds {
+  static const local = 'LOCAL';
+  static const external = 'EXTERNAL';
+}
+
+/// The `timeForm` of an event.
+abstract final class TimeForms {
+  static const timed = 'TIMED';
+  static const allDay = 'ALL_DAY';
+  static const recurring = 'RECURRING';
+}
+
+/// The `targetKind` of a calendar subscription: what the entries become.
+abstract final class SubscriptionTargets {
+  static const event = 'EVENT';
+  static const task = 'TASK';
+}
+
+/// The `syncInterval` of a calendar subscription.
+abstract final class SyncIntervals {
+  static const hourly = 'HOURLY';
+  static const daily = 'DAILY';
+  static const weekly = 'WEEKLY';
+}
+
+/// The `contentMode` of a calendar feed.
+abstract final class FeedContentModes {
+  static const full = 'FULL';
+  static const busy = 'BUSY';
+}
+
+/// The `kind` of a wiki page.
+abstract final class PageKinds {
+  static const page = 'PAGE';
+  static const recipe = 'RECIPE';
+}
+
+/// The `kind` of a board.
+abstract final class BoardKinds {
+  static const start = 'START';
+  static const dashboard = 'DASHBOARD';
+}
+
+/// The `layout` of a board.
+abstract final class BoardLayouts {
+  static const flow = 'FLOW';
+  static const grid = 'GRID';
+}
+
+/// The zone when none is known: off for everyone, but never missing.
+const utcTimeZone = 'UTC';

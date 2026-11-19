@@ -1,0 +1,3 @@
+org.springframework.boot.diagnostics.FailureAnalyzer=\
+de.danielkononov.hiwiski.platform.internal.MissingConfigurationFailureAnalyzer,\
+de.danielkononov.hiwiski.platform.internal.StartRefusedFailureAnalyzer

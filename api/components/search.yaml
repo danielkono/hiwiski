@@ -1,0 +1,107 @@
+SearchHit:
+  type: object
+  required: [itemType, itemId, title]
+  properties:
+    itemType:
+      type: string
+    itemId:
+      type: string
+      format: uuid
+    title:
+      type: string
+    entityKey:
+      type: string
+      nullable: true
+    context:
+      description: Where it was found — "Recipes › Autumn cooking", "Mom's calendar".
+      type: string
+      nullable: true
+    snippet:
+      description: |
+        The matching passage. Highlighting happens in the client -- it knows its font
+        sizes, and HTML would have to pass through an app that renders none.
+      type: string
+      nullable: true
+    archived:
+      description: The item is archived -- only with `includeArchived`, or on a jump.
+      type: boolean
+
+SearchResult:
+  type: object
+  required: [hits]
+  properties:
+    hits:
+      type: array
+      items:
+        $ref: '#/SearchHit'
+    jumpTo:
+      description: |
+        An entered number jumps straight to the item instead of running a full-text
+        search.
+      allOf:
+        - $ref: '#/SearchHit'
+
+HistoryEntry:
+  type: object
+  required: [seq, at, op]
+  properties:
+    seq:
+      type: integer
+      format: int64
+    at:
+      type: string
+      format: date-time
+    actorId:
+      type: string
+      format: uuid
+      nullable: true
+    op:
+      type: string
+      enum: [upsert, delete]
+    fields:
+      description: Which fields this change touched.
+      type: array
+      items:
+        type: string
+    status:
+      description: |
+        The task's status after this change — only when the change touched `status`.
+        The field name alone does not tell "checked off" from "opened again".
+      allOf:
+        - $ref: './todo.yaml#/TodoStatus'
+    archived:
+      description: |
+        Whether the item is archived after this change — only when the change touched
+        `archivedAt`. Archiving and restoring touch the same two fields.
+      type: boolean
+    column:
+      description: |
+        The column a card stands in after this change, by the name its board gives it
+        now -- only when the change touched `columnId`, and absent once the column is
+        gone. The field name alone does not say where the card went.
+      type: string
+    entryId:
+      description: |
+        In a list's history: the task this change was made to — absent for a change to
+        the list itself. Ticking off or deleting an entry shows on the list without
+        opening the entry.
+      type: string
+      format: uuid
+    entryTitle:
+      description: The task's title as it is now — also for a deleted one.
+      type: string
+
+History:
+  type: object
+  required: [entries, reachesBack]
+  properties:
+    entries:
+      type: array
+      items:
+        $ref: '#/HistoryEntry'
+    reachesBack:
+      description: |
+        How far back the history reaches. **The log retention period limits it, and
+        the UI says so**.
+      type: string
+      format: date-time

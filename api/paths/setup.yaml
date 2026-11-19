@@ -1,0 +1,162 @@
+Setup:
+  post:
+    tags: [setup]
+    operationId: runSetup
+    summary: Set up the instance
+    description: |
+      Reachable without login, but only **once**: if `setup.completed` is set, the
+      server answers with `409`.
+
+      Only with the **setup code** from the server's log (`setupCode`): a wrong or
+      missing one answers `403 setup.code_invalid`, checked before anything else; ten
+      wrong ones per client address are free, then one every thirty seconds (`429`).
+
+      Creates the family name, time zone, the administrator account and the first
+      groups and logs the device in right away -- otherwise the first user would have
+      to log in again immediately after creating everything.
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/identity.yaml#/SetupRequest'
+    responses:
+      '201':
+        description: Set up and logged in
+        content:
+          application/json:
+            schema:
+              $ref: '../components/identity.yaml#/SignedIn'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '409':
+        $ref: '../components/errors.yaml#/responses/Conflict'
+      '429':
+        $ref: '../components/errors.yaml#/responses/TooManyRequests'
+
+# Restoring on a fresh server, from the setup wizard. Every call names
+# the setup code in a header: the upload's body is the file itself.
+
+SetupUploads:
+  post:
+    tags: [backupFiles]
+    operationId: uploadSetupBackup
+    summary: Upload an archive to restore on a fresh server
+    description: |
+      As `uploadBackup`, without a sign-in -- there is no one yet -- but with the setup
+      code. Once the instance is set up it is `409 setup.already_completed`.
+    security: []
+    parameters:
+      - $ref: '#/SetupCodeHeader'
+    requestBody:
+      required: true
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary
+    responses:
+      '201':
+        description: Uploaded
+        content:
+          application/json:
+            schema:
+              $ref: '../components/admin.yaml#/BackupUpload'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '409':
+        $ref: '../components/errors.yaml#/responses/Conflict'
+      '429':
+        $ref: '../components/errors.yaml#/responses/TooManyRequests'
+
+SetupUploadInspect:
+  post:
+    tags: [setupRestore]
+    operationId: inspectSetupBackup
+    summary: What restoring the uploaded archive would bring back
+    description: |
+      As `inspectUploadedBackup`. A wrong password is `400 admin.backup_password_wrong`,
+      an archive of a newer server `400 admin.backup_too_new`.
+    security: []
+    parameters:
+      - $ref: '#/SetupCodeHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/admin.yaml#/BackupPasswordEntry'
+    responses:
+      '200':
+        description: The preview
+        content:
+          application/json:
+            schema:
+              $ref: '../components/admin.yaml#/BackupPreview'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+      '409':
+        $ref: '../components/errors.yaml#/responses/Conflict'
+      '429':
+        $ref: '../components/errors.yaml#/responses/TooManyRequests'
+
+SetupUploadRestore:
+  post:
+    tags: [setupRestore]
+    operationId: restoreSetupBackup
+    summary: Set the instance up from the uploaded archive
+    description: |
+      Members, groups and the administrator come from the archive, and so does the
+      backup key -- wrapped with the password just typed, which opens the backups from
+      then on. Nobody is signed in: the wizard goes on to the sign-in screen.
+    security: []
+    parameters:
+      - $ref: '#/SetupCodeHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/admin.yaml#/BackupPasswordEntry'
+    responses:
+      '200':
+        description: Restored
+        content:
+          application/json:
+            schema:
+              $ref: '../components/admin.yaml#/RestoreResult'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+      '409':
+        $ref: '../components/errors.yaml#/responses/Conflict'
+      '429':
+        $ref: '../components/errors.yaml#/responses/TooManyRequests'
+
+SetupCodeHeader:
+  name: X-Hiwiski-Setup-Code
+  in: header
+  required: true
+  description: The setup code from the server's log, as in `SetupRequest.setupCode`.
+  schema:
+    type: string

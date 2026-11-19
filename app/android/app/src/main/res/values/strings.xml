@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The home screen widgets' texts. The app's own texts are in lib/core/l10n; the widgets are
+     native and run without the app, so theirs live here (docs/development/home-widgets.md). -->
+<resources>
+    <string name="widget_agenda_name">Upcoming events</string>
+    <string name="widget_agenda_description">The next events of the calendars you choose in Hiwiski</string>
+    <string name="widget_shopping_name">Shopping list</string>
+    <string name="widget_shopping_description">What is still to buy on a shopping list</string>
+    <string name="widget_tasks_name">Task list</string>
+    <string name="widget_tasks_description">The open tasks of a list</string>
+    <string name="widget_kanban_name">Kanban column</string>
+    <string name="widget_kanban_description">The cards in one column of a Kanban board</string>
+    <string name="widget_set_up">Tap to choose what it shows</string>
+    <string name="widget_waiting">Nothing yet — tap to open Hiwiski</string>
+    <string name="widget_gone">No longer there — tap to choose again</string>
+    <string name="widget_no_events">No upcoming events</string>
+    <string name="widget_nothing_open">Nothing open</string>
+    <string name="widget_all_day">All day</string>
+    <string name="widget_until">until %1$s</string>
+    <string name="widget_today">Today</string>
+    <string name="widget_tomorrow">Tomorrow</string>
+    <string name="widget_counts">%1$d open · %2$d done</string>
+    <string name="widget_more">+%1$d more</string>
+    <string name="widget_as_of">As of %1$s</string>
+</resources>

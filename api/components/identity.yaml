@@ -1,0 +1,519 @@
+# Members, groups, devices, invitations, login.
+#
+# There are no roles and no fine-grained permissions. Every member may do
+# everything in every module -- with their own items; what others see is decided by
+# the share. Groups remain, but only as recipients of a share.
+
+# --- Enumerations ------------------------------------------------------------
+
+ColorToken:
+  type: string
+  description: |
+    What is stored is a **token, not a hex value**: a stored hex
+    value would be unreadable in one of the two themes. The mapping from token to color
+    lives in the client, once for light and once for dark.
+  enum: [BLUE, RUST, VIOLET, GREEN, PINK, OCHRE, TEAL, SLATE]
+  example: BLUE
+
+AppearanceMode:
+  type: string
+  description: |
+    The choice belongs to the member, not the device, and is therefore kept here. It is
+    also stored locally so that the very first frame after startup is already right.
+  enum: [LIGHT, DARK, SYSTEM]
+
+DevicePlatform:
+  type: string
+  enum: [IOS, ANDROID, WEB, MACOS, WINDOWS, LINUX, UNKNOWN]
+
+InvitationValidity:
+  type: string
+  enum: [HOUR_1, HOURS_24, DAYS_7]
+
+# --- Member -------------------------------------------------------------------
+
+Member:
+  type: object
+  required: [id, username, displayName, isAdmin, colorToken]
+  properties:
+    id:
+      type: string
+      format: uuid
+    username:
+      type: string
+      description: Unique, lowercase.
+      example: anna
+    displayName:
+      type: string
+      example: Anna
+    isAdmin:
+      type: boolean
+      description: |
+        Exactly one member has this. It is assigned during setup, cannot be taken
+        away and is the only way into the server.
+
+        In domain terms the administrator has **no special rights**: they see other
+        people's tasks no more than anyone else does.
+    colorToken:
+      $ref: './identity.yaml#/ColorToken'
+    groupIds:
+      type: array
+      items:
+        type: string
+        format: uuid
+    disabled:
+      type: boolean
+      description: |
+        Disabled by the administrator (`disableMember`): no sign-in, no session, every
+        device signed out. The member and their things stay; `enableMember` lets them
+        sign in again.
+    createdAt:
+      type: string
+      format: date-time
+    avatarImageId:
+      type: string
+      format: uuid
+      nullable: true
+      description: |
+        The member's picture in the media store (`GET /images/{id}/preview`); `null`
+        shows the initial.
+
+MemberList:
+  type: object
+  required: [members]
+  properties:
+    members:
+      type: array
+      items:
+        $ref: './identity.yaml#/Member'
+
+UpdateMemberRequest:
+  type: object
+  description: |
+    What a member may change about themselves. The username stays, because it appears
+    in mentions and log lines.
+  properties:
+    displayName:
+      type: string
+    colorToken:
+      $ref: './identity.yaml#/ColorToken'
+    appearance:
+      $ref: './identity.yaml#/AppearanceMode'
+    avatarImageId:
+      type: string
+      format: uuid
+      nullable: true
+      description: |
+        A picture uploaded with this member as its carrier (`ownerType` `MEMBER`).
+    removeAvatar:
+      type: boolean
+      nullable: true
+      description: Takes the picture away; the initial shows again.
+
+CreateMemberRequest:
+  type: object
+  description: Administrator only. The way without an invitation, e.g. for the wall tablet.
+  required: [displayName, username, password]
+  properties:
+    displayName:
+      type: string
+    username:
+      type: string
+    password:
+      type: string
+      format: password
+      minLength: 8
+    colorToken:
+      $ref: './identity.yaml#/ColorToken'
+    groupIds:
+      type: array
+      items:
+        type: string
+        format: uuid
+
+# --- Group --------------------------------------------------------------------
+
+Group:
+  type: object
+  description: |
+    A freely named set of members. Serves **only for sharing**, not for permissions --
+    it carries no role.
+
+    Groups are stored as a reference and not resolved into members: whoever joins the
+    group later is included as a result.
+  required: [id, name, memberIds, position]
+  properties:
+    id:
+      type: string
+      format: uuid
+    name:
+      type: string
+      example: Parents
+    iconToken:
+      type: string
+      description: The name of a Material Symbol, e.g. `group`.
+      example: group
+    position:
+      type: integer
+    memberIds:
+      type: array
+      items:
+        type: string
+        format: uuid
+
+GroupList:
+  type: object
+  required: [groups]
+  properties:
+    groups:
+      type: array
+      items:
+        $ref: './identity.yaml#/Group'
+
+WriteGroupRequest:
+  type: object
+  required: [name]
+  properties:
+    name:
+      type: string
+    iconToken:
+      type: string
+    memberIds:
+      type: array
+      items:
+        type: string
+        format: uuid
+
+# --- Device -------------------------------------------------------------------
+
+Device:
+  type: object
+  required: [id, memberId, name, platform, createdAt, current]
+  properties:
+    id:
+      type: string
+      format: uuid
+    memberId:
+      type: string
+      format: uuid
+    name:
+      type: string
+      example: Annas iPhone
+    platform:
+      $ref: './identity.yaml#/DevicePlatform'
+    createdAt:
+      type: string
+      format: date-time
+    lastSeenAt:
+      type: string
+      format: date-time
+    lastSyncSeq:
+      type: integer
+      format: int64
+      description: |
+        Reported by the device with every pull. Only this way can the device list show
+        "3 changes waiting - offline for 12 days", and that is exactly what the design
+        asks for.
+    pendingCount:
+      type: integer
+      description: How many changes on the device are still waiting to be synced.
+    current:
+      type: boolean
+      description: The device this request comes from. It has no "sign out".
+    staySignedIn:
+      type: boolean
+      description: |
+        `false` for a session that ends 12 hours after the device was last seen.
+        Every device ends 180 days after it was last seen.
+
+DeviceList:
+  type: object
+  required: [devices]
+  properties:
+    devices:
+      type: array
+      items:
+        $ref: './identity.yaml#/Device'
+
+# --- Session ------------------------------------------------------------------
+
+Session:
+  type: object
+  required: [member, deviceId, mustChangePassword]
+  properties:
+    member:
+      $ref: './identity.yaml#/Member'
+    deviceId:
+      type: string
+      format: uuid
+    mustChangePassword:
+      type: boolean
+      description: |
+        While this is set, the session may change the password
+        (`POST /api/v1/auth/password`) and otherwise only call what carries no
+        content: `GET /api/v1/auth/session`, `POST /api/v1/auth/logout`, and the
+        public handshake and login. Everything else answers `403` with
+        `auth.password_change_required`. A state in which the user can use the app
+        and swipe the prompt away would not be a prompt.
+    appearance:
+      $ref: './identity.yaml#/AppearanceMode'
+
+SignedIn:
+  type: object
+  description: The token and the state the app continues working with.
+  required: [token, session]
+  properties:
+    token:
+      type: string
+      description: |
+        Opaque random value, stored as a hash on the server. Not a JWT: a JWT cannot be
+        revoked before it expires, but a lost phone must be lockable right away.
+    session:
+      $ref: './identity.yaml#/Session'
+
+DeviceRegistration:
+  type: object
+  description: Whoever logs in registers their device at the same time.
+  required: [deviceName, platform]
+  properties:
+    deviceName:
+      type: string
+      example: Annas iPhone
+    platform:
+      $ref: './identity.yaml#/DevicePlatform'
+    staySignedIn:
+      type: boolean
+      description: |
+        `false` means: the token is not stored permanently and expires with the
+        session. On the wall tablet that is never wanted, on a shared computer
+        always. The server ends such a session after 12 hours without a request.
+      default: true
+    installationId:
+      type: string
+      format: uuid
+      description: |
+        Names this installation of the app, the same across sign-ins. A sign-in from
+        an installation retires the devices registered from it before: the app holds
+        one token at a time, so an earlier one is dead even when its sign-out never
+        reached the server — and would otherwise linger in the device list.
+
+LoginRequest:
+  type: object
+  required: [username, password, device]
+  properties:
+    username:
+      type: string
+    password:
+      type: string
+      format: password
+    device:
+      $ref: './identity.yaml#/DeviceRegistration'
+
+ChangePasswordRequest:
+  type: object
+  required: [currentPassword, newPassword]
+  properties:
+    currentPassword:
+      type: string
+      format: password
+    newPassword:
+      type: string
+      format: password
+      minLength: 8
+
+PasswordReset:
+  type: object
+  description: |
+    The temporary password. It is shown **once** and cannot be retrieved again
+    afterwards; on the next login the user has to choose their own.
+  required: [temporaryPassword]
+  properties:
+    temporaryPassword:
+      type: string
+
+# --- Invitation ---------------------------------------------------------------
+
+CreateInvitationRequest:
+  type: object
+  required: [validity]
+  properties:
+    displayName:
+      type: string
+      description: Prefill for the name, which the invitee then confirms.
+    groupIds:
+      type: array
+      items:
+        type: string
+        format: uuid
+    validity:
+      $ref: './identity.yaml#/InvitationValidity'
+
+Invitation:
+  type: object
+  required: [id, expiresAt]
+  properties:
+    id:
+      type: string
+      format: uuid
+    code:
+      type: string
+      description: |
+        Seven characters from an alphabet without easily confused letters. It gets
+        read aloud and copied by hand, hence monospace in the UI.
+
+        **Only in the answer to `createInvitation`.** The server keeps only a hash of
+        it, like a device token, so the list of open invitations goes out without code
+        and deep link.
+      example: K7M42QX
+    displayName:
+      type: string
+    groupIds:
+      type: array
+      items:
+        type: string
+        format: uuid
+    expiresAt:
+      type: string
+      format: date-time
+    redeemedAt:
+      type: string
+      format: date-time
+    deepLink:
+      type: string
+      description: |
+        `hiwiski://invite?host=...&code=...` -- the content of the QR code. `host` is the
+        address the server was reached under, **with its scheme** and percent-encoded
+        (`host=https%3A%2F%2Fnas.example`): without the scheme a joining device assumed
+        `http://` and sent the new password in plain text to a TLS server. The URL
+        scheme must be registered in all platform projects; that is exactly what was
+        missing in an earlier version. Only in the answer to `createInvitation`,
+        like the code.
+      example: hiwiski://invite?host=http%3A%2F%2Fhiwiski.local&code=K7M42QX
+
+InvitationList:
+  type: object
+  required: [invitations]
+  properties:
+    invitations:
+      type: array
+      items:
+        $ref: './identity.yaml#/Invitation'
+
+InvitationPreview:
+  type: object
+  description: |
+    Retrievable without login. **Without this card nobody knows what they are joining**.
+  required: [familyName, invitedBy, expiresAt]
+  properties:
+    familyName:
+      type: string
+    invitedBy:
+      type: string
+      description: The display name of the inviter.
+    displayName:
+      type: string
+      description: The prefill for the name.
+    groupNames:
+      type: array
+      items:
+        type: string
+    expiresAt:
+      type: string
+      format: date-time
+
+RedeemInvitationRequest:
+  type: object
+  required: [displayName, username, password, device]
+  properties:
+    memberId:
+      type: string
+      format: uuid
+      description: |
+        The id the new member gets, when the app brings one: a device that was used
+        without a server keeps the member it created there, and every item that names it
+        stays valid. Without it the server picks one. Taken already:
+        `409 identity.id_taken`.
+    displayName:
+      type: string
+    username:
+      type: string
+    password:
+      type: string
+      format: password
+      minLength: 8
+    device:
+      $ref: './identity.yaml#/DeviceRegistration'
+
+# --- Setup --------------------------------------------------------------------
+
+SetupRequest:
+  type: object
+  description: |
+    Exactly once, for the first one. After that `setup.completed` is set and the
+    wizard is never reachable again.
+  required: [familyName, timezone, admin, device]
+  properties:
+    setupCode:
+      type: string
+      description: |
+        The one-time code the server prints to its log at every start while it is not
+        set up (`Setup code: K7M4-2QXP`), or the one `HIWISKI_SETUP_CODE` names. Without
+        it whoever reached a fresh server first became its administrator. Optional in
+        the contract only so older clients get `403 setup.code_invalid` instead of a
+        validation error; the server always requires it. Case, dashes and spaces do not
+        matter.
+      example: K7M4-2QXP
+    familyName:
+      type: string
+      example: Familie Berger
+    timezone:
+      type: string
+      description: IANA zone, prefilled from the device.
+      example: Europe/Berlin
+    admin:
+      $ref: './identity.yaml#/SetupAdmin'
+    groups:
+      type: array
+      description: |
+        Suggested are **Everyone** and **Parents** (the setup wizard uses the language of its UI), renamable, more
+        possible. Every new member goes into the first group.
+      items:
+        type: string
+    device:
+      $ref: './identity.yaml#/DeviceRegistration'
+    language:
+      type: string
+      description: |
+        The language of the wizard's UI, e.g. `de`. The product catalog is seeded in it
+        -- German or English, anything else English.
+      example: de
+    backupPassword:
+      type: string
+      format: password
+      minLength: 8
+      description: |
+        Every backup is locked with it. The server keeps only a public
+        key to encrypt with and the private key wrapped with this password -- without
+        it no backup can be restored, and nobody can reset it. Not the administrator's
+        password: `400 setup.backup_password_same`. Optional in the contract only, like
+        `setupCode`, so the code is checked first; the server always requires it
+        (`400 setup.backup_password_required`).
+
+SetupAdmin:
+  type: object
+  required: [displayName, username, password]
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: |
+        The administrator's id, when the app brings one -- see
+        `RedeemInvitationRequest.memberId`.
+    displayName:
+      type: string
+    username:
+      type: string
+    password:
+      type: string
+      format: password
+      minLength: 8

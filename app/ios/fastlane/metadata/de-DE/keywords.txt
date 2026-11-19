@@ -1,0 +1,1 @@
+familie,einkaufsliste,kanban,rezepte,termine,todo,haushalt,selfhosted,offline,datenschutz,teilen

@@ -1,0 +1,17 @@
+{{ define "main" }}
+<div class="page">
+  <article class="prose">
+    <h1>{{ .Title }}</h1>
+    {{ .Content }}
+    {{- /* Pagefind's index and interface are written next to the pages after Hugo has
+           built them (tool/site_tools.sh, release.yml); a local build has neither. */}}
+    <link rel="stylesheet" href="/pagefind/pagefind-ui.css">
+    <div id="search" data-pagefind-ignore></div>
+    <noscript><p>{{ T "searchNeedsScript" }}</p></noscript>
+  </article>
+</div>
+{{- with resources.Get "js/search.js" | minify | fingerprint }}
+<script src="/pagefind/pagefind-ui.js" defer></script>
+<script src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}" defer></script>
+{{- end }}
+{{ end }}

@@ -1,0 +1,53 @@
+#!/bin/sh
+# Maintenance commands that run without a signed-in account.
+#
+# English on purpose: these lines are read by whoever operates the server, and they end
+# up in bug reports.
+#
+# The one command that matters: resetting the administrator's own password. Every other
+# password is reset by the administrator from inside the app — but the
+# administrator has no one above them, and there is no e-mail to fall back on. Without
+# this command a locked-out administrator would need a database console.
+set -eu
+
+usage() {
+    cat <<'USAGE'
+hiwiski — maintenance commands
+
+  hiwiski reset-admin-password        set a new password for the administrator account
+  hiwiski version                     print the server version
+
+Run these inside the container:
+
+  docker compose exec app hiwiski reset-admin-password
+USAGE
+}
+
+case "${1:-}" in
+    reset-admin-password)
+        shift
+        # The image is Jib's exploded layout: no fat jar, no Boot launcher -- the
+        # application's own main class, as the container's entrypoint starts it. The
+        # classpath is quoted so the shell leaves the wildcard to java.
+        # A small heap of its own: the server's JVM already claims most of the
+        # container's memory, and on a Raspberry Pi the two together get killed.
+        exec java -Xmx256m -cp '/app/resources:/app/classes:/app/libs/*' \
+            de.danielkononov.hiwiski.HiwiskiApplication \
+            --hiwiski.command=reset-admin-password "$@"
+        ;;
+    version)
+        # Only the version, for a bug report; "unknown" if the build left none.
+        # (`exec cat … || echo` never reached the fallback: exec replaces the shell.)
+        version=$(sed -n 's/^build\.version=//p' \
+            /app/resources/META-INF/build-info.properties 2>/dev/null || true)
+        echo "${version:-unknown}"
+        ;;
+    ""|-h|--help|help)
+        usage
+        ;;
+    *)
+        echo "hiwiski: unknown command '$1'" >&2
+        usage >&2
+        exit 64
+        ;;
+esac

@@ -1,0 +1,9 @@
+{{- /* The pages of a documentation section (features, setup) beside the text. */ -}}
+{{- $section := .CurrentSection }}
+{{- if .IsSection }}{{ $section = . }}{{ end }}
+<nav class="sidebar" aria-label="{{ $section.Title }}">
+  <a href="{{ $section.RelPermalink }}"{{ if eq . $section }} aria-current="page"{{ end }}>{{ $section.LinkTitle }}</a>
+  {{- range $section.Pages.ByWeight }}
+  <a href="{{ .RelPermalink }}"{{ if eq $ . }} aria-current="page"{{ end }}>{{ .LinkTitle }}</a>
+  {{- end }}
+</nav>

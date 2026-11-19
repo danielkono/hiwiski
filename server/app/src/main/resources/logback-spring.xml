@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Log and console are English, structured, on stdout. Log lines end up in
+  bug reports and are addressed to the person who runs the server.
+
+  The second appender keeps the last lines in memory so the administrator can view and
+  export them from within the app. There is no service anything would go to.
+-->
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="BUFFER" class="de.danielkononov.hiwiski.admin.internal.LogBuffer"/>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="BUFFER"/>
+    </root>
+</configuration>

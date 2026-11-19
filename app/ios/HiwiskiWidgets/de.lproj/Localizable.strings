@@ -1,0 +1,21 @@
+/* The home screen widgets' German texts (see en.lproj/Localizable.strings). */
+"widget.agenda.name" = "Nächste Termine";
+"widget.agenda.description" = "Die nächsten Termine der Kalender, die du in Hiwiski wählst.";
+"widget.shopping.name" = "Einkaufsliste";
+"widget.shopping.description" = "Was auf einer Einkaufsliste noch fehlt.";
+"widget.tasks.name" = "Aufgabenliste";
+"widget.tasks.description" = "Die offenen Aufgaben einer Liste.";
+"widget.kanban.name" = "Kanban-Spalte";
+"widget.kanban.description" = "Die Karten einer Spalte eines Kanban-Boards.";
+"widget.setUp" = "Zum Einrichten tippen";
+"widget.waiting" = "Noch nichts da – zum Öffnen tippen";
+"widget.gone" = "Nicht mehr da – zum Neuwählen tippen";
+"widget.noEvents" = "Keine anstehenden Termine";
+"widget.nothingOpen" = "Nichts offen";
+"widget.allDay" = "Ganztägig";
+"widget.until" = "bis %@";
+"widget.today" = "Heute";
+"widget.tomorrow" = "Morgen";
+"widget.counts" = "%1$d offen · %2$d erledigt";
+"widget.more" = "+%d weitere";
+"widget.asOf" = "Stand %@";

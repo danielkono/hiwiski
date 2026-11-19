@@ -1,0 +1,270 @@
+openapi: 3.0.3
+
+info:
+  title: Hiwiski API
+  version: "2026.1"
+  description: |
+    The HTTP interface of the family app.
+
+    This file is written by hand and is the source of truth: the server interfaces and
+    the Dart client are generated from it, not the other way round.
+
+    There are two styles side by side:
+
+    * **Synced entities** go exclusively through `/api/v1/sync/pull` and
+      `/api/v1/sync/push`. For tasks, events, wiki pages and everything else that lives
+      on the device there is deliberately no CRUD over REST. A second write path would
+      have to implement validation, sharing, conflict logic and log writing a second
+      time -- and would drift from it.
+    * **Classic REST** only for login, invitations, handshake, wiki revisions, history,
+      search, imports, images and administration.
+
+    Contract rules every change must follow:
+
+    * Fields only additive and optional. Never rename, never change the meaning, never
+      make `required` after the fact.
+    * Enums are only extended. The client must survive an unknown value.
+    * `oneOf` and discriminators are avoided -- the generators, especially on the Dart
+      side, handle them poorly.
+    * Deletion only after a deprecation period.
+    * Within a year there is no break. A real break is called `/api/v2` and comes at the
+      turn of the year.
+
+    `GET /api/v1/events` is the only endpoint **outside** this spec: a long-lived SSE
+    stream cannot be expressed in OpenAPI, and the generators turn it into unusable
+    signatures on both sides.
+
+servers:
+  - url: /
+    description: The family's home server
+
+tags:
+  - name: platform
+    description: Version and capability negotiation, reachable without login
+  - name: setup
+    description: The initial setup, can be run exactly once
+  - name: auth
+    description: Login, session, password
+  - name: devices
+    description: Your own devices and revoking them
+  - name: members
+    description: The members of the family
+  - name: groups
+    description: Groups -- recipients of a share, not roles
+  - name: invitations
+    description: Invitations with code and QR
+  - name: access
+    description: Ownership and sharing — three levels, one inheritance rule
+  - name: trash
+    description: Deleted items and restoring them
+  - name: admin
+    description: Settings, backup, log — administrator only
+  - name: backupFiles
+    description: |
+      Downloading and uploading backup archives. Excluded from the Dart generation for
+      the same reason as `images`: a binary body becomes `dart:io File` there.
+  - name: setupRestore
+    description: Restoring an archive on a fresh server, from the setup wizard
+  - name: calendar
+    description: |
+      Triggering a subscription sync, importing a file, and the agenda a home screen
+      widget reads. Calendars and events themselves are written exclusively through the
+      sync.
+  - name: wiki
+    description: |
+      Revisions, references and the recipe import. The pages themselves go through the
+      sync.
+  - name: images
+    description: |
+      The media store: images on pages and recipes. Excluded from the Dart
+      generation — a binary body becomes `dart:io File` there.
+  - name: todo
+    description: |
+      What a list holds, for a home screen widget. Lists and tasks themselves go
+      exclusively through the sync.
+  - name: catalog
+    description: |
+      The product catalog and the shopping list's categories -- the only domain entities
+      without an owner and without a share.
+  - name: dashboard
+    description: |
+      The wall tablet board under its own address -- without login.
+  - name: search
+    description: |
+      Search across everything the asker may see -- and the history of an item.
+  - name: sync
+    description: |
+      Pull and push. Everything that lives on the device goes exclusively through here.
+
+paths:
+  /api/v1/handshake:
+    $ref: './paths/platform.yaml#/Handshake'
+
+  /api/v1/setup:
+    $ref: './paths/setup.yaml#/Setup'
+  /api/v1/setup/uploads:
+    $ref: './paths/setup.yaml#/SetupUploads'
+  /api/v1/setup/uploads/{id}/inspect:
+    $ref: './paths/setup.yaml#/SetupUploadInspect'
+  /api/v1/setup/uploads/{id}/restore:
+    $ref: './paths/setup.yaml#/SetupUploadRestore'
+
+  /api/v1/auth/login:
+    $ref: './paths/auth.yaml#/Login'
+  /api/v1/auth/logout:
+    $ref: './paths/auth.yaml#/Logout'
+  /api/v1/auth/session:
+    $ref: './paths/auth.yaml#/CurrentSession'
+  /api/v1/auth/password:
+    $ref: './paths/auth.yaml#/Password'
+
+  /api/v1/devices:
+    $ref: './paths/devices.yaml#/Devices'
+  /api/v1/devices/{id}:
+    $ref: './paths/devices.yaml#/Device'
+
+  /api/v1/members:
+    $ref: './paths/members.yaml#/Members'
+  /api/v1/members/{id}:
+    $ref: './paths/members.yaml#/Member'
+  /api/v1/members/{id}/password-reset:
+    $ref: './paths/members.yaml#/MemberPasswordReset'
+  /api/v1/members/{id}/disable:
+    $ref: './paths/members.yaml#/MemberDisable'
+  /api/v1/members/{id}/enable:
+    $ref: './paths/members.yaml#/MemberEnable'
+  /api/v1/members/{id}/sign-out:
+    $ref: './paths/members.yaml#/MemberSignOut'
+
+  /api/v1/groups:
+    $ref: './paths/groups.yaml#/Groups'
+  /api/v1/groups/{id}:
+    $ref: './paths/groups.yaml#/Group'
+
+  /api/v1/invitations:
+    $ref: './paths/invitations.yaml#/Invitations'
+  /api/v1/invitations/{code}:
+    $ref: './paths/invitations.yaml#/InvitationPreview'
+  /api/v1/invitations/{code}/redeem:
+    $ref: './paths/invitations.yaml#/InvitationRedeem'
+  /api/v1/invitations/{id}/revoke:
+    $ref: './paths/invitations.yaml#/InvitationRevoke'
+
+  /api/v1/items/{itemType}/{itemId}/shares:
+    $ref: './paths/access.yaml#/Shares'
+
+  /api/v1/trash:
+    $ref: './paths/admin.yaml#/Trash'
+  /api/v1/trash/{itemType}/{itemId}/restore:
+    $ref: './paths/admin.yaml#/TrashRestore'
+
+  /api/v1/admin/settings:
+    $ref: './paths/admin.yaml#/AdminSettings'
+  /api/v1/admin/backups:
+    $ref: './paths/admin.yaml#/Backups'
+  /api/v1/admin/backups/uploads:
+    $ref: './paths/admin.yaml#/BackupUploads'
+  /api/v1/admin/backups/uploads/{id}/inspect:
+    $ref: './paths/admin.yaml#/BackupUploadInspect'
+  /api/v1/admin/backups/uploads/{id}/restore:
+    $ref: './paths/admin.yaml#/BackupUploadRestore'
+  /api/v1/admin/backups/{id}/file:
+    $ref: './paths/admin.yaml#/BackupFile'
+  /api/v1/admin/backups/{id}/inspect:
+    $ref: './paths/admin.yaml#/BackupInspect'
+  /api/v1/admin/backups/{id}/restore:
+    $ref: './paths/admin.yaml#/BackupRestore'
+  /api/v1/admin/backup-password:
+    $ref: './paths/admin.yaml#/BackupPassword'
+  /api/v1/admin/backup-password/reset:
+    $ref: './paths/admin.yaml#/BackupPasswordReset'
+  /api/v1/admin/logs:
+    $ref: './paths/admin.yaml#/AdminLogs'
+
+  /api/v1/calendar/subscriptions/{subscriptionId}/refresh:
+    $ref: './paths/calendar.yaml#/RefreshSubscription'
+  /api/v1/calendar/subscriptions/preview:
+    $ref: './paths/calendar.yaml#/PreviewSubscription'
+  /api/v1/calendars/{calendarId}/import:
+    $ref: './paths/calendar.yaml#/ImportIcs'
+  /api/v1/calendar/agenda:
+    $ref: './paths/calendar.yaml#/Agenda'
+
+  /api/v1/todo/lists/{listId}/summary:
+    $ref: './paths/todo.yaml#/ListSummary'
+
+  /api/v1/wiki/pages/{pageId}/revisions:
+    $ref: './paths/wiki.yaml#/Revisions'
+  /api/v1/wiki/pages/{pageId}/revisions/{revisionId}:
+    $ref: './paths/wiki.yaml#/Revision'
+  /api/v1/links/{itemType}/{itemId}:
+    $ref: './paths/wiki.yaml#/Links'
+  /api/v1/images:
+    $ref: './paths/images.yaml#/Images'
+  /api/v1/images/{id}:
+    $ref: './paths/images.yaml#/Image'
+  /api/v1/images/{id}/preview:
+    $ref: './paths/images.yaml#/ImagePreview'
+  /api/v1/catalog/products:
+    $ref: './paths/catalog.yaml#/Products'
+  /api/v1/catalog/products/aisle:
+    $ref: './paths/catalog.yaml#/ProductAisle'
+  /api/v1/catalog/aisles:
+    $ref: './paths/catalog.yaml#/Aisles'
+  /api/v1/catalog/aisles/order:
+    $ref: './paths/catalog.yaml#/AisleOrder'
+  /api/v1/catalog/aisles/{id}:
+    $ref: './paths/catalog.yaml#/Aisle'
+  /api/v1/wiki/recipes/import:
+    $ref: './paths/wiki.yaml#/ImportRecipe'
+
+  /api/v1/boards/{token}:
+    $ref: './paths/dashboard.yaml#/PublicBoard'
+  /api/v1/boards/{token}/ticket:
+    $ref: './paths/dashboard.yaml#/PublicBoardTicket'
+  /api/v1/boards/{token}/content:
+    $ref: './paths/dashboard.yaml#/PublicBoardContent'
+
+  /api/v1/search:
+    $ref: './paths/search.yaml#/Search'
+  /api/v1/history/{itemType}/{itemId}:
+    $ref: './paths/search.yaml#/ItemHistory'
+
+  /api/v1/sync/pull:
+    $ref: './paths/sync.yaml#/Pull'
+  /api/v1/sync/push:
+    $ref: './paths/sync.yaml#/Push'
+  /api/v1/events/ticket:
+    $ref: './paths/sync.yaml#/EventTicket'
+
+components:
+  schemas:
+    # The error shape is part of the contract, even when no endpoint names it right now.
+    # Without this entry the generators would only produce it once the first error case
+    # is documented -- and until then the client would have no type for it.
+    ApiError:
+      $ref: './components/errors.yaml#/ApiError'
+
+    # The field schemas of the synced entities. They sit next to the envelope, not
+    # inside it: `ChangeEnvelope.fields` is free-form so that an unknown type does not
+    # break an older app. They are binding all the same.
+    TodoListFields:
+      $ref: './components/todo.yaml#/TodoListFields'
+    TodoFields:
+      $ref: './components/todo.yaml#/TodoFields'
+    TodoOccurrenceFields:
+      $ref: './components/todo.yaml#/TodoOccurrenceFields'
+    TagFields:
+      $ref: './components/tag.yaml#/TagFields'
+
+  securitySchemes:
+    deviceToken:
+      type: http
+      scheme: bearer
+      description: |
+        Opaque device token, stored as a hash on the server and revocable at any time.
+        Not a JWT: a JWT cannot be revoked before it expires, but a lost phone must be
+        lockable right away.
+
+security:
+  - deviceToken: []

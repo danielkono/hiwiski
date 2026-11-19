@@ -1,0 +1,146 @@
+Images:
+  post:
+    tags: [images]
+    operationId: uploadImage
+    summary: Upload an image — always with a carrier
+    description: |
+      **There is no upload without a target**: `ownerType` and `ownerItemId` are
+      required, and whoever uploads must be allowed to edit the carrier. That is the
+      difference between a media store and a file module, and it is written into the
+      contract here.
+
+      The same image (same `sha256`) is stored on disk only once, even on two recipes.
+      Next to the original, a preview with a longest edge of 640 is created.
+
+      JPEG, PNG, GIF and WebP are accepted, recognized by their first bytes. The size is
+      read from the header before anything is decoded (for a GIF the logical screen
+      and every frame): more than 100 megapixels is
+      `400 media.too_large`, a header that says no size is `400 media.not_an_image` --
+      for WebP as for the others. Every format gets a JPEG preview, an animated image
+      one of its first frame (a WebP over 16 megapixels none: its preview is the original).
+
+      The original is stored without its metadata: EXIF and XMP (GPS position, time,
+      camera), IPTC, comments and PNG text chunks are dropped, the pixels stay as they
+      are, and a JPEG keeps only its orientation. Data after a JPEG's end (a Motion
+      Photo's video) is dropped; the pictures of a multi-picture JPEG (MPF) stay.
+      `sha256` and `byteSize` are those of the stored bytes.
+
+      **Limits**: each member may store up to a quota
+      (`HIWISKI_MEDIA_QUOTA_PER_MEMBER`, 5 GB by default), counted over the images they
+      uploaded; past it the upload is `413 media.quota_exceeded` with `usedBytes` and
+      `quotaBytes`. Only a few uploads are processed at once
+      (`HIWISKI_MEDIA_PARALLEL_UPLOADS`, 4 by default); one that waited half a minute
+      for its turn is `503 media.busy` with `Retry-After`.
+
+      The image is then set on the carrier through the sync (`imageId`) — the upload
+      does not change any item.
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [ownerType, ownerItemId, file]
+            properties:
+              ownerType:
+                type: string
+                description: |
+                  `WIKI_PAGE` — pages and recipes —, `TODO_LIST` and `TODO` (images in
+                  a list's or a task's description), `EVENT` (images in an event's note) or `MEMBER`, one's
+                  own picture (`ownerItemId` is then one's own member id). A member's
+                  picture is visible to the whole family.
+              ownerItemId:
+                type: string
+                format: uuid
+              id:
+                type: string
+                format: uuid
+                description: |
+                  The image's id, when the app brings one: an image added without a
+                  server keeps the id its carrier already points to. The
+                  same id from the same member for the same carrier again is the same
+                  upload and answers with the stored image; anything else under a taken
+                  id is `409 media.id_taken`. So is a new id that an item the uploader
+                  can see but not edit already names (another page's text, another
+                  member's picture): who may only read an item does not decide what
+                  its images show. The `409` for a taken id is the same whether or
+                  not the uploader can see the image that has it; an item the
+                  uploader cannot see that names a new id is not looked at, and the
+                  id answers as a fresh one. Two uploads of one new id at the same
+                  time are answered as if one came after the other.
+              file:
+                type: string
+                format: binary
+    responses:
+      '201':
+        description: The stored image
+        content:
+          application/json:
+            schema:
+              $ref: '../components/media.yaml#/ImageInfo'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+      '409':
+        $ref: '../components/errors.yaml#/responses/Conflict'
+      '413':
+        $ref: '../components/errors.yaml#/responses/PayloadTooLarge'
+      '503':
+        $ref: '../components/errors.yaml#/responses/ServiceUnavailable'
+
+Image:
+  get:
+    tags: [images]
+    operationId: getImage
+    summary: The original
+    description: Visible when the carrier is visible — no share of its own.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: The bytes
+        content:
+          image/*:
+            schema:
+              type: string
+              format: binary
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+
+ImagePreview:
+  get:
+    tags: [images]
+    operationId: getImagePreview
+    summary: The preview (longest edge 640)
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: The bytes
+        content:
+          image/*:
+            schema:
+              type: string
+              format: binary
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+

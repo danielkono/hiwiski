@@ -1,0 +1,21 @@
+{{ define "main" }}
+<div class="page">
+  <article class="prose">
+    <h1>{{ .Title }}</h1>
+    {{ .Content }}
+    {{- with resources.Get "CHANGELOG.md" }}
+    {{- partial "no-raw-html.html" (dict "name" "CHANGELOG.md" "text" .Content "page" $.Page) }}
+    <section class="changelog" lang="en">
+      {{- if ne site.Language.Lang "en" }}<p class="note">{{ T "releaseNotesEnglish" }}</p>{{ end }}
+      {{- /* The released versions only: the file's own title and introduction are
+             for the repository, and what is not released yet is not news. */ -}}
+      {{- range after 1 (split .Content "\n## ") }}
+      {{- if not (hasPrefix . "Unreleased") }}
+      {{ printf "## %s" . | $.Page.RenderString (dict "display" "block") }}
+      {{- end }}
+      {{- end }}
+    </section>
+    {{- end }}
+  </article>
+</div>
+{{ end }}

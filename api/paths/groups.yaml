@@ -1,0 +1,87 @@
+Groups:
+  get:
+    tags: [groups]
+    operationId: listGroups
+    summary: The family's groups
+    responses:
+      '200':
+        description: All groups
+        content:
+          application/json:
+            schema:
+              $ref: '../components/identity.yaml#/GroupList'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+  post:
+    tags: [groups]
+    operationId: createGroup
+    summary: Create a group
+    description: Administrator only.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/identity.yaml#/WriteGroupRequest'
+    responses:
+      '201':
+        description: Created
+        content:
+          application/json:
+            schema:
+              $ref: '../components/identity.yaml#/Group'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+
+Group:
+  patch:
+    tags: [groups]
+    operationId: updateGroup
+    summary: Change a group
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/identity.yaml#/WriteGroupRequest'
+    responses:
+      '200':
+        description: Changed
+        content:
+          application/json:
+            schema:
+              $ref: '../components/identity.yaml#/Group'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+  delete:
+    tags: [groups]
+    operationId: deleteGroup
+    summary: Dissolve a group
+    description: |
+      The members stay. Shares with this group disappear along with it -- whatever goes
+      with a deletion must be listed.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Dissolved
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'

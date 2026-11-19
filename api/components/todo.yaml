@@ -1,0 +1,259 @@
+# The field schemas of the task entities.
+#
+# They sit **next to** the envelope, not inside it: `ChangeEnvelope.fields` is
+# free-form in the spec so that an unknown type does not break an older app.
+# These schemas still state bindingly what goes into `fields` -- they are
+# the contract both sides code against.
+
+TodoListKind:
+  type: string
+  description: |
+    Cannot be changed after creation: a shopping list has amounts and aisles, a task
+    list has due dates. The one exception: `STANDARD` may become
+    `KANBAN`; every other change is rejected with `todo.kind_locked`.
+  enum: [STANDARD, SHOPPING, KANBAN]
+
+KanbanColumn:
+  type: object
+  description: |
+    A column of a Kanban board. A card names it by `id`, so renaming or
+    recoloring a column moves no card.
+  required: [id, name, done]
+  properties:
+    id:
+      type: string
+      format: uuid
+    name:
+      type: string
+    colorToken:
+      $ref: './identity.yaml#/ColorToken'
+    done:
+      type: boolean
+      description: |
+        The done column -- exactly one per board. A card in it is `DONE`, a card in any
+        other `OPEN`.
+
+TodoStatus:
+  type: string
+  enum: [OPEN, DONE]
+
+TodoListFields:
+  type: object
+  description: Entity type `TODO_LIST`. Container for `TODO`.
+  properties:
+    name:
+      type: string
+    kind:
+      $ref: './todo.yaml#/TodoListKind'
+    colorToken:
+      $ref: './identity.yaml#/ColorToken'
+    position:
+      type: integer
+    assignees:
+      type: array
+      description: |
+        Members **and** groups. Assignees see the list automatically and may edit it.
+      items:
+        type: string
+        format: uuid
+    tags:
+      $ref: './tag.yaml#/TagIds'
+    columns:
+      type: array
+      nullable: true
+      description: |
+        Only on `KANBAN`: the columns in their order, replaced as a whole. 2 to 8, distinct
+        ids, exactly one `done` -- otherwise `todo.kanban_columns_invalid`
+        (Kanban).
+      items:
+        $ref: './todo.yaml#/KanbanColumn'
+    archivedAt:
+      type: string
+      format: date-time
+      nullable: true
+      description: |
+        Set while the list is archived: kept, read-only, out of the
+        overview. Its tasks count as archived with it. `null` restores it.
+    archivedBy:
+      type: string
+      format: uuid
+      nullable: true
+
+TodoFields:
+  type: object
+  description: Entity type `TODO`. Inherits its share from the list.
+  properties:
+    listId:
+      type: string
+      format: uuid
+    title:
+      type: string
+    description:
+      type: string
+      description: Markdown. References like `#TD-14` become chips when rendered.
+    status:
+      $ref: './todo.yaml#/TodoStatus'
+    dueDate:
+      type: string
+      format: date
+    dueTime:
+      type: string
+      description: Local time without zone, `HH:mm`.
+      example: "17:30"
+    rrule:
+      type: string
+      description: |
+        The recurrence rule on the task itself; the occurrences are produced when
+        displayed.
+        Not on a Kanban board (`todo.kanban_no_repeat`).
+      example: FREQ=WEEKLY;BYDAY=MO
+    assignees:
+      type: array
+      description: |
+        Members **and** groups. An assignment shares automatically -- otherwise someone
+        assigns and the assignee sees nothing.
+      items:
+        type: string
+        format: uuid
+    position:
+      type: integer
+    amount:
+      type: number
+      description: Only on the shopping list.
+    unit:
+      type: string
+    productId:
+      type: string
+      format: uuid
+    columnId:
+      type: string
+      format: uuid
+      nullable: true
+      description: |
+        On a Kanban board: the column the card stands in. A `DONE` card stands in the
+        done column whatever this says; an unknown column means the first one
+        (Kanban).
+    tags:
+      $ref: './tag.yaml#/TagIds'
+
+TodoOccurrenceFields:
+  type: object
+  description: |
+    Entity type `TODO_OCCURRENCE`. A checked-off occurrence of a series.
+
+    The server **adds the delivered occurrences instead of replacing the list**.
+    Otherwise the second device loses its check mark when both check off different
+    occurrences offline. Each occurrence is therefore an entity of its own
+    with its own identity -- not an element in a field of the task.
+  properties:
+    todoId:
+      type: string
+      format: uuid
+    occurrenceDate:
+      type: string
+      format: date
+    doneAt:
+      type: string
+      format: date-time
+    doneBy:
+      type: string
+      format: uuid
+    skipped:
+      type: boolean
+
+ListSummary:
+  type: object
+  description: |
+    A list for a home screen widget.
+
+    **No enums in here**, on purpose: the widgets' clients are generated in Swift and
+    Kotlin, and theirs throw on a value they do not know -- where the Dart client maps it
+    to a placeholder. A field that would be an enum is a string, and the widget falls
+    back on an unknown one.
+  required: [position, listId, name, kind, openCount, doneCount, items, truncated]
+  properties:
+    position:
+      type: integer
+      format: int64
+      description: |
+        The server's change position when it answered. The widget keeps the newer of
+        this answer and the app's own picture of the same list.
+    listId:
+      type: string
+      format: uuid
+    name:
+      type: string
+    kind:
+      type: string
+      description: The list's kind (`STANDARD`, `SHOPPING`, `KANBAN`), as a string.
+    colorToken:
+      type: string
+      nullable: true
+      description: The list's color token, as a string; unknown falls back to `SLATE`.
+    archived:
+      type: boolean
+      description: An archived list is read-only; the widget still shows it.
+    openCount:
+      type: integer
+      description: The open entries of the whole list (the whole board).
+    doneCount:
+      type: integer
+      description: The done entries of the whole list (the whole board).
+    column:
+      $ref: './todo.yaml#/ListSummaryColumn'
+    items:
+      type: array
+      description: |
+        The open entries in the list's order -- or, with a column, the cards standing
+        in it, done ones too if it is a done column.
+      items:
+        $ref: './todo.yaml#/ListSummaryItem'
+    truncated:
+      type: boolean
+      description: Whether there were more entries than the limit let through.
+
+ListSummaryColumn:
+  type: object
+  description: The column asked for, when the board has it.
+  required: [id, name, done]
+  properties:
+    id:
+      type: string
+      format: uuid
+    name:
+      type: string
+    colorToken:
+      type: string
+      nullable: true
+    done:
+      type: boolean
+    count:
+      type: integer
+      description: How many cards stand in the column.
+
+ListSummaryItem:
+  type: object
+  required: [todoId, title, done]
+  properties:
+    todoId:
+      type: string
+      format: uuid
+    title:
+      type: string
+    done:
+      type: boolean
+    amount:
+      type: number
+      nullable: true
+      description: Only on the shopping list.
+    unit:
+      type: string
+      nullable: true
+    dueDate:
+      type: string
+      format: date
+      nullable: true
+    dueTime:
+      type: string
+      nullable: true
+      description: Local time without zone, `HH:mm`.

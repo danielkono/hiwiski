@@ -1,0 +1,97 @@
+# The product catalog a fresh instance starts with.
+# name<TAB>category key<TAB>usual unit (optional)
+Apples	produce	kg
+Bananas	produce
+Pears	produce
+Lemons	produce
+Oranges	produce
+Grapes	produce	g
+Berries	produce	g
+Tomatoes	produce
+Cucumber	produce
+Bell peppers	produce
+Onions	produce
+Garlic	produce
+Ginger	produce	g
+Potatoes	produce	kg
+Carrots	produce
+Lettuce	produce
+Broccoli	produce
+Zucchini	produce
+Mushrooms	produce	g
+Pumpkin	produce
+Butternut squash	produce
+Parsley	produce	bunch
+Chives	produce	bunch
+Basil	produce
+Avocado	produce
+Leek	produce
+Spinach	produce	g
+Bread	bakery
+Wholegrain bread	bakery
+Bread rolls	bakery
+Toast	bakery
+Bagels	bakery
+Ground beef	meat_seafood	g
+Chicken	meat_seafood	g
+Beef	meat_seafood	g
+Salmon	meat_seafood	g
+Ham	deli	g
+Sausages	deli	g
+Tofu	deli	g
+Milk	dairy_eggs	l
+Oat milk	dairy_eggs	l
+Butter	dairy_eggs	g
+Yogurt	dairy_eggs	g
+Cream	dairy_eggs	ml
+Sour cream	dairy_eggs	g
+Cheese	dairy_eggs	g
+Feta	dairy_eggs	g
+Mozzarella	dairy_eggs
+Parmesan	dairy_eggs	g
+Eggs	dairy_eggs
+Oats	breakfast	g
+Cereal	breakfast	g
+Honey	breakfast
+Jam	breakfast
+Peanut butter	breakfast
+Coffee	breakfast	g
+Tea	breakfast
+Flour	pantry	kg
+Sugar	pantry	kg
+Rice	pantry	g
+Pasta	pantry	g
+Spaghetti	pantry	g
+Lentils	pantry	g
+Vegetable stock	pantry	ml
+Coconut milk	pantry	ml
+Canned tomatoes	pantry	g
+Salt	spices_condiments
+Pepper	spices_condiments
+Oil	spices_condiments	ml
+Olive oil	spices_condiments	ml
+Vinegar	spices_condiments	ml
+Ketchup	spices_condiments
+Chocolate	snacks_sweets
+Cookies	snacks_sweets
+Chips	snacks_sweets
+Water	beverages	l
+Juice	beverages	l
+Apple juice	beverages	l
+Beer	beverages
+Wine	beverages
+Frozen peas	frozen	g
+Pizza	frozen
+Ice cream	frozen
+Diapers	baby
+Wet wipes	baby
+Toothpaste	personal_care
+Shampoo	personal_care
+Shower gel	personal_care
+Dish soap	household
+Laundry detergent	household
+Toilet paper	household
+Paper towels	household
+Trash bags	household
+Cat food	pet
+Dog food	pet

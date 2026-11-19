@@ -1,0 +1,118 @@
+Revisions:
+  get:
+    tags: [wiki]
+    operationId: listRevisions
+    summary: The history of a page
+    description: |
+      Revisions go through REST, not through the sync: they never change, can be of any
+      length and are rarely needed -- mirroring them to every device would be the most
+      expensive way of almost never looking at them.
+    parameters:
+      - name: pageId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: The revisions, newest first
+        content:
+          application/json:
+            schema:
+              $ref: '../components/wiki.yaml#/RevisionList'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+
+Revision:
+  get:
+    tags: [wiki]
+    operationId: getRevision
+    summary: A single version for reading
+    parameters:
+      - name: pageId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: revisionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: The version including its text
+        content:
+          application/json:
+            schema:
+              $ref: '../components/wiki.yaml#/Revision'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+
+Links:
+  get:
+    tags: [wiki]
+    operationId: getLinks
+    summary: References in both directions
+    description: |
+      Whatever the reader may not see is left out entirely instead of showing "access
+      denied" -- existence is information too.
+    parameters:
+      - name: itemType
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Where it points and who points to it
+        content:
+          application/json:
+            schema:
+              $ref: '../components/wiki.yaml#/LinkList'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+
+ImportRecipe:
+  post:
+    tags: [wiki]
+    operationId: importRecipe
+    summary: Fetch a recipe from an address and parse it
+    description: |
+      The server fetches and parses; nothing is saved until after the **review screen**.
+      `recipeIngredient` is free text and never parses completely --
+      lines parsed with low confidence are marked and can be corrected.
+
+      The outgoing request checks the **resolved IP** against private ranges, loopback,
+      link-local and metadata addresses -- before **and after** every redirect.
+      Otherwise the import becomes a tool for reaching the router.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/wiki.yaml#/ImportRecipeRequest'
+    responses:
+      '200':
+        description: The parsed recipe, not yet saved
+        content:
+          application/json:
+            schema:
+              $ref: '../components/wiki.yaml#/ParsedRecipe'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'

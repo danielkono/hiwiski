@@ -1,0 +1,89 @@
+PublicBoard:
+  get:
+    tags: [dashboard]
+    operationId: getPublicBoard
+    summary: The dashboard under its own address
+    description: |
+      **Without login, does not expire, revocable**.
+
+      A wall tablet as a full account would bring along a lot of questions nobody
+      wants to answer -- a token without expiry in the keychain, an app that never
+      logs out, a way out of full screen without a keyboard. The address solves all
+      three.
+
+      What is delivered is **only** what the board's owner may see: the session of
+      this address is restricted to them and cannot do anything they cannot.
+    security: []
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: The board with its tiles
+        content:
+          application/json:
+            schema:
+              $ref: '../components/dashboard.yaml#/BoardView'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+
+PublicBoardTicket:
+  post:
+    tags: [dashboard]
+    operationId: createDashboardTicket
+    summary: A ticket for this board's event stream
+    description: |
+      The stream needs a ticket because an SSE connection cannot be opened with a
+      header. The ticket is short-lived and runs in the board owner's
+      name; the stream carries only change positions, never content. A stream opened
+      before the address was regenerated keeps running until it times out (30
+      minutes) -- what it signals cannot be read without a valid address.
+    security: []
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: The ticket
+        content:
+          application/json:
+            schema:
+              $ref: '../components/dashboard.yaml#/DashboardTicket'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+
+PublicBoardContent:
+  get:
+    tags: [dashboard]
+    operationId: getPublicBoardContent
+    summary: What this board's tiles show
+    description: |
+      The items the tiles name -- their calendars and events, their lists and tasks,
+      their pages -- for a wall tablet without a sign-in. Without them,
+      every data tile on the kiosk was empty, or showed whatever member happened to be
+      signed in on that browser.
+
+      Only what the board's owner may see, as a pull would deliver it to them: the same
+      envelopes, so the device stores them the way it stores synced items.
+    security: []
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: The items, containers before their content
+        content:
+          application/json:
+            schema:
+              $ref: '../components/dashboard.yaml#/BoardContent'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'

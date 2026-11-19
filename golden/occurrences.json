@@ -1,0 +1,297 @@
+{
+  "description": "Expanding an event into the occurrences of a window: the three time forms, multi-day events and the exceptions of a series. Checked by the app (EventExpander) and the server (EventOccurrences, behind the agenda of the home screen widget).",
+  "note": "The window is half-open, [from, to). Local times have no zone; RECURRING and ALL_DAY events are read in local time. TIMED events are instants: their cases give the window and the expected times in UTC, with a Z, so that the result does not depend on the zone of the machine the test runs on. An exception is keyed by the original start of its occurrence, in local time to the minute. Multi-day series stay clear of a clock change: the app adds a series' length on the device's clock, the server on the wall clock, and the two differ by the hour the clocks move.",
+  "cases": [
+    {
+      "name": "a timed event inside the window",
+      "why": "The everyday case.",
+      "event": {
+        "timeForm": "TIMED",
+        "startsAt": "2026-10-12T08:00:00Z",
+        "endsAt": "2026-10-12T09:00:00Z"
+      },
+      "from": "2026-10-12T00:00Z",
+      "to": "2026-10-13T00:00Z",
+      "expected": [
+        { "start": "2026-10-12T08:00Z", "end": "2026-10-12T09:00Z", "allDay": false, "moved": false }
+      ]
+    },
+    {
+      "name": "a timed event that began before the window and still runs",
+      "why": "A party that started last night is still on this morning's agenda.",
+      "event": {
+        "timeForm": "TIMED",
+        "startsAt": "2026-10-11T22:00:00Z",
+        "endsAt": "2026-10-12T02:00:00Z"
+      },
+      "from": "2026-10-12T00:00Z",
+      "to": "2026-10-13T00:00Z",
+      "expected": [
+        { "start": "2026-10-11T22:00Z", "end": "2026-10-12T02:00Z", "allDay": false, "moved": false }
+      ]
+    },
+    {
+      "name": "a timed event that ended before the window",
+      "why": "What is over is not on the agenda.",
+      "event": {
+        "timeForm": "TIMED",
+        "startsAt": "2026-10-11T20:00:00Z",
+        "endsAt": "2026-10-11T21:00:00Z"
+      },
+      "from": "2026-10-12T00:00Z",
+      "to": "2026-10-13T00:00Z",
+      "expected": []
+    },
+    {
+      "name": "a timed event without an end",
+      "why": "An event without an end lasts no time; it must not vanish or run on forever.",
+      "event": {
+        "timeForm": "TIMED",
+        "startsAt": "2026-10-12T08:00:00Z"
+      },
+      "from": "2026-10-12T00:00Z",
+      "to": "2026-10-13T00:00Z",
+      "expected": [
+        { "start": "2026-10-12T08:00Z", "end": "2026-10-12T08:00Z", "allDay": false, "moved": false }
+      ]
+    },
+    {
+      "name": "an all-day event on its day",
+      "why": "A date, not a point in time: 12 October in every zone.",
+      "event": {
+        "timeForm": "ALL_DAY",
+        "startDate": "2026-10-12",
+        "endDate": "2026-10-12"
+      },
+      "from": "2026-10-12T00:00",
+      "to": "2026-10-13T00:00",
+      "expected": [
+        { "start": "2026-10-12T00:00", "end": "2026-10-12T00:00", "allDay": true, "moved": false }
+      ]
+    },
+    {
+      "name": "a multi-day all-day event that began before the window",
+      "why": "The holidays started on Friday and still belong to Monday. The end day is inclusive.",
+      "event": {
+        "timeForm": "ALL_DAY",
+        "startDate": "2026-10-09",
+        "endDate": "2026-10-14"
+      },
+      "from": "2026-10-12T00:00",
+      "to": "2026-10-15T00:00",
+      "expected": [
+        { "start": "2026-10-09T00:00", "end": "2026-10-14T00:00", "allDay": true, "moved": false }
+      ]
+    },
+    {
+      "name": "an all-day event that ended the day before",
+      "why": "The inclusive end day must not reach into the next one.",
+      "event": {
+        "timeForm": "ALL_DAY",
+        "startDate": "2026-10-10",
+        "endDate": "2026-10-11"
+      },
+      "from": "2026-10-12T00:00",
+      "to": "2026-10-13T00:00",
+      "expected": []
+    },
+    {
+      "name": "a weekly series keeps its time across the clock change",
+      "why": "Every Monday 8:00 stays 8:00 after the clocks go back on 25 October.",
+      "event": {
+        "timeForm": "RECURRING",
+        "localStart": "2026-10-19T08:00",
+        "localEnd": "2026-10-19T09:00",
+        "timeZone": "Europe/Berlin",
+        "rrule": "FREQ=WEEKLY;BYDAY=MO"
+      },
+      "from": "2026-10-19T00:00",
+      "to": "2026-11-03T00:00",
+      "expected": [
+        { "start": "2026-10-19T08:00", "end": "2026-10-19T09:00", "allDay": false, "moved": false },
+        { "start": "2026-10-26T08:00", "end": "2026-10-26T09:00", "allDay": false, "moved": false },
+        { "start": "2026-11-02T08:00", "end": "2026-11-02T09:00", "allDay": false, "moved": false }
+      ]
+    },
+    {
+      "name": "a cancelled occurrence is left out",
+      "why": "The lesson that does not take place must not be on anyone's agenda.",
+      "event": {
+        "timeForm": "RECURRING",
+        "localStart": "2026-10-19T08:00",
+        "localEnd": "2026-10-19T09:00",
+        "timeZone": "Europe/Berlin",
+        "rrule": "FREQ=WEEKLY;BYDAY=MO",
+        "exceptions": { "2026-10-26T08:00": { "cancelled": true } }
+      },
+      "from": "2026-10-19T00:00",
+      "to": "2026-11-03T00:00",
+      "expected": [
+        { "start": "2026-10-19T08:00", "end": "2026-10-19T09:00", "allDay": false, "moved": false },
+        { "start": "2026-11-02T08:00", "end": "2026-11-02T09:00", "allDay": false, "moved": false }
+      ]
+    },
+    {
+      "name": "a moved occurrence shows at its new time",
+      "why": "Moved to Tuesday afternoon, with an end of its own, and in the order of its new day.",
+      "event": {
+        "timeForm": "RECURRING",
+        "localStart": "2026-10-19T08:00",
+        "localEnd": "2026-10-19T09:00",
+        "timeZone": "Europe/Berlin",
+        "rrule": "FREQ=WEEKLY;BYDAY=MO",
+        "exceptions": { "2026-10-26T08:00": { "start": "2026-10-27T17:00", "end": "2026-10-27T18:30" } }
+      },
+      "from": "2026-10-19T00:00",
+      "to": "2026-11-03T00:00",
+      "expected": [
+        { "start": "2026-10-19T08:00", "end": "2026-10-19T09:00", "allDay": false, "moved": false },
+        { "start": "2026-10-27T17:00", "end": "2026-10-27T18:30", "allDay": false, "moved": true },
+        { "start": "2026-11-02T08:00", "end": "2026-11-02T09:00", "allDay": false, "moved": false }
+      ]
+    },
+    {
+      "name": "a moved occurrence without an end keeps the series' length",
+      "why": "Only the start was moved; the lesson still takes an hour.",
+      "event": {
+        "timeForm": "RECURRING",
+        "localStart": "2026-10-19T08:00",
+        "localEnd": "2026-10-19T09:00",
+        "timeZone": "Europe/Berlin",
+        "rrule": "FREQ=WEEKLY;BYDAY=MO",
+        "exceptions": { "2026-11-02T08:00": { "start": "2026-11-02T10:00" } }
+      },
+      "from": "2026-11-02T00:00",
+      "to": "2026-11-03T00:00",
+      "expected": [
+        { "start": "2026-11-02T10:00", "end": "2026-11-02T11:00", "allDay": false, "moved": true }
+      ]
+    },
+    {
+      "name": "an occurrence moved into the window from outside it",
+      "why": "Monday's lesson moved to the Friday before: the expansion only reaches the original starts inside the window, so it has to look for the exceptions as well.",
+      "event": {
+        "timeForm": "RECURRING",
+        "localStart": "2026-10-19T08:00",
+        "localEnd": "2026-10-19T09:00",
+        "timeZone": "Europe/Berlin",
+        "rrule": "FREQ=WEEKLY;BYDAY=MO",
+        "exceptions": { "2026-10-26T08:00": { "start": "2026-10-23T08:00", "end": "2026-10-23T09:00" } }
+      },
+      "from": "2026-10-23T00:00",
+      "to": "2026-10-26T00:00",
+      "expected": [
+        { "start": "2026-10-23T08:00", "end": "2026-10-23T09:00", "allDay": false, "moved": true }
+      ]
+    },
+    {
+      "name": "an occurrence moved out of the window is gone from it",
+      "why": "Its original day no longer has it.",
+      "event": {
+        "timeForm": "RECURRING",
+        "localStart": "2026-10-19T08:00",
+        "localEnd": "2026-10-19T09:00",
+        "timeZone": "Europe/Berlin",
+        "rrule": "FREQ=WEEKLY;BYDAY=MO",
+        "exceptions": { "2026-10-26T08:00": { "start": "2026-10-28T08:00", "end": "2026-10-28T09:00" } }
+      },
+      "from": "2026-10-26T00:00",
+      "to": "2026-10-27T00:00",
+      "expected": []
+    },
+    {
+      "name": "an exception left by an earlier rule is ignored",
+      "why": "The series moved from Wednesdays to Mondays; the old Wednesday's exception is no occurrence of the rule any more.",
+      "event": {
+        "timeForm": "RECURRING",
+        "localStart": "2026-10-19T08:00",
+        "localEnd": "2026-10-19T09:00",
+        "timeZone": "Europe/Berlin",
+        "rrule": "FREQ=WEEKLY;BYDAY=MO",
+        "exceptions": { "2026-10-21T08:00": { "start": "2026-10-23T10:00", "end": "2026-10-23T11:00" } }
+      },
+      "from": "2026-10-23T00:00",
+      "to": "2026-10-24T00:00",
+      "expected": []
+    },
+    {
+      "name": "a weekend series that began before the window still runs into it",
+      "why": "Friday evening to Sunday noon belongs to Saturday too.",
+      "event": {
+        "timeForm": "RECURRING",
+        "localStart": "2026-11-06T18:00",
+        "localEnd": "2026-11-08T12:00",
+        "timeZone": "Europe/Berlin",
+        "rrule": "FREQ=WEEKLY;BYDAY=FR"
+      },
+      "from": "2026-11-14T00:00",
+      "to": "2026-11-15T00:00",
+      "expected": [
+        { "start": "2026-11-13T18:00", "end": "2026-11-15T12:00", "allDay": false, "moved": false }
+      ]
+    },
+    {
+      "name": "a yearly birthday as an all-day series",
+      "why": "Expanded over dates, years after its first day.",
+      "event": {
+        "timeForm": "ALL_DAY",
+        "startDate": "2020-11-14",
+        "endDate": "2020-11-14",
+        "rrule": "FREQ=YEARLY"
+      },
+      "from": "2026-11-12T00:00",
+      "to": "2026-11-19T00:00",
+      "expected": [
+        { "start": "2026-11-14T00:00", "end": "2026-11-14T00:00", "allDay": true, "moved": false }
+      ]
+    },
+    {
+      "name": "a cancelled day of an all-day series",
+      "why": "The exception's key is the day at midnight.",
+      "event": {
+        "timeForm": "ALL_DAY",
+        "startDate": "2026-11-02",
+        "endDate": "2026-11-02",
+        "rrule": "FREQ=WEEKLY;BYDAY=MO",
+        "exceptions": { "2026-11-09T00:00": { "cancelled": true } }
+      },
+      "from": "2026-11-02T00:00",
+      "to": "2026-11-17T00:00",
+      "expected": [
+        { "start": "2026-11-02T00:00", "end": "2026-11-02T00:00", "allDay": true, "moved": false },
+        { "start": "2026-11-16T00:00", "end": "2026-11-16T00:00", "allDay": true, "moved": false }
+      ]
+    },
+    {
+      "name": "a moved day of an all-day series",
+      "why": "Moved from Monday to Wednesday, it is a whole day on Wednesday.",
+      "event": {
+        "timeForm": "ALL_DAY",
+        "startDate": "2026-11-02",
+        "endDate": "2026-11-02",
+        "rrule": "FREQ=WEEKLY;BYDAY=MO",
+        "exceptions": { "2026-11-09T00:00": { "start": "2026-11-11T00:00", "end": "2026-11-11T00:00" } }
+      },
+      "from": "2026-11-09T00:00",
+      "to": "2026-11-12T00:00",
+      "expected": [
+        { "start": "2026-11-11T00:00", "end": "2026-11-11T00:00", "allDay": true, "moved": true }
+      ]
+    },
+    {
+      "name": "a multi-day all-day series that began before the window",
+      "why": "Every weekend from Friday to Sunday: on Saturday the one that began on Friday.",
+      "event": {
+        "timeForm": "ALL_DAY",
+        "startDate": "2026-11-06",
+        "endDate": "2026-11-08",
+        "rrule": "FREQ=WEEKLY;BYDAY=FR"
+      },
+      "from": "2026-11-14T00:00",
+      "to": "2026-11-15T00:00",
+      "expected": [
+        { "start": "2026-11-13T00:00", "end": "2026-11-15T00:00", "allDay": true, "moved": false }
+      ]
+    }
+  ]
+}

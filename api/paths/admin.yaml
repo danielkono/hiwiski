@@ -1,0 +1,422 @@
+Trash:
+  get:
+    tags: [trash]
+    operationId: listTrash
+    summary: Deleted items from all modules
+    description: |
+      Sorted by time. Everyone sees what they deleted themselves and what was shared
+      with them; the administrator sees nothing more — they may manage the server, not
+      other people's content.
+    parameters:
+      - name: itemType
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Filter by type.
+    responses:
+      '200':
+        description: The trash
+        content:
+          application/json:
+            schema:
+              $ref: '../components/admin.yaml#/TrashList'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+
+TrashRestore:
+  post:
+    tags: [trash]
+    operationId: restoreFromTrash
+    summary: Restore
+    description: |
+      Brings the item back **including its share**. If its container is gone by now,
+      the server answers with `400` and the code `trash.container_gone` — the UI then
+      asks for a target and sends it as `targetContainerId`.
+
+      Only the owner, or whoever may delete the item, restores it -- that is, whoever may
+      write both the item and the container it lies in; a list, a calendar or a root page
+      comes back only by its owner's hand. Anyone else gets `404`, as for
+      an item that is not in the trash. A `targetContainerId` moves the item, and moving
+      is the owner's: anyone else gets `403` (`access.denied`). A target that does not exist, or
+      that the caller may not write, is `404` as well (`sync.container_not_found`).
+    parameters:
+      - name: itemType
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: '../components/admin.yaml#/RestoreRequest'
+    responses:
+      '204':
+        description: Restored
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+
+AdminSettings:
+  get:
+    tags: [admin]
+    operationId: getInstanceSettings
+    summary: The instance settings
+    responses:
+      '200':
+        description: The settings
+        content:
+          application/json:
+            schema:
+              $ref: '../components/admin.yaml#/InstanceSettings'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+  put:
+    tags: [admin]
+    operationId: setInstanceSettings
+    summary: Change the instance settings
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/admin.yaml#/InstanceSettings'
+    responses:
+      '200':
+        description: The new settings
+        content:
+          application/json:
+            schema:
+              $ref: '../components/admin.yaml#/InstanceSettings'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+
+Backups:
+  get:
+    tags: [admin]
+    operationId: listBackups
+    summary: The stored backups and how backing up goes
+    description: |
+      Newest first, read from the archives' headers -- no password needed. The status
+      says when the last one was made, when the next is due and, until the next one
+      succeeds, why the last one failed.
+    responses:
+      '200':
+        description: What is there
+        content:
+          application/json:
+            schema:
+              $ref: '../components/admin.yaml#/BackupList'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+  post:
+    tags: [admin]
+    operationId: createBackup
+    summary: Back up now
+    description: |
+      Encrypted to the backup key -- no password needed. Without one (an instance set
+      up before backups were encrypted) it is `409 admin.backup_password_missing`.
+      A backup that cannot be written is `503 admin.backup_failed` with its `reason`.
+    responses:
+      '201':
+        description: The new backup
+        content:
+          application/json:
+            schema:
+              $ref: '../components/admin.yaml#/BackupInfo'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '409':
+        $ref: '../components/errors.yaml#/responses/Conflict'
+      '503':
+        $ref: '../components/errors.yaml#/responses/ServiceUnavailable'
+
+BackupFile:
+  get:
+    tags: [backupFiles]
+    operationId: downloadBackup
+    summary: Download an archive
+    description: |
+      The archive as it lies in the backup directory, streamed. It stays encrypted:
+      opening it needs the backup password.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: The archive
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+
+BackupInspect:
+  post:
+    tags: [admin]
+    operationId: inspectBackup
+    summary: What restoring an archive would bring back
+    description: |
+      **The password comes before the preview.** The preview is read from the
+      decrypted manifest, so a wrong password shows up before anything is replaced:
+      `400 admin.backup_password_wrong`. An archive of a newer server is
+      `400 admin.backup_too_new` with the `serverVersion` it needs; another family's
+      archive is `400 admin.backup_other_family` with its `familyName` -- it belongs on
+      a new instance, restored through the setup wizard.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/admin.yaml#/BackupPasswordEntry'
+    responses:
+      '200':
+        description: The preview
+        content:
+          application/json:
+            schema:
+              $ref: '../components/admin.yaml#/BackupPreview'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+
+BackupRestore:
+  post:
+    tags: [admin]
+    operationId: restoreBackup
+    summary: Restore a backup
+    description: |
+      **Replaces everything.** The current state is backed up first, so that a restore
+      by mistake can be undone. The instance identifier is regenerated in the process;
+      every device uses it to tell that its state is no longer valid, and syncs from
+      scratch.
+
+      An archive restores on the server version it came from and on every newer one:
+      it is restored into a staging schema at its own version and migrated on.
+      A wrong password changes nothing
+      (`400 admin.backup_password_wrong`), and neither does another family's archive
+      (`400 admin.backup_other_family`).
+
+      A backup that has never been restored is not a backup — that is why this path is
+      in the same phase as backing up.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/admin.yaml#/BackupPasswordEntry'
+    responses:
+      '200':
+        description: Restored
+        content:
+          application/json:
+            schema:
+              $ref: '../components/admin.yaml#/RestoreResult'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+      '409':
+        $ref: '../components/errors.yaml#/responses/Conflict'
+
+BackupUploads:
+  post:
+    tags: [backupFiles]
+    operationId: uploadBackup
+    summary: Upload an archive to restore
+    description: |
+      The raw file as the body, streamed to a staging file outside the backup
+      directory -- past the limit for images. It is never kept: it is deleted after
+      the restore, or an hour after the upload if nothing followed.
+    requestBody:
+      required: true
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary
+    responses:
+      '201':
+        description: Uploaded
+        content:
+          application/json:
+            schema:
+              $ref: '../components/admin.yaml#/BackupUpload'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+
+BackupUploadInspect:
+  post:
+    tags: [admin]
+    operationId: inspectUploadedBackup
+    summary: What restoring an uploaded archive would bring back
+    description: As `inspectBackup`, for an uploaded archive.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/admin.yaml#/BackupPasswordEntry'
+    responses:
+      '200':
+        description: The preview
+        content:
+          application/json:
+            schema:
+              $ref: '../components/admin.yaml#/BackupPreview'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+
+BackupUploadRestore:
+  post:
+    tags: [admin]
+    operationId: restoreUploadedBackup
+    summary: Restore an uploaded archive
+    description: As `restoreBackup`, for an uploaded archive; the upload is deleted after.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/admin.yaml#/BackupPasswordEntry'
+    responses:
+      '200':
+        description: Restored
+        content:
+          application/json:
+            schema:
+              $ref: '../components/admin.yaml#/RestoreResult'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+      '409':
+        $ref: '../components/errors.yaml#/responses/Conflict'
+
+BackupPassword:
+  put:
+    tags: [admin]
+    operationId: changeBackupPassword
+    summary: Change the backup password
+    description: |
+      Wraps the same backup key anew -- in the database and in the header of every
+      archive in the backup directory made with it. Copies already downloaded keep the
+      old password. A wrong current one is `400 admin.backup_password_wrong`.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/admin.yaml#/BackupPasswordChange'
+    responses:
+      '204':
+        description: Changed
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+
+BackupPasswordReset:
+  post:
+    tags: [admin]
+    operationId: resetBackupPassword
+    summary: Set a new backup password without the old one
+    description: |
+      Makes a **new key pair**: backups from now on open with the new password, the
+      ones made before only with the old one. Also how an instance set up before
+      backups were encrypted gets its first backup password.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/admin.yaml#/BackupPasswordReset'
+    responses:
+      '204':
+        description: Set
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+
+AdminLogs:
+  get:
+    tags: [admin]
+    operationId: getLogs
+    summary: The server log
+    description: |
+      The most recent lines, in English. The user sends them deliberately themselves —
+      there is no third-party telemetry.
+    parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 500
+    responses:
+      '200':
+        description: The lines
+        content:
+          application/json:
+            schema:
+              $ref: '../components/admin.yaml#/LogLines'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'

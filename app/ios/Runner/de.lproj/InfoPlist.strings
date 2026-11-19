@@ -1,0 +1,2 @@
+/* German texts of the permission prompts; the English ones are in Info.plist. */
+"NSLocalNetworkUsageDescription" = "Hiwiski verbindet sich mit dem Server eurer Familie im Heimnetz.";

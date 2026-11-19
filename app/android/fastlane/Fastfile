@@ -1,0 +1,73 @@
+default_platform(:android)
+
+APP_DIR = File.expand_path("../..", __dir__)
+BUNDLE = File.join(APP_DIR, "build/app/outputs/bundle/release/app-release.aab")
+
+platform :android do
+  # fastlane internal version:2026.2.0-dev.7 build:57
+  # fastlane internal version:2026.2.0-dev.7 build:57 status:draft   -- while the app has never been rolled out
+  #
+  # Run by the release workflow, which passes the version it read from the tags and its
+  # run number.
+  desc "Build the app bundle and upload it to the internal test track"
+  lane :internal do |options|
+    # Signed with the debug key, a bundle is refused by Play -- better here than after
+    # the build.
+    unless File.exist?(File.join(APP_DIR, "android/key.properties"))
+      UI.user_error!("android/key.properties is missing: no upload key")
+    end
+    UI.user_error!("No version:<version> -- the release run passes it") unless options[:version]
+    version_name = options[:version]
+
+    # The release run's build number, the same for the web app, Android and iOS, so one
+    # build is found on every platform by it. Play takes every version code once; the
+    # run number it comes from rises with every run, so it does as long as every upload
+    # comes from one.
+    UI.user_error!("No build:<number> -- the release run passes its build number") unless options[:build]
+    version_code = Integer(options[:build].to_s, 10, exception: false)
+    UI.user_error!("build:#{options[:build]} is not a build number") unless version_code&.positive?
+    UI.message("Version #{version_name} (#{version_code})")
+
+    Dir.chdir(APP_DIR) do
+      sh("flutter", "build", "appbundle", "--release",
+         "--build-name=#{version_name}", "--build-number=#{version_code}")
+    end
+
+    upload_to_play_store(
+      track: "internal",
+      aab: BUNDLE,
+      release_status: options[:status] || "completed",
+      # The release notes go with every build: changelogs/default.txt, which points
+      # to the website's "What's new". The listing is the metadata lane's.
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+    )
+  end
+
+  # fastlane metadata                 -- texts, screenshots, feature graphic and icon
+  # fastlane metadata check:true      -- only ask Play whether it would take them
+  #
+  # The store listing, no build: the texts from fastlane/metadata/android, the
+  # pictures from its images/ folders (drawn by app/test/store, laid out by
+  # tool/store_pictures.py). Only pictures that changed are sent again.
+  desc "Upload the Google Play listing: texts, screenshots, feature graphic and icon"
+  lane :metadata do |options|
+    # supply looks for a release on a track even when it sends no bundle and no
+    # release notes, and the default track, production, has none while the app is in
+    # testing. The listing belongs to the app, not to a release: any build will do,
+    # so the newest on the internal track, where every build goes.
+    codes = google_play_track_version_codes(track: "internal")
+    UI.user_error!("No build on the internal track yet: fastlane internal first") if codes.empty?
+
+    upload_to_play_store(
+      track: "internal",
+      version_code: codes.max,
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_changelogs: true,
+      sync_image_upload: true,
+      validate_only: options[:check].to_s == "true",
+    )
+  end
+end

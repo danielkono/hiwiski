@@ -1,0 +1,16 @@
+Handshake:
+  get:
+    tags: [platform]
+    operationId: getHandshake
+    summary: Version and capabilities of the server
+    description: |
+      Reachable without login. The client calls this on startup and after every
+      connection setup.
+    security: []
+    responses:
+      '200':
+        description: The server's state
+        content:
+          application/json:
+            schema:
+              $ref: '../components/platform.yaml#/Handshake'

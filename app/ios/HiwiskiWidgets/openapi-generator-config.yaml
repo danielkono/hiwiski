@@ -1,0 +1,11 @@
+# The home screen widgets' client, generated from the contract like the Dart client and the
+# server's interfaces: only the two reads the widgets make, and the types they answer with.
+# Run app/tool/generate_widget_client.sh after a change to the contract.
+generate:
+  - types
+  - client
+accessModifier: internal
+filter:
+  operations:
+    - getAgenda
+    - getListSummary

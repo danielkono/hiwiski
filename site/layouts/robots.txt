@@ -1,0 +1,7 @@
+User-agent: *
+{{- /* The scenes' build and the search index are no pages. Crawling stays allowed
+       while the site is not indexable: a crawler has to see the noindex. */}}
+Disallow: /embed/
+Disallow: /pagefind/
+
+Sitemap: {{ "sitemap.xml" | absURL }}

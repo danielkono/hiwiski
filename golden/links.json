@@ -1,0 +1,94 @@
+{
+  "description": "References as they are parsed from a text. Server and client parse the same text in different languages; a reference the phone shows as a chip and the server does not write to the table is worse than no reference at all.",
+  "note": "The normalized form is expected: 'key:<KEY>' for the typed form #TD-14, 'uri:<TYPE>/<uuid>' for the form from the link picker. In the order of the text and without duplicates -- both sides then resolve to the same row of the link table. The type is upper case, the address lower case: hiwiski://wiki_page/... becomes WIKI_PAGE.",
+  "cases": [
+    {
+      "name": "the typed form",
+      "why": "The convenient case. Assumes the number has already been assigned.",
+      "text": "Zugangsdaten stehen in #WIKI-3.",
+      "expected": ["key:WIKI-3"]
+    },
+    {
+      "name": "the form from the picker",
+      "why": "The reliable form. It also works for an item that was created offline and has no number yet -- which is exactly why the picker always inserts it.",
+      "text": "Siehe [Router einrichten](hiwiski://wiki_page/01932b3c-4d5e-7f80-8a1b-2c3d4e5f6071).",
+      "expected": ["uri:WIKI_PAGE/01932b3c-4d5e-7f80-8a1b-2c3d4e5f6071"]
+    },
+    {
+      "name": "both forms in one text, in the order of the text",
+      "why": "They end up in the same table. The order is that of the text, not that of the notations -- otherwise the UI would show the chips differently from how they appear in the text.",
+      "text": "Erst [Einkauf](hiwiski://todo/01932b3c-4d5e-7f80-8a1b-2c3d4e5f6072), dann #EVT-01, danach #WIKI-3.",
+      "expected": [
+        "uri:TODO/01932b3c-4d5e-7f80-8a1b-2c3d4e5f6072",
+        "key:EVT-01",
+        "key:WIKI-3"
+      ]
+    },
+    {
+      "name": "the same reference twice yields one row",
+      "why": "The table has a unique index on it. A duplicate entry would be an error on writing instead of on reading.",
+      "text": "#TD-14 ist erledigt, sobald #TD-14 abgehakt ist.",
+      "expected": ["key:TD-14"]
+    },
+    {
+      "name": "a bare address without Markdown brackets",
+      "why": "Whoever types it by hand or copies it from the address bar means the same reference.",
+      "text": "hiwiski://event/01932b3c-4d5e-7f80-8a1b-2c3d4e5f6073",
+      "expected": ["uri:EVENT/01932b3c-4d5e-7f80-8a1b-2c3d4e5f6073"]
+    },
+    {
+      "name": "a heading is not a reference",
+      "why": "Markdown uses the same character. Between '# Einkauf' and '#TD-14' there is a space, and that is what decides it.",
+      "text": "# Einkauf\n\nNichts weiter.",
+      "expected": []
+    },
+    {
+      "name": "lower case is not a key",
+      "why": "The readable key is upper case -- '#td-14' is text that someone meant that way.",
+      "text": "steht in #td-14",
+      "expected": []
+    },
+    {
+      "name": "a number without digits is not a reference",
+      "why": "'#TD-' is a beginning, not a key. Half a match would be worse than none.",
+      "text": "#TD- und #WIKI-",
+      "expected": []
+    },
+    {
+      "name": "a broken address yields no reference",
+      "why": "A UUID that is too short is not a user error worth pointing out -- it simply yields no reference.",
+      "text": "[Kaputt](hiwiski://todo/01932b3c-4d5e)",
+      "expected": []
+    },
+    {
+      "name": "a key inside a link label is not a reference",
+      "why": "The label is display text. The server used to find the #TD-14 in it as well, the device did not -- backlinks and the offline info bar disagreed.",
+      "text": "[Fix #TD-14 follow-up](hiwiski://todo/01932b3c-4d5e-7f80-8a1b-2c3d4e5f6072)",
+      "expected": ["uri:TODO/01932b3c-4d5e-7f80-8a1b-2c3d4e5f6072"]
+    },
+    {
+      "name": "a label with escaped brackets",
+      "why": "The picker escapes brackets in a title. Ending the label at the first ] broke the link apart.",
+      "text": "[Packing \\[summer\\] #TD-1](hiwiski://wiki_page/01932b3c-4d5e-7f80-8a1b-2c3d4e5f6071)",
+      "expected": ["uri:WIKI_PAGE/01932b3c-4d5e-7f80-8a1b-2c3d4e5f6071"]
+    },
+    {
+      "name": "an unclosed bracket does not hide what follows it",
+      "why": "Both sides skip the brackets that cannot start a link, so that a line of them is read in linear time. Skipping must not lose the bare address, the key or the next link after the line break.",
+      "text": "[[[ open hiwiski://todo/01932b3c-4d5e-7f80-8a1b-2c3d4e5f6072 #TD-7 [\n[Router](hiwiski://wiki_page/01932b3c-4d5e-7f80-8a1b-2c3d4e5f6071)",
+      "expected": ["uri:TODO/01932b3c-4d5e-7f80-8a1b-2c3d4e5f6072", "key:TD-7", "uri:WIKI_PAGE/01932b3c-4d5e-7f80-8a1b-2c3d4e5f6071"]
+    },
+    {
+      "name": "an open bracket before a link belongs to its label",
+      "why": "The label runs from the first bracket to the closing one, as it always did -- a bracket inside it is text.",
+      "text": "[a [b](hiwiski://todo/01932b3c-4d5e-7f80-8a1b-2c3d4e5f6072) #TD-1",
+      "expected": ["uri:TODO/01932b3c-4d5e-7f80-8a1b-2c3d4e5f6072", "key:TD-1"]
+    },
+    {
+      "name": "empty text",
+      "why": "A task without a description is the normal case and must not be treated differently from one with.",
+      "text": "",
+      "expected": []
+    }
+  ]
+}

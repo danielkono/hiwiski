@@ -1,0 +1,22 @@
+/* The home screen widgets' texts. The app's own texts are in lib/core/l10n; the widgets are
+   native and run without the app, so theirs live here (docs/development/home-widgets.md). */
+"widget.agenda.name" = "Upcoming events";
+"widget.agenda.description" = "The next events of the calendars you choose in Hiwiski.";
+"widget.shopping.name" = "Shopping list";
+"widget.shopping.description" = "What is still to buy on a shopping list.";
+"widget.tasks.name" = "Task list";
+"widget.tasks.description" = "The open tasks of a list.";
+"widget.kanban.name" = "Kanban column";
+"widget.kanban.description" = "The cards in one column of a Kanban board.";
+"widget.setUp" = "Tap to choose what it shows";
+"widget.waiting" = "Nothing yet — tap to open Hiwiski";
+"widget.gone" = "No longer there — tap to choose again";
+"widget.noEvents" = "No upcoming events";
+"widget.nothingOpen" = "Nothing open";
+"widget.allDay" = "All day";
+"widget.until" = "until %@";
+"widget.today" = "Today";
+"widget.tomorrow" = "Tomorrow";
+"widget.counts" = "%1$d open · %2$d done";
+"widget.more" = "+%d more";
+"widget.asOf" = "As of %@";

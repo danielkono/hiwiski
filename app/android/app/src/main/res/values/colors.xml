@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The app's surface (light, lib/core/theme/hiwiski_color_schemes.dart): the window
+         shows it until Flutter draws its first frame, so a cold start does not flash. -->
+    <color name="launch_background">#F8FAF0</color>
+</resources>

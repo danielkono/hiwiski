@@ -1,0 +1,31 @@
+# The demo's own web server: static files, behind a proxy that does TLS.
+{
+	admin off
+	auto_https off
+	persist_config off
+}
+
+:8080 {
+	root * /srv
+	encode zstd gzip
+
+	header {
+		# The page talks to nothing but itself (no third-party calls).
+		# 'wasm-unsafe-eval' for CanvasKit and the database, blob: for the web workers
+		# Drift starts, data: for images the app draws itself.
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'"
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	# Asked for anew on every load, answered with 304 while unchanged: Flutter's files
+	# carry no hash in their names, so a cached main.dart.js would outlive an update.
+	header Cache-Control "no-cache"
+
+	# A path of the app (`/wiki`, `/calendar` ...) is the app; reloading it must not
+	# end in a 404.
+	try_files {path} /index.html
+	file_server
+}

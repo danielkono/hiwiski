@@ -1,0 +1,68 @@
+{{- /* What search engines and link previews read.
+       The description is the page's own, else its lead, else the start of its text. */ -}}
+{{- $description := .Description | default .Params.lead }}
+{{- if not $description }}
+  {{- $description = .Summary | plainify | htmlUnescape | strings.TrimSpace | truncate 160 }}
+{{- end }}
+{{- $description = $description | default (T "tagline") }}
+{{- $title := cond .IsHome (printf "%s — %s" site.Title (T "tagline")) (printf "%s · %s" .Title site.Title) }}
+  <title>{{ $title }}</title>
+  <meta name="description" content="{{ $description }}">
+  {{- /* Until the launch the whole site stays out of the index (params.indexable);
+         the search page and "not found" always do. */}}
+  {{- if or (not site.Params.indexable) .Params.noindex (eq .Kind "404") }}
+  <meta name="robots" content="noindex">
+  {{- end }}
+  {{- if ne .Kind "404" }}
+  <link rel="canonical" href="{{ .Permalink }}">
+  {{- range .AllTranslations }}
+  <link rel="alternate" hreflang="{{ .Language.Locale }}" href="{{ .Permalink }}">
+  {{- end }}
+  {{- /* Who speaks neither: the bare address picks by the browser's language
+         (deploy/site-image/Caddyfile), every other page falls back to English. */}}
+  {{- if .IsHome }}
+  <link rel="alternate" hreflang="x-default" href="{{ site.BaseURL }}">
+  {{- else }}
+  {{- range where .AllTranslations "Language.Lang" "en" }}
+  <link rel="alternate" hreflang="x-default" href="{{ .Permalink }}">
+  {{- end }}
+  {{- end }}
+  {{- end }}
+
+  {{- /* Link previews in messengers and social networks: the page's scene as a large
+         screen, the task overview where a page has none. */}}
+  {{- $image := printf "/scenes/%s/%s-tile-light.png" site.Language.Lang (.Params.scene | default "tasks-overview") }}
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="{{ site.Title }}">
+  <meta property="og:title" content="{{ cond .IsHome site.Title .Title }}">
+  <meta property="og:description" content="{{ $description }}">
+  <meta property="og:url" content="{{ .Permalink }}">
+  <meta property="og:locale" content="{{ site.Params.ogLocale }}">
+  {{- range .Translations }}
+  <meta property="og:locale:alternate" content="{{ .Site.Params.ogLocale }}">
+  {{- end }}
+  {{- if fileExists (printf "static%s" $image) }}
+  <meta property="og:image" content="{{ $image | absURL }}">
+  <meta property="og:image:width" content="2000">
+  <meta property="og:image:height" content="1250">
+  <meta name="twitter:card" content="summary_large_image">
+  {{- end }}
+
+  {{- if .IsHome }}
+  {{- /* What Hiwiski is, for search engines that show apps as such. */}}
+  {{- $app := dict
+        "@context" "https://schema.org"
+        "@type" "SoftwareApplication"
+        "name" site.Title
+        "description" $description
+        "url" .Permalink
+        "inLanguage" (slice "de" "en")
+        "applicationCategory" "LifestyleApplication"
+        "operatingSystem" "Android, iOS, Web, Linux (Docker)"
+        "offers" (dict "@type" "Offer" "price" "0" "priceCurrency" "EUR")
+        "sameAs" (slice site.Params.github)
+  }}
+  {{- with site.GetPage "/license" }}{{ $app = merge $app (dict "license" .Permalink) }}{{ end }}
+  <script type="application/ld+json">{{ $app | jsonify | safeJS }}</script>
+  {{- end }}
+{{- /**/ -}}

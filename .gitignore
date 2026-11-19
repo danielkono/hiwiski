@@ -1,0 +1,54 @@
+# --- Gradle / Java ---
+.gradle/
+build/
+!server/buildSrc/src/**/build/
+out/
+*.class
+
+# --- Flutter / Dart ---
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+app/build/
+app/.fvm/
+**/generated_plugin_registrant.dart
+
+# --- Generated code ---
+# The generated Dart client and the Drift/Freezed outputs are not checked in; they are
+# generated from the spec or from the tables and would otherwise be maintained twice.
+app/lib/core/api/generated/
+*.g.dart
+*.freezed.dart
+*.drift.dart
+app/lib/core/l10n/generated/
+
+# The bundled spec and the baseline spec are NOT generated code in the sense of this
+# file -- they are the published contract and are checked in.
+
+# --- Operations ---
+deploy/.env
+*.log
+
+# --- Tools ---
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# The symbol font and the codepoint file are source, not build output -- they stay in
+# the repository (shipped as an asset, never loaded at runtime).
+
+# --- Releases ---
+# fastlane's run reports. The keys and the Play service account live outside the
+# repository (docs/release.md).
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/test_output/
+
+# The demo image's web build, made by release.yml (deploy/demo-image/Dockerfile).
+/deploy/demo-image/web/
+# The website's image content, made by release.yml (deploy/site-image/Dockerfile).
+/deploy/site-image/public/

@@ -1,0 +1,208 @@
+Members:
+  get:
+    tags: [members]
+    operationId: listMembers
+    summary: The members of the family
+    description: |
+      Everyone sees the list. Whoever lives in a family knows who belongs to it anyway
+      -- and without it nothing could be assigned or shared with anyone.
+
+      The client stores it locally: avatars, assignments and share lists must still be
+      nameable offline.
+    responses:
+      '200':
+        description: All members
+        content:
+          application/json:
+            schema:
+              $ref: '../components/identity.yaml#/MemberList'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+  post:
+    tags: [members]
+    operationId: createMember
+    summary: Create a member
+    description: |
+      Administrator only. The way without an invitation -- e.g. for the member who owns
+      the wall tablet dashboard.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/identity.yaml#/CreateMemberRequest'
+    responses:
+      '201':
+        description: Created
+        content:
+          application/json:
+            schema:
+              $ref: '../components/identity.yaml#/Member'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '409':
+        $ref: '../components/errors.yaml#/responses/Conflict'
+
+Member:
+  patch:
+    tags: [members]
+    operationId: updateMember
+    summary: Change a member
+    description: |
+      The profile: display name, colour, appearance, picture. Every member may change
+      their own; the administrator anyone's.
+
+      Group membership is not changed here -- it belongs to the group (`updateGroup`).
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/identity.yaml#/UpdateMemberRequest'
+    responses:
+      '200':
+        description: Changed
+        content:
+          application/json:
+            schema:
+              $ref: '../components/identity.yaml#/Member'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+
+MemberPasswordReset:
+  post:
+    tags: [members]
+    operationId: resetMemberPassword
+    summary: Set a temporary password
+    description: |
+      Administrator only. There is no self-service path because there is no email.
+      The temporary password is returned **once** and cannot be retrieved again
+      afterwards; on the next login the user has to choose their own.
+
+      Every device of the member is signed out: otherwise the old tokens -- a device
+      someone else signed into with a leaked password included -- worked again as soon
+      as the member chose a new password.
+
+      For the administrator themselves there is no way through the app -- use
+      `docker compose exec app hiwiski reset-admin-password` instead.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Set
+        content:
+          application/json:
+            schema:
+              $ref: '../components/identity.yaml#/PasswordReset'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+
+MemberDisable:
+  post:
+    tags: [members]
+    operationId: disableMember
+    summary: Disable a member
+    description: |
+      Administrator only.
+      The member can no longer sign in, and every device of theirs is signed out at
+      once -- for a stolen phone, or a member who left on bad terms. Their things stay
+      as they are, and so do their shares; `enableMember` undoes it. The administrator
+      cannot be disabled: `400` with `identity.member_is_admin`.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Disabled
+        content:
+          application/json:
+            schema:
+              $ref: '../components/identity.yaml#/Member'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+
+MemberEnable:
+  post:
+    tags: [members]
+    operationId: enableMember
+    summary: Enable a disabled member again
+    description: |
+      Administrator only. The member signs in again with their password; the devices
+      signed out when they were disabled stay signed out.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Enabled
+        content:
+          application/json:
+            schema:
+              $ref: '../components/identity.yaml#/Member'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+
+MemberSignOut:
+  post:
+    tags: [members]
+    operationId: signOutMember
+    summary: Sign out every device of a member
+    description: |
+      Administrator only. Every device of the member loses access at once (`401`, an
+      open event stream gets `revoked`); the member can sign in again. Changes on those
+      devices that have not been synced yet stay there, locked, until the member signs
+      in again. The administrator's own devices are in their own device
+      list instead: for the administrator the answer is `400` with
+      `identity.member_is_admin`.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Signed out
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'

@@ -1,0 +1,67 @@
+Pull:
+  post:
+    tags: [sync]
+    operationId: pull
+    summary: The delta since your own position
+    description: |
+      Filtered by share, **in the same query** as the matches. Two steps would be a
+      time window, and a title alone already gives away too much.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/sync.yaml#/PullRequest'
+    responses:
+      '200':
+        description: The delta
+        content:
+          application/json:
+            schema:
+              $ref: '../components/sync.yaml#/PullResponse'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+
+Push:
+  post:
+    tags: [sync]
+    operationId: push
+    summary: Send local mutations
+    description: |
+      Every mutation carries its `mutationId` as idempotency key and its
+      `baseVersion`. The check is **field by field**: whoever checks something off
+      while someone else moves the due date loses nothing.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/sync.yaml#/PushRequest'
+    responses:
+      '200':
+        description: One result per mutation
+        content:
+          application/json:
+            schema:
+              $ref: '../components/sync.yaml#/PushResponse'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+
+EventTicket:
+  post:
+    tags: [sync]
+    operationId: createEventTicket
+    summary: Ticket for the real-time stream
+    description: |
+      Valid for 60 seconds, redeemable once. `GET /api/v1/events` is the **only
+      endpoint outside this spec**: a long-lived stream cannot be expressed in OpenAPI,
+      and the generators turn it into unusable signatures on both sides.
+    responses:
+      '201':
+        description: The ticket
+        content:
+          application/json:
+            schema:
+              $ref: '../components/sync.yaml#/EventTicket'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'

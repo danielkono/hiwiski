@@ -1,0 +1,16 @@
+{{ define "main" }}
+{{ partial "doc.html" . }}
+{{- if eq .Section "features" }}
+<ul class="tiles page">
+  {{- range .Pages.ByWeight }}
+  <li>
+    <a class="card" href="{{ .RelPermalink }}">
+      {{- with .Params.scene }}{{ partial "poster.html" (dict "name" (printf "%s-tile" .) "lang" site.Language.Lang "alt" "") }}{{ end }}
+      <h2 class="title">{{ .LinkTitle }}</h2>
+      <span class="summary">{{ .Params.lead | markdownify }}</span>
+    </a>
+  </li>
+  {{- end }}
+</ul>
+{{- end }}
+{{ end }}

@@ -1,0 +1,27 @@
+# Riverpod providers return Drift row types (`TodoRow`, `OutboxRow` …). In the shared
+# `.g.dart` they would only exist after *all* generators have run, so the Riverpod
+# generator would see unresolved types. Drift therefore writes its own part file
+# (`.drift.dart`) and runs first.
+targets:
+  $default:
+    sources:
+      # The lint plugin is a package of its own; the app's generators have no business
+      # there.
+      exclude:
+        - tool/**
+    builders:
+      drift_dev:
+        enabled: false
+      drift_dev:preparing_builder:
+        enabled: true
+      drift_dev:not_shared:
+        enabled: true
+        options:
+          # No manager API (`db.managers.todos.create(…)`): it is a second way to
+          # write synced rows past `LocalWrites`, and nothing uses it.
+          generate_manager: false
+
+global_options:
+  drift_dev:not_shared:
+    runs_before:
+      - riverpod_generator

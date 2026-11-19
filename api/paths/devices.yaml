@@ -1,0 +1,40 @@
+Devices:
+  get:
+    tags: [devices]
+    operationId: listDevices
+    summary: Your own devices
+    description: |
+      Only your own. The administrator does not see other people's devices -- they may
+      manage the server, not other people's content.
+    responses:
+      '200':
+        description: This member's devices
+        content:
+          application/json:
+            schema:
+              $ref: '../components/identity.yaml#/DeviceList'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+
+Device:
+  delete:
+    tags: [devices]
+    operationId: revokeDevice
+    summary: Lock out a device
+    description: |
+      Takes effect immediately. Changes on the device that have not been synced yet
+      are lost -- the UI says so right there.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Locked out
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'

@@ -1,0 +1,108 @@
+# Ownership and sharing.
+#
+# Shares go through REST and not through the sync: they carry no owner and no share
+# themselves, so they are not items in the sense of the glossary. Their *consequences*
+# do go through the sync -- as `access_granted` and `access_revoked`.
+
+AccessLevel:
+  type: string
+  description: |
+    * `READ` -- see, search, comment, link
+    * `CHECK` -- additionally toggle a task's status. Nothing else: no title, no due
+      date, no deleting. This level is not optional -- the design requires it on the
+      wall tablet and on the children's shopping list.
+    * `WRITE` -- additionally create, change and delete within the container. Not:
+      change the share or delete the container.
+  enum: [READ, CHECK, WRITE]
+
+ShareSubjectType:
+  type: string
+  description: |
+    Groups are stored **as a reference** and not resolved into members: whoever joins
+    the group later is included as a result.
+  enum: [MEMBER, GROUP]
+
+ShareSource:
+  type: string
+  description: |
+    Where the row comes from. The UI shows inherited shares greyed out with the note
+    "inherited from the list" and automatically assigned ones with "automatic - assigned".
+  enum: [OWNER, DIRECT, INHERITED, ASSIGNED]
+
+ShareEntry:
+  type: object
+  required: [subjectType, subjectId, level, source]
+  properties:
+    subjectType:
+      $ref: './access.yaml#/ShareSubjectType'
+    subjectId:
+      type: string
+      format: uuid
+    level:
+      $ref: './access.yaml#/AccessLevel'
+    source:
+      $ref: './access.yaml#/ShareSource'
+
+ShareSheet:
+  type: object
+  description: |
+    The share sheet, the same on every item. The order is fixed:
+    owner, automatically assigned, inherited, own.
+  required: [itemType, itemId, entries, mayEdit]
+  properties:
+    itemType:
+      type: string
+    itemId:
+      type: string
+      format: uuid
+    ownerId:
+      type: string
+      format: uuid
+    mayEdit:
+      type: boolean
+      description: |
+        Only the owner may change the share. **Whoever may not change it still sees the
+        sheet — read-only.** Knowing who sees something is not a privilege.
+    myLevel:
+      $ref: './access.yaml#/AccessLevel'
+      description: |
+        What the caller may do with this item — the effective level, from owner, share,
+        inheritance or assignment. The app hides editing on *read* and allows only the
+        done state on *check off*; the server enforces it either way.
+    inheritedFromType:
+      type: string
+      description: The container inherited from, as long as there is no own share.
+    inheritedFromId:
+      type: string
+      format: uuid
+    inheritedFromName:
+      type: string
+      description: Its name, for "inherited from *House & Tech*".
+    entries:
+      type: array
+      items:
+        $ref: './access.yaml#/ShareEntry'
+
+WriteShare:
+  type: object
+  required: [subjectType, subjectId, level]
+  properties:
+    subjectType:
+      $ref: './access.yaml#/ShareSubjectType'
+    subjectId:
+      type: string
+      format: uuid
+    level:
+      $ref: './access.yaml#/AccessLevel'
+
+WriteSharesRequest:
+  type: object
+  description: |
+    Replaces the item's **own** shares. An empty list falls back to the inherited one
+    — an own share replaces the inherited one, it does not add to it.
+  required: [shares]
+  properties:
+    shares:
+      type: array
+      items:
+        $ref: './access.yaml#/WriteShare'

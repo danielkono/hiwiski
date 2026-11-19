@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The home screen widgets' German texts (see values/strings.xml). -->
+<resources>
+    <string name="widget_agenda_name">Nächste Termine</string>
+    <string name="widget_agenda_description">Die nächsten Termine der Kalender, die du in Hiwiski wählst</string>
+    <string name="widget_shopping_name">Einkaufsliste</string>
+    <string name="widget_shopping_description">Was auf einer Einkaufsliste noch fehlt</string>
+    <string name="widget_tasks_name">Aufgabenliste</string>
+    <string name="widget_tasks_description">Die offenen Aufgaben einer Liste</string>
+    <string name="widget_kanban_name">Kanban-Spalte</string>
+    <string name="widget_kanban_description">Die Karten einer Spalte eines Kanban-Boards</string>
+    <string name="widget_set_up">Zum Einrichten tippen</string>
+    <string name="widget_waiting">Noch nichts da – zum Öffnen tippen</string>
+    <string name="widget_gone">Nicht mehr da – zum Neuwählen tippen</string>
+    <string name="widget_no_events">Keine anstehenden Termine</string>
+    <string name="widget_nothing_open">Nichts offen</string>
+    <string name="widget_all_day">Ganztägig</string>
+    <string name="widget_until">bis %1$s</string>
+    <string name="widget_today">Heute</string>
+    <string name="widget_tomorrow">Morgen</string>
+    <string name="widget_counts">%1$d offen · %2$d erledigt</string>
+    <string name="widget_more">+%1$d weitere</string>
+    <string name="widget_as_of">Stand %1$s</string>
+</resources>

@@ -1,0 +1,290 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    # An unused import is a leftover of something someone solved differently.
+    unused_import: error
+    unused_local_variable: error
+    # A `TODO` in the code is a finding that was not written down. Whatever comes up
+    # belongs in an issue, not in a comment.
+    todo: warning
+  exclude:
+    # Generated code is not analyzed -- nobody ever tinkers with generated code.
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/*.drift.dart"
+    - "lib/core/api/generated/**"
+    - "lib/core/l10n/generated/**"
+    - "lib/core/theme/hiwiski_symbols.dart"
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
+
+linter:
+  rules:
+    - always_declare_return_types
+    - avoid_print
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_final_locals
+    - prefer_single_quotes
+    - require_trailing_commas
+    - sort_child_properties_last
+    - unawaited_futures
+    - use_super_parameters
+
+# Project rules of our own (tool/hiwiski_lints).
+plugins:
+  # Third-party rules (https://nikoro.github.io/many_lints/), enabled below under
+  # `many_lints:`. Every enabled rule is a warning, so `dart analyze` fails on a new
+  # finding instead of collecting infos nobody reads. The list is the opinionated
+  # preset minus the rules switched off there; a rule switched on later goes here
+  # too.
+  many_lints:
+    version: 1.2.0
+    diagnostics:
+      always_pass_global_key: warning
+      always_remove_listener: warning
+      async_value_nullable_pattern: warning
+      avoid_bare_await_in_do: warning
+      avoid_bloc_public_methods: warning
+      avoid_border_all: warning
+      avoid_build_context_in_providers: warning
+      avoid_cascade_after_if_null: warning
+      avoid_catch_error: warning
+      avoid_collapsible_if: warning
+      avoid_collection_equality_checks: warning
+      avoid_collection_methods_with_unrelated_types: warning
+      avoid_commented_out_code: warning
+      avoid_conditional_hooks: warning
+      avoid_constant_conditions: warning
+      avoid_constant_switches: warning
+      avoid_contradictory_expressions: warning
+      avoid_default_tostring: warning
+      avoid_dollar_outside_do_frame: warning
+      avoid_dst_unsafe_date_arithmetic: warning
+      avoid_duplicate_bloc_event_handlers: warning
+      avoid_duplicate_cascades: warning
+      avoid_duplicate_mixins: warning
+      avoid_either_of_future: warning
+      avoid_empty_catch: warning
+      avoid_empty_setstate: warning
+      avoid_empty_spread: warning
+      avoid_equal_expressions: warning
+      avoid_exit_outside_entrypoint: warning
+      avoid_expanded_as_spacer: warning
+      avoid_flexible_outside_flex: warning
+      avoid_focused_tests: warning
+      avoid_future_ignore: warning
+      avoid_future_of_either: warning
+      avoid_future_of_option: warning
+      avoid_generics_shadowing: warning
+      avoid_hooks_outside_build: warning
+      avoid_incomplete_copy_with: warning
+      avoid_incorrect_image_opacity: warning
+      avoid_inherited_widget_in_initstate: warning
+      avoid_inverted_boolean_checks: warning
+      avoid_late_context: warning
+      avoid_late_final_reassignment: warning
+      avoid_map_keys_contains: warning
+      avoid_missing_completer_stack_trace: warning
+      avoid_missing_enum_constant_in_map: warning
+      avoid_misused_hooks: warning
+      avoid_misused_test_matchers: warning
+      avoid_mounted_in_setstate: warning
+      avoid_nested_conditional_expressions: warning
+      avoid_nested_do_notation: warning
+      avoid_nested_futures: warning
+      avoid_non_null_assertion: warning
+      avoid_not_encodable_in_to_json: warning
+      avoid_notifier_constructors: warning
+      avoid_only_rethrow: warning
+      avoid_passing_async_when_sync_expected: warning
+      avoid_passing_bloc_to_bloc: warning
+      avoid_passing_build_context_to_blocs: warning
+      avoid_public_notifier_properties: warning
+      avoid_recursive_widget_calls: warning
+      avoid_redundant_async: warning
+      avoid_redundant_else: warning
+      avoid_ref_inside_state_dispose: warning
+      avoid_ref_read_inside_build: warning
+      avoid_ref_watch_outside_build: warning
+      avoid_removed_fpdart_api: warning
+      avoid_returning_widgets: warning
+      avoid_self_compare: warning
+      avoid_shadowed_extension_methods: warning
+      avoid_shrink_wrap_in_lists: warning
+      avoid_single_child_in_multi_child_widgets: warning
+      avoid_single_field_destructuring: warning
+      avoid_skipped_tests: warning
+      avoid_state_constructors: warning
+      avoid_throw_in_catch_block: warning
+      avoid_throw_in_fp_callback: warning
+      avoid_todo_comments: warning
+      avoid_unassigned_stream_subscriptions: warning
+      avoid_unmodified_loop_condition: warning
+      avoid_unnecessary_call: warning
+      avoid_unnecessary_constructor: warning
+      avoid_unnecessary_consumer_widgets: warning
+      avoid_unnecessary_continue: warning
+      avoid_unnecessary_enum_prefix: warning
+      avoid_unnecessary_extends: warning
+      avoid_unnecessary_gesture_detector: warning
+      avoid_unnecessary_hook_widgets: warning
+      avoid_unnecessary_negations: warning
+      avoid_unnecessary_overrides: warning
+      avoid_unnecessary_return: warning
+      avoid_unnecessary_setstate: warning
+      avoid_unnecessary_stateful_widgets: warning
+      avoid_unrelated_type_casts: warning
+      avoid_unremovable_callbacks_in_listeners: warning
+      avoid_unrun_task: warning
+      avoid_unsafe_collection_methods: warning
+      avoid_untyped_safe_cast: warning
+      check_for_equals_in_render_object_setters: warning
+      check_is_not_closed_after_async_gap: warning
+      dispose_fields: warning
+      dispose_provided_instances: warning
+      emit_new_bloc_state_instances: warning
+      function_always_returns_null: warning
+      function_always_returns_same_value: warning
+      handle_bloc_event_subclasses: warning
+      match_getter_setter_field_names: warning
+      missing_provider_scope: warning
+      no_equal_conditions: warning
+      no_equal_then_else: warning
+      notifier_build: warning
+      pass_existing_future_to_future_builder: warning
+      pass_existing_stream_to_stream_builder: warning
+      prefer_abstract_final_static_class: warning
+      prefer_add_all: warning
+      prefer_align_over_container: warning
+      prefer_and_then: warning
+      prefer_any_or_every: warning
+      prefer_async_callback: warning
+      prefer_bloc_extensions: warning
+      prefer_center_over_align: warning
+      prefer_chain_either: warning
+      prefer_chaining_over_intermediate_run: warning
+      prefer_compute_over_isolate_run: warning
+      prefer_const_border_radius: warning
+      prefer_constrained_box_over_container: warning
+      prefer_correct_edge_insets_constructor: warning
+      prefer_correct_future_return_type: warning
+      prefer_correct_json_casts: warning
+      prefer_correct_test_file_name: warning
+      prefer_do_notation: warning
+      prefer_enums_by_name: warning
+      prefer_expect_later: warning
+      prefer_explicit_function_type: warning
+      prefer_for_loop_in_children: warning
+      prefer_from_nullable: warning
+      prefer_from_predicate: warning
+      prefer_immediate_return: warning
+      prefer_immutable_bloc_state: warning
+      prefer_immutable_state: warning
+      prefer_iterable_of: warning
+      prefer_multi_bloc_provider: warning
+      prefer_overriding_parent_equality: warning
+      prefer_padding_over_container: warning
+      prefer_primary_constructors: warning
+      prefer_private_named_parameters: warning
+      prefer_return_await: warning
+      prefer_returning_condition: warning
+      prefer_returning_shorthands: warning
+      prefer_safe_collection_access: warning
+      prefer_shorthands_with_constructors: warning
+      prefer_shorthands_with_enums: warning
+      prefer_shorthands_with_static_fields: warning
+      prefer_simpler_patterns_null_check: warning
+      prefer_single_widget_per_file: warning
+      prefer_sized_box_square: warning
+      prefer_string_parse_extensions: warning
+      prefer_switch_expression: warning
+      prefer_switch_with_enums: warning
+      prefer_test_matchers: warning
+      prefer_text_rich: warning
+      prefer_theme_mode_getters: warning
+      prefer_transform_over_container: warning
+      prefer_type_over_var: warning
+      prefer_typed_exceptions: warning
+      prefer_unit_over_void: warning
+      prefer_use_callback: warning
+      prefer_void_callback: warning
+      prefer_wildcard_pattern: warning
+      proper_super_calls: warning
+      protected_notifier_properties: warning
+      provider_parameters: warning
+      require_atomic_async_updates: warning
+      use_closest_build_context: warning
+      use_dedicated_media_query_methods: warning
+      use_existing_destructuring: warning
+      use_ref_and_state_synchronously: warning
+      use_ref_read_synchronously: warning
+      use_setstate_synchronously: warning
+  hiwiski_lints:
+    path: tool/hiwiski_lints
+    diagnostics:
+      # Strings belong in named constants, UI text in app_*.arb.
+      no_string_literals: error
+      # Measurements come from HiwiskiMetrics, not from the screen.
+      no_magic_dimensions: error
+      # Every file stays in its layer: view → ViewModel → model and domain →
+      # services.
+      layer_boundaries: error
+      # Only the frames build a Scaffold; a screen inside the shell is a HiwiskiPage.
+      scaffold_in_frames: error
+      # A state holder is a ViewModel, named after its folder; its state is …State.
+      view_model_names: error
+      # Async ViewModels: no loading flags, when keeps the data, no shared watchers.
+      async_state: error
+      # A ViewModel answers through its state: its commands return nothing.
+      view_model_commands: error
+      # A synced table is written only through LocalWrites: the row and its outbox
+      # entry in one transaction, or the two drift apart.
+      synced_writes: error
+      # The time through package:clock, so a test can fix the day.
+      clock_now: error
+
+# The opinionated preset: core bugs, likely defects and style preferences. It already
+# includes every Riverpod rule (async_value_nullable_pattern, avoid_ref_read_inside_build,
+# avoid_ref_watch_outside_build, notifier_build, provider_parameters, …).
+many_lints:
+  preset: opinionated
+  rules:
+    # Our failures are HiwiskiFailure exceptions, mapped to sentences in
+    # failure_text.dart -- not fpdart's TaskEither.
+    prefer_task_either_over_try_catch: false
+    # Counts every setState of a method, also across an await or in exclusive
+    # branches (try / catch / finally) -- none of its findings could be merged.
+    prefer_single_setstate: false
+    # A widget's own padding is inside it (a chip's, a tooltip's bubble, a scroll
+    # view's content); a Padding around it is space outside. Not the same thing.
+    avoid_wrapping_in_padding: false
+    # Takes every expression for pure: a fresh `Outbox.newId()`, a new map literal,
+    # `_url.text` after an await -- none of them is the variable it names.
+    use_existing_variable: false
+    # Flags `exception[field]` where `exception` is the loop's own element: there is
+    # nothing loop-invariant to hoist.
+    avoid_accessing_collections_by_constant_index: false
+    # Reports a SizedBox gap whenever all gaps of a list have the same size, also
+    # when only some children are separated by one (icon, gap, text, trailing):
+    # `spacing` would put the gap between all of them. The lists where it is the
+    # same layout use `spacing`.
+    prefer_spacing: false
+    # In a test, `.single`, a hard cast and `!` are the assertion: if it throws, the
+    # test fails, which is what it should do.
+    avoid_unsafe_collection_methods:
+      exclude: [test/**, integration_test/**]
+    prefer_correct_json_casts:
+      exclude: [test/**, integration_test/**]
+    avoid_non_null_assertion:
+      exclude: [test/**, integration_test/**]
+    # A test builds its fixture with a helper (`app(home)`) and looks widgets up
+    # (`tester.widget<…>`) -- neither is a build method that should be a class.
+    avoid_returning_widgets:
+      exclude: [test/**, integration_test/**]

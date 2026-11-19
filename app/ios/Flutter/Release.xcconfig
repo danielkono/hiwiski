@@ -1,0 +1,6 @@
+#include "Generated.xcconfig"
+
+// Only while fastlane beta builds for the store: manual signing with the match
+// profile (fastlane/Fastfile). Without the file, Release signs automatically for
+// development, for installs on a device.
+#include? "Signing.xcconfig"

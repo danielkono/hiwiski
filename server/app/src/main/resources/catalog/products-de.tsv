@@ -1,0 +1,97 @@
+# The product catalog a fresh instance starts with.
+# name<TAB>category key<TAB>usual unit (optional)
+Äpfel	produce	kg
+Bananen	produce
+Birnen	produce
+Zitronen	produce
+Orangen	produce
+Trauben	produce	g
+Beeren	produce	g
+Tomaten	produce
+Gurke	produce
+Paprika	produce
+Zwiebel	produce
+Knoblauch	produce
+Ingwer	produce	g
+Kartoffeln	produce	kg
+Möhren	produce
+Karotten	produce
+Salat	produce
+Brokkoli	produce
+Zucchini	produce
+Pilze	produce	g
+Champignons	produce	g
+Hokkaido-Kürbis	produce
+Kürbis	produce
+Petersilie	produce	Bund
+Schnittlauch	produce	Bund
+Basilikum	produce
+Avocado	produce
+Lauch	produce
+Spinat	produce	g
+Brot	bakery
+Vollkornbrot	bakery
+Brötchen	bakery
+Toast	bakery
+Hackfleisch	meat_seafood	g
+Hähnchen	meat_seafood	g
+Rinderrouladen	meat_seafood
+Lachs	meat_seafood	g
+Schinken	deli	g
+Wurst	deli	g
+Tofu	deli	g
+Milch	dairy_eggs	l
+Hafermilch	dairy_eggs	l
+Butter	dairy_eggs	g
+Quark	dairy_eggs	g
+Joghurt	dairy_eggs	g
+Sahne	dairy_eggs	ml
+Schmand	dairy_eggs	g
+Käse	dairy_eggs	g
+Feta	dairy_eggs	g
+Mozzarella	dairy_eggs
+Parmesan	dairy_eggs	g
+Eier	dairy_eggs
+Haferflocken	breakfast	g
+Müsli	breakfast	g
+Honig	breakfast
+Marmelade	breakfast
+Kaffee	breakfast	g
+Tee	breakfast
+Mehl	pantry	kg
+Zucker	pantry	kg
+Reis	pantry	g
+Nudeln	pantry	g
+Spaghetti	pantry	g
+Linsen	pantry	g
+Gemüsebrühe	pantry	ml
+Kokosmilch	pantry	ml
+Passierte Tomaten	pantry	g
+Salz	spices_condiments
+Pfeffer	spices_condiments
+Öl	spices_condiments	ml
+Olivenöl	spices_condiments	ml
+Essig	spices_condiments	ml
+Schokolade	snacks_sweets
+Kekse	snacks_sweets
+Chips	snacks_sweets
+Wasser	beverages	l
+Saft	beverages	l
+Apfelsaft	beverages	l
+Bier	beverages
+Wein	beverages
+Tiefkühlerbsen	frozen	g
+Pizza	frozen
+Eis	frozen
+Windeln	baby
+Feuchttücher	baby
+Zahnpasta	personal_care
+Shampoo	personal_care
+Duschgel	personal_care
+Spülmittel	household
+Waschmittel	household
+Toilettenpapier	household
+Küchenrolle	household
+Müllbeutel	household
+Katzenfutter	pet
+Hundefutter	pet

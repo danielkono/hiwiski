@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="{{ site.Language.Locale }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="/favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  {{- partial "meta.html" . }}
+  {{- /* Not deferred: the theme carried over from the last page is set before the
+         first paint, so the page does not flash in the system's. */}}
+  {{- with resources.Get "js/theme.js" | minify | fingerprint }}
+  <script src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}"></script>
+  {{- end }}
+  {{- with resources.Get "css/site.css" | minify | fingerprint }}
+  <link rel="stylesheet" href="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}">
+  {{- end }}
+</head>
+<body>
+  <a class="skip" href="#content">{{ T "skipToContent" }}</a>
+  {{ partial "header.html" . }}
+  <main id="content" data-pagefind-body>
+    {{ block "main" . }}{{ end }}
+  </main>
+  {{ partial "footer.html" . }}
+  {{- if .HasShortcode "scene" }}
+  {{- with resources.Get "js/scenes.js" | minify | fingerprint }}
+  <script src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}" data-base="{{ site.Params.embedBase }}" defer></script>
+  {{- end }}
+  {{- end }}
+</body>
+</html>

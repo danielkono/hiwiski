@@ -1,0 +1,129 @@
+Revision:
+  type: object
+  required: [id, seq, title, createdAt, kind]
+  properties:
+    id:
+      type: string
+      format: uuid
+    seq:
+      type: integer
+    changeSeq:
+      description: |
+        The history entry (`HistoryEntry.seq`) of the save that left this version. Not
+        on a conflict version — the save that lost was never written — nor on one whose
+        save the log no longer holds.
+      type: integer
+      format: int64
+    title:
+      type: string
+    content:
+      type: string
+      description: Only filled when reading a single revision.
+    authorId:
+      type: string
+      format: uuid
+      nullable: true
+    createdAt:
+      type: string
+      format: date-time
+    kind:
+      type: string
+      enum: [SAVE, CONFLICT]
+      description: |
+        `CONFLICT` records the version that lost in an editing conflict.
+        Without it the losing side's work would be gone.
+
+RevisionList:
+  type: object
+  required: [revisions]
+  properties:
+    revisions:
+      type: array
+      items:
+        $ref: '#/Revision'
+
+LinkRef:
+  type: object
+  required: [itemType, itemId, title]
+  properties:
+    itemType:
+      type: string
+    itemId:
+      type: string
+      format: uuid
+    title:
+      description: The **current** title, not the text that applied when it was written.
+      type: string
+    entityKey:
+      type: string
+      nullable: true
+
+LinkList:
+  type: object
+  required: [outgoing, incoming]
+  properties:
+    outgoing:
+      type: array
+      items:
+        $ref: '#/LinkRef'
+    incoming:
+      type: array
+      items:
+        $ref: '#/LinkRef'
+
+ImportRecipeRequest:
+  type: object
+  required: [url]
+  properties:
+    url:
+      type: string
+
+ParsedIngredient:
+  type: object
+  required: [label, uncertain]
+  properties:
+    amount:
+      type: number
+      nullable: true
+    unit:
+      type: string
+      nullable: true
+    label:
+      type: string
+    productId:
+      type: string
+      format: uuid
+      nullable: true
+    uncertain:
+      type: boolean
+      description: |
+        What the import could not split up with confidence. `recipeIngredient` is free
+        text and never parses completely; the review screen is therefore mandatory, not
+        a convenience.
+
+ParsedRecipe:
+  type: object
+  required: [title, ingredients]
+  properties:
+    title:
+      type: string
+    servings:
+      type: integer
+      nullable: true
+    durationMinutes:
+      type: integer
+      nullable: true
+    imageUrl:
+      type: string
+      nullable: true
+    sourceUrl:
+      type: string
+      nullable: true
+    content:
+      type: string
+      nullable: true
+      description: The preparation steps as Markdown.
+    ingredients:
+      type: array
+      items:
+        $ref: '#/ParsedIngredient'

@@ -1,0 +1,140 @@
+Invitations:
+  get:
+    tags: [invitations]
+    operationId: listInvitations
+    summary: Open invitations
+    description: |
+      Administrator only, like creating one: a code is a family account in the
+      invitation's groups for whoever redeems it first.
+
+      They appear on the family screen as "Invited - 24 h left" with a placeholder
+      avatar. Without code and deep link: the server keeps only a hash
+      of the code, which goes out once, in the answer to `createInvitation`.
+    responses:
+      '200':
+        description: Open invitations
+        content:
+          application/json:
+            schema:
+              $ref: '../components/identity.yaml#/InvitationList'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+  post:
+    tags: [invitations]
+    operationId: createInvitation
+    summary: Create an invitation
+    description: Administrator only.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/identity.yaml#/CreateInvitationRequest'
+    responses:
+      '201':
+        description: Created
+        content:
+          application/json:
+            schema:
+              $ref: '../components/identity.yaml#/Invitation'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+
+InvitationPreview:
+  get:
+    tags: [invitations]
+    operationId: previewInvitation
+    summary: Preview an invitation
+    description: |
+      Without login. Without this card nobody knows what they are joining.
+
+      An expired or used code answers with `404` -- the same answer as for a made-up
+      one, so that valid codes cannot be guessed. Counted per client address with the
+      redemption: ten codes that match nothing are free, then one every thirty seconds
+      (`429` with `Retry-After`).
+    security: []
+    parameters:
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: What you are joining
+        content:
+          application/json:
+            schema:
+              $ref: '../components/identity.yaml#/InvitationPreview'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+      '429':
+        $ref: '../components/errors.yaml#/responses/TooManyRequests'
+
+InvitationRevoke:
+  post:
+    tags: [invitations]
+    operationId: revokeInvitation
+    summary: Withdraw an open invitation
+    description: |
+      Administrator only. Its code stops opening anything at once, and it leaves the
+      list of open invitations -- for one handed to the wrong person, or not needed
+      any more.
+
+      A `POST` on its own path and not a `DELETE` on `/api/v1/invitations/{id}`: that
+      path is the preview's, which takes a code.
+
+      `404` with `identity.invitation_not_found` when there is no open invitation with
+      this id: redeemed, withdrawn already, or never there.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Withdrawn
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+
+InvitationRedeem:
+  post:
+    tags: [invitations]
+    operationId: redeemInvitation
+    summary: Join a family
+    security: []
+    parameters:
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/identity.yaml#/RedeemInvitationRequest'
+    responses:
+      '201':
+        description: Joined and logged in
+        content:
+          application/json:
+            schema:
+              $ref: '../components/identity.yaml#/SignedIn'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+      '409':
+        $ref: '../components/errors.yaml#/responses/Conflict'
+      '429':
+        $ref: '../components/errors.yaml#/responses/TooManyRequests'

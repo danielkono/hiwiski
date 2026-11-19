@@ -1,0 +1,67 @@
+{{ define "main" }}
+{{- $lang := site.Language.Lang }}
+<div class="home">
+  <section class="hero">
+    <div class="hero-text">
+      <h1 class="display">{{ site.Title }}</h1>
+      <p class="lead">{{ T "tagline" }}</p>
+      {{- with .Params.intro }}<p>{{ . | markdownify }}</p>{{ end }}
+      <p class="actions">
+        <a class="button filled" href="{{ site.Params.demo }}">{{ partial "icon.html" "play" }}{{ T "tryDemo" }}</a>
+        {{- with site.GetPage "/setup" }}<a class="button tonal" href="{{ .RelPermalink }}">{{ T "setUpServer" }}</a>{{ end }}
+      </p>
+    </div>
+    <div class="collage" aria-hidden="true">
+      <div class="big">{{ partial "poster.html" (dict "name" "tasks-overview" "lang" $lang "alt" .Params.heroAlt.overview) }}</div>
+      <div class="phone">{{ partial "poster.html" (dict "name" "wiki-page-phone" "lang" $lang "alt" .Params.heroAlt.page) }}</div>
+    </div>
+  </section>
+
+  {{- with .Params.features }}
+  <section>
+    <div class="section-head">
+      <h2 class="headline">{{ .title }}</h2>
+      {{- with site.GetPage "/features" }}<a class="button text" href="{{ .RelPermalink }}">{{ T "featuresButton" }}{{ partial "icon.html" "arrow_forward" }}</a>{{ end }}
+    </div>
+    <div class="grid three">
+      {{- range .items }}
+      <a class="card"{{ with site.GetPage .page }} href="{{ .RelPermalink }}"{{ end }}>
+        <span class="icon-chip">{{ partial "icon.html" .icon }}</span>
+        <h3 class="title">{{ .title }}</h3>
+        <p>{{ .text | markdownify }}</p>
+      </a>
+      {{- end }}
+    </div>
+  </section>
+  {{- end }}
+
+  {{- with .Params.connect }}
+  <section class="card connect">
+    <div>
+      <h2 class="headline">{{ .title }}</h2>
+      <p class="lead">{{ .text | markdownify }}</p>
+    </div>
+    <div class="collage" aria-hidden="true">
+      <div class="big">{{ partial "poster.html" (dict "name" "wiki-page" "lang" $lang "alt" "") }}</div>
+      <div class="big">{{ partial "poster.html" (dict "name" "task-list" "lang" $lang "alt" "") }}</div>
+    </div>
+  </section>
+  {{- end }}
+
+  <section>
+    <div class="section-head">
+      <h2 class="headline">{{ .Params.principlesTitle }}</h2>
+      {{- with site.GetPage "/why" }}<a class="button text" href="{{ .RelPermalink }}">{{ T "whyButton" }}{{ partial "icon.html" "arrow_forward" }}</a>{{ end }}
+    </div>
+    <div class="grid three">
+      {{- range .Params.principles }}
+      <article class="card">
+        <span class="icon-chip">{{ partial "icon.html" .icon }}</span>
+        <h3 class="title">{{ .title }}</h3>
+        <p>{{ .text | markdownify }}</p>
+      </article>
+      {{- end }}
+    </div>
+  </section>
+</div>
+{{ end }}

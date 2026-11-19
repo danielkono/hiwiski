@@ -1,0 +1,89 @@
+Login:
+  post:
+    tags: [auth]
+    operationId: login
+    summary: Log in
+    description: |
+      Login attempts are **delayed, not locked out** -- a locked-out family has no
+      support channel. The delay counts per username *and* client
+      address, so an outsider guessing at a known username slows only themselves;
+      each address also has a budget of failed sign-ins across usernames, and each
+      username a ceiling across addresses. The ceiling does not apply to an
+      `installationId` that has signed in to the account before, nor to an address the
+      username signed in from recently: a stranger cannot keep the member's own devices
+      out.
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/identity.yaml#/LoginRequest'
+    responses:
+      '200':
+        description: Logged in
+        content:
+          application/json:
+            schema:
+              $ref: '../components/identity.yaml#/SignedIn'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+      '429':
+        $ref: '../components/errors.yaml#/responses/TooManyRequests'
+
+Logout:
+  post:
+    tags: [auth]
+    operationId: logout
+    summary: Revoke your own device
+    responses:
+      '204':
+        description: Logged out
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+
+CurrentSession:
+  get:
+    tags: [auth]
+    operationId: getSession
+    summary: Who am I, what is my state
+    responses:
+      '200':
+        description: The current session
+        content:
+          application/json:
+            schema:
+              $ref: '../components/identity.yaml#/Session'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+
+Password:
+  post:
+    tags: [auth]
+    operationId: changePassword
+    summary: Change your own password
+    description: |
+      The one call with content that a session with `mustChangePassword` may make
+      (see `Session.mustChangePassword` for the full list).
+
+      A wrong current password is delayed like a failed sign-in: otherwise a stolen
+      token could guess the password itself, which outlives revoking the token.
+
+      All other devices of this member are signed out (they get `401`, an open event
+      stream gets `revoked`): a new password is how a member locks out whoever learned
+      the old one. The device that made the change stays signed in.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/identity.yaml#/ChangePasswordRequest'
+    responses:
+      '204':
+        description: Changed
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+      '429':
+        $ref: '../components/errors.yaml#/responses/TooManyRequests'

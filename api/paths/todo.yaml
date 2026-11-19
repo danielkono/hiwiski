@@ -1,0 +1,52 @@
+ListSummary:
+  get:
+    tags: [todo]
+    operationId: getListSummary
+    summary: What a list holds, for a home screen widget
+    description: |
+      What a home screen widget shows when it asks the server itself -- while the app
+      is closed, the widget's own refresh is the only one that runs. Tasks travel
+      through the sync; this is the one read of them over REST, and it only reads.
+
+      The open entries in the list's order (position, then title) and how many are
+      open and done. With `columnId`, a Kanban board answers with the cards **standing**
+      in that column -- derived as the app derives it: a done card stands in its column
+      if that is a done column, otherwise in the first done one; an open card likewise
+      among the open columns. A column the board no longer has answers like no column.
+
+      Errors: `404 todo.list_not_found` for a list that is missing, deleted or not
+      visible to the caller -- the same answer for all three.
+    parameters:
+      - name: listId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: columnId
+        in: query
+        required: false
+        description: Only on a Kanban board -- the column to show.
+        schema:
+          type: string
+          format: uuid
+      - name: limit
+        in: query
+        required: false
+        description: At most this many entries; the counts include all of them.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 30
+    responses:
+      '200':
+        description: The list's entries and counts
+        content:
+          application/json:
+            schema:
+              $ref: '../components/todo.yaml#/ListSummary'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'

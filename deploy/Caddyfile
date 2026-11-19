@@ -1,0 +1,65 @@
+# TLS on the home network. Three ways, offered in this order:
+#
+#  1. Own name with a DNS challenge, if a domain is available. Caddy fetches a real
+#     certificate without the server having to be reachable from outside. The clean
+#     way -- see the commented-out block below.
+#  2. Plain cleartext on the home network, with a visible warning in the app and at
+#     sign-in. The way most people will go. This is the active setting.
+#  3. Self-signed -- works, but requires an exception on every device and is the worst
+#     of the three for the target audience.
+#
+# The app says plainly what currently applies instead of showing a padlock that is not
+# one: the handshake reports `cleartext`, and the sign-in screen spells it out.
+
+# Another proxy in front of this one -- the NAS's own reverse proxy, a Cloudflare or
+# Tailscale tunnel: Caddy then sees that proxy as every visitor, and the server would
+# count the whole family as one address (one wrong password from outside slows
+# everyone). Name it here, with its address or range, and Caddy passes the visitor's
+# own address on instead:
+#
+# {
+# 	servers {
+# 		trusted_proxies static 192.168.1.2
+# 		trusted_proxies_strict
+# 	}
+# }
+
+# Every name and address on port 80, not only HIWISKI_HOSTNAME: nothing in the stack
+# announces that name, and a family opening http://192.168.1.20 or the NAS's own name
+# -- Android often cannot resolve `.local` at all -- got Caddy's empty answer instead
+# of the setup wizard.
+http://{$HIWISKI_HOSTNAME}, :80 {
+	encode gzip zstd
+
+	# Caddy sets X-Forwarded-Proto by itself. Without it the server would take every
+	# request for cleartext -- including those that came in over TLS. X-Forwarded-For
+	# is the visitor's address as Caddy settled it: the peer's, or what a trusted
+	# proxy above named -- exactly one address, the one the server counts.
+	reverse_proxy app:8080 {
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-For {client_ip}
+	}
+}
+
+# --- Way 1: own name with a DNS challenge ----------------------------------------
+# Needs a Caddy image with the matching DNS module, e.g.
+#   caddy:2-builder -> xcaddy build --with github.com/caddy-dns/<provider>
+#
+# {$HIWISKI_HOSTNAME} {
+# 	encode gzip zstd
+# 	tls {
+# 		dns <provider> {$HIWISKI_DNS_TOKEN}
+# 	}
+# 	reverse_proxy app:8080 {
+# 		header_up X-Forwarded-Proto {scheme}
+# 		header_up X-Forwarded-For {client_ip}
+# 	}
+# }
+
+# --- Way 3: self-signed ----------------------------------------------------------
+# {$HIWISKI_HOSTNAME} {
+# 	tls internal
+# 	reverse_proxy app:8080 {
+# 		header_up X-Forwarded-For {client_ip}
+# 	}
+# }

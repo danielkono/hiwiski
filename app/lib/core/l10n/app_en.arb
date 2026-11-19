@@ -1,0 +1,1831 @@
+{
+  "@@locale": "en",
+  "appName": "Hiwiski",
+  "actionCancel": "Cancel",
+  "actionSave": "Save",
+  "actionCreate": "Create",
+  "actionContinue": "Continue",
+  "actionBack": "Back",
+  "actionRetry": "Try again",
+  "actionCopy": "Copy",
+  "actionCopied": "Copied",
+  "actionDone": "Done",
+  "actionClose": "Close",
+  "actionAdd": "Add",
+  "actionDelete": "Delete",
+  "wikiTaskToggle": "Tick off",
+  "colorBlue": "Blue",
+  "colorRust": "Rust",
+  "colorViolet": "Violet",
+  "colorGreen": "Green",
+  "colorPink": "Pink",
+  "colorOchre": "Ochre",
+  "colorTeal": "Teal",
+  "colorSlate": "Slate",
+  "colorRed": "Red",
+  "colorAmber": "Amber",
+  "actionMore": "More",
+  "boardAddWidget": "Add widget",
+  "recipeServingsFewer": "Fewer servings",
+  "recipeServingsMore": "More servings",
+  "recipeIngredientRemove": "Remove ingredient",
+  "searchClear": "Clear search",
+  "commentSend": "Send comment",
+  "wikiSubpagesShow": "Show subpages",
+  "wikiSubpagesHide": "Hide subpages",
+  "groupIconFamily": "Family",
+  "groupIconParents": "Parents",
+  "groupIconChildren": "Children",
+  "groupIconElders": "Grandparents",
+  "groupIconTablet": "Tablet",
+  "groupIconGroup": "Group",
+  "navHome": "Home",
+  "homeGreetingMorning": "Good morning, {name}",
+  "@homeGreetingMorning": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "homeGreetingDay": "Hello, {name}",
+  "@homeGreetingDay": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "homeGreetingEvening": "Good evening, {name}",
+  "@homeGreetingEvening": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "navCalendar": "Calendar",
+  "navTasks": "Tasks",
+  "navWiki": "Wiki",
+  "navFamily": "Family",
+  "navSettings": "Settings",
+  "navSearch": "Search",
+  "navAccount": "Account",
+  "serverTitle": "Server address",
+  "serverLead": "Enter your server's address.",
+  "serverField": "Address",
+  "serverHint": "hiwiski.local:8080",
+  "serverConnect": "Connect",
+  "serverConnected": "Connected to {familyName}, version {version}.",
+  "@serverConnected": {
+    "placeholders": {
+      "familyName": {
+        "type": "String"
+      },
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "serverCleartextTitle": "This connection is not encrypted",
+  "serverCleartextBody": "HTTPS is not set up. Inside your own home network that is acceptable — over the open internet it is not. Your server's setup guide explains how to add a certificate.",
+  "serverUnreachable": "No Hiwiski server answered at this address.",
+  "serverChange": "Change",
+  "serverLabel": "Server",
+  "setupTitle": "Set up Hiwiski",
+  "setupStep": "Step {current} of {total}",
+  "@setupStep": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "setupFamilyTitle": "Your family",
+  "setupFamilyName": "Family name",
+  "setupTimezone": "Time zone",
+  "setupCode": "Setup code",
+  "setupCodeHint": "The server prints it to its log at every start until it is set up — for example with docker compose logs app. It keeps strangers from setting up your server before you do.",
+  "setupAdminTitle": "Your account",
+  "setupAdminLead": "This account administers the server. It cannot be changed later.",
+  "setupDisplayName": "Display name",
+  "setupUsername": "Username",
+  "setupPassword": "Password",
+  "setupPasswordRepeat": "Repeat password",
+  "setupGroupsTitle": "Groups",
+  "setupGroupsLead": "Users can be assigned to groups. Everyone joins the first one.",
+  "setupGroupEveryone": "Everyone",
+  "setupGroupParents": "Parents",
+  "setupGroupAdd": "Add group",
+  "setupDoneTitle": "That's it",
+  "setupDoneLead": "The Hiwiski server is ready.",
+  "setupStart": "Let's go",
+  "loginWelcome": "Welcome back",
+  "loginUsername": "Username",
+  "loginPassword": "Password",
+  "loginStaySignedIn": "Stay signed in",
+  "loginSubmit": "Sign in",
+  "loginNewHere": "Join a family?",
+  "loginRedeem": "Redeem invitation",
+  "loginShowPassword": "Show password",
+  "loginHidePassword": "Hide password",
+  "inviteRedeemTitle": "Redeem invitation",
+  "inviteServerTitle": "Connect to this server?",
+  "inviteServerBody": "This invitation leads to {host}. Only continue if you know this address: the server you join gets the name and password you choose there.",
+  "@inviteServerBody": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteServerConnect": "Connect",
+  "inviteRedeemServer": "Server: {host}",
+  "@inviteRedeemServer": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteCodeLabel": "Invitation code",
+  "inviteInvitedBy": "Invited by {name}",
+  "@inviteInvitedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteGroups": "Groups: {groups}",
+  "@inviteGroups": {
+    "placeholders": {
+      "groups": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteYourName": "Your name",
+  "inviteJoin": "Join",
+  "inviteExpired": "This code has expired or has already been used. Ask for a new invitation.",
+  "passwordChangeTitle": "Choose a new password",
+  "passwordChangeLead": "Your password was reset. Pick your own before you carry on.",
+  "passwordCurrent": "Current password",
+  "passwordNew": "New password",
+  "passwordRepeat": "Repeat password",
+  "passwordApply": "Apply",
+  "passwordMismatch": "The passwords do not match.",
+  "passwordTooShort": "At least 8 characters.",
+  "accountTitle": "Account",
+  "accountAppearance": "Appearance",
+  "accountThemeLight": "Light",
+  "accountThemeDark": "Dark",
+  "accountThemeSystem": "System",
+  "aboutTitle": "About Hiwiski",
+  "aboutVersion": "Version",
+  "aboutApp": "App",
+  "aboutDevelopmentBuild": "Development build",
+  "aboutLicense": "License",
+  "aboutLicenseTerms": "Free for noncommercial use — running it for your own family included.",
+  "aboutSourceCode": "Source code",
+  "aboutPackageLicenses": "Licenses of the packages used",
+  "aboutPackageLicensesHint": "The libraries and fonts the app is built from.",
+  "accountAdministration": "Administration",
+  "accountChangePassword": "Change password",
+  "accountPasswordChanged": "Password changed. Your other devices are signed out.",
+  "accountSignOut": "Sign out",
+  "accountSignOutConfirm": "Sign out of Hiwiski on this device?",
+  "accountSignOutBody": "Data that has not been synced is lost.",
+  "accountAdmin": "Administrator",
+  "familyTitle": "Family",
+  "familyGroups": "Groups",
+  "familyMembers": "Members",
+  "familyNewMember": "New member",
+  "familyNewGroup": "New group",
+  "familyInvited": "Invited · {remaining} left",
+  "familyInviteExpired": "Invited · expired",
+  "@familyInvited": {
+    "placeholders": {
+      "remaining": {
+        "type": "String"
+      }
+    }
+  },
+  "familyMemberCount": "{count, plural, =0{no members} =1{1 member} other{{count} members}}",
+  "familyGroupCount": "{count, plural, =0{no groups} =1{1 group} other{{count} groups}}",
+  "@familyGroupCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@familyMemberCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "familyResetPassword": "Reset password",
+  "familyResetPasswordLead": "{name} has to choose their own the next time they sign in. All of {name}'s devices are signed out.",
+  "familyMemberActions": "More for {name}",
+  "@familyMemberActions": {"placeholders": {"name": {"type": "String"}}},
+  "familySignOutDevices": "Sign out all devices",
+  "familySignOutDevicesConfirm": "Sign out all of {name}'s devices?",
+  "@familySignOutDevicesConfirm": {"placeholders": {"name": {"type": "String"}}},
+  "familySignOutDevicesBody": "Every device of {name} loses access at once. {name} can sign in again.",
+  "@familySignOutDevicesBody": {"placeholders": {"name": {"type": "String"}}},
+  "familySignedOutDevices": "{name}'s devices are signed out.",
+  "@familySignedOutDevices": {"placeholders": {"name": {"type": "String"}}},
+  "familyDisable": "Disable",
+  "familyDisableConfirm": "Disable {name}?",
+  "@familyDisableConfirm": {"placeholders": {"name": {"type": "String"}}},
+  "familyDisableBody": "{name} can no longer sign in, and every device of theirs is signed out at once. Their things and shares stay. You can enable {name} again later.",
+  "@familyDisableBody": {"placeholders": {"name": {"type": "String"}}},
+  "familyEnable": "Enable",
+  "familyDisabled": "Disabled",
+  "familyRevoke": "Withdraw",
+  "familyRevokeTooltip": "Withdraw invitation",
+  "familyRevokeTooltipFor": "Withdraw the invitation for {name}",
+  "@familyRevokeTooltipFor": {"placeholders": {"name": {"type": "String"}}},
+  "familyRevokeConfirm": "Withdraw the invitation?",
+  "familyRevokeBody": "Its code stops working at once. You can create a new invitation at any time.",
+  "@familyResetPasswordLead": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "inviteCreateTitle": "New member",
+  "inviteCreateName": "Name (optional)",
+  "inviteCreateValidity": "Valid for",
+  "inviteValidity1Hour": "1 hour",
+  "inviteValidity24Hours": "24 hours",
+  "inviteValidity7Days": "7 days",
+  "inviteCreateSubmit": "Create invitation",
+  "inviteResultLead": "Install Hiwiski on the new device and scan the QR code with its camera — or choose \"Redeem invitation\" in Hiwiski and enter this code.",
+  "inviteResultFor": "For",
+  "inviteResultGroups": "Groups",
+  "inviteResultValid": "Valid",
+  "inviteCopyCode": "Copy code",
+  "devicesTitle": "My devices",
+  "devicesThisDevice": "This device",
+  "devicesSignedInSince": "Signed in since {date}",
+  "@devicesSignedInSince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "devicesSyncedJustNow": "Synced · just now",
+  "devicesSyncedAgo": "Synced · {ago}",
+  "@devicesSyncedAgo": {
+    "placeholders": {
+      "ago": {
+        "type": "String"
+      }
+    }
+  },
+  "devicesPending": "{count, plural, =1{1 change waiting} other{{count} changes waiting}} · offline for {days, plural, =1{1 day} other{{days} days}}",
+  "@devicesPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "devicesRevoke": "Sign out",
+  "devicesWaiting": "{count, plural, =1{1 change waiting} other{{count} changes waiting}}",
+  "@devicesWaiting": {"placeholders": {"count": {"type": "int"}}},
+  "devicesRevokeConfirm": "Sign out “{name}”?",
+  "@devicesRevokeConfirm": {"placeholders": {"name": {"type": "String"}}},
+  "devicesRevokeLoss": "{count, plural, =0{It loses access at once.} =1{It loses access at once, and 1 change on it that has not been synced is lost.} other{It loses access at once, and {count} changes on it that have not been synced are lost.}}",
+  "@devicesRevokeLoss": {"placeholders": {"count": {"type": "int"}}},
+  "devicesNote": "A device that is signed out loses access immediately. Changes on it that have not been synced are lost.",
+  "stateEmptyTitle": "Nothing here yet",
+  "notFoundTitle": "Not found",
+  "notFound": "This page does not exist.",
+  "notFoundHome": "Go to Home",
+  "stateGone": "This no longer exists — it was deleted or is no longer shared with you.",
+  "boardDashboardEmpty": "Your dashboard is still empty. Add a widget with +.",
+  "boardKioskEmpty": "Nothing on this dashboard yet. Set it up in the app under Account › Dashboard.",
+  "todoNoListYet": "No list yet — create one under Tasks first.",
+  "stateLoading": "Loading",
+  "stateOffline": "Offline. Syncing is pending.",
+  "stateOfflineWeb": "No connection to the server. If you close the tab, your changes are lost.",
+  "stateOfflineSearch": "Offline — only what is on this device.",
+  "stateReadOnly": "Read only.",
+  "stateReadOnlyShared": "Shared with you to read. Only the owner and those who may write change it.",
+  "conflictTitle": "Conflict: {field}",
+  "@conflictTitle": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "conflictBefore": "Before",
+  "conflictBeforeUnknown": "No longer known — the history does not reach back that far.",
+  "conflictDoneColumn": "{name} (done)",
+  "@conflictDoneColumn": {"description": "A done column of a board in a conflict: Done (done).", "placeholders": {"name": {"type": "String"}}},
+  "conflictColumnGone": "a column that no longer exists",
+  "conflictTicked": "ticked off",
+  "conflictUnticked": "not ticked off",
+  "conflictTheirs": "Now on the server",
+  "conflictMine": "Yours",
+  "conflictKeepTheirs": "Keep the server's",
+  "stateConflictField": "\"{field}\" was changed elsewhere at the same time.",
+  "@stateConflictField": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "stateConflictCount": "{count, plural, =1{1 change was made elsewhere at the same time.} other{{count} changes were made elsewhere at the same time.}}",
+  "@stateConflictCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "conflictListTitle": "Conflicts",
+  "stateConflictTake": "Take mine anyway",
+  "stateConflictShow": "View",
+  "stateConflictWiki": "Your version from {time} was not saved.",
+  "@stateConflictWiki": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "validationRequired": "Required",
+  "validationDays": "A whole number of days, at least 1",
+  "stateErrorGeneric": "Something went wrong.",
+  "errorAuthInvalidCredentials": "Username or password is wrong.",
+  "errorAuthRequired": "Please sign in.",
+  "errorAuthCurrentPasswordWrong": "The current password is wrong.",
+  "errorAuthNewPasswordSame": "The new password is the current one. Choose another.",
+  "errorAuthTooManyAttempts": "Too many attempts. Wait a moment, then try again.",
+  "errorAccessDenied": "You are not allowed to do that.",
+  "errorCalendarReadOnly": "This calendar is filled by its source. Only tags, attendees and reminders can be changed here.",
+  "errorCalendarFeedTokenInvalid": "This calendar link is not safe enough. Create the link again.",
+  "errorSyncValueTooLarge": "Too large for the server. It is kept on this device and syncs once the text or the list is shorter.",
+  "errorRequestInvalid": "The server could not read this change.",
+  "errorRequestTooLarge": "This is too much for the server at once. Shorten it and try again.",
+  "errorIdentityMemberIsAdmin": "This cannot be done to the administrator.",
+  "errorIdentityTextTooLong": "That is too long. Shorten it and try again.",
+  "errorAccessNotShareable": "This cannot be shared. It belongs to one member.",
+  "errorCalendarFeedNotFound": "This calendar link does not exist or no longer works.",
+  "errorSyncEntityDeleted": "Someone deleted this in the meantime. Only whoever may delete it can bring it back.",
+  "errorSyncContainerNotFound": "That place no longer exists, or you can't add anything there.",
+  "errorAdminKeyPrefixTaken": "Another kind of item already uses this prefix.",
+  "errorSyncBoardGone": "The dashboard this widget belonged to is gone.",
+  "errorDashboardBoardNotFound": "This address opens no dashboard. The current address is in the app under Account › Dashboard.",
+  "errorAccessCheckNotApplicable": "“Check off” only exists for lists and tasks.",
+  "errorIdentityUsernameTaken": "That username is taken.",
+  "errorIdentityUsernameInvalid": "2 to 32 characters: letters, digits, dot, dash, underscore.",
+  "errorIdentityPasswordTooShort": "At least 8 characters.",
+  "errorIdentityAdminRequired": "Only the administrator can do that.",
+  "errorIdentityInvitationNotFound": "This code has expired or has already been used.",
+  "errorIdentityDeviceNotFound": "That device is already gone.",
+  "errorIdentityGroupDefault": "Every new member joins this group, so it stays.",
+  "errorSetupAlreadyCompleted": "This server is already set up.",
+  "errorSetupTimezoneInvalid": "Unknown time zone.",
+  "errorSetupCodeInvalid": "That setup code is not right. Use the one from the server's latest start.",
+  "errorServerGeneric": "The server had a problem. Reference {correlationId}.",
+  "@errorServerGeneric": {
+    "placeholders": {
+      "correlationId": {
+        "type": "String"
+      }
+    }
+  },
+  "errorNetwork": "The server could not be reached.",
+  "todoEmpty": "No lists yet. Create one first.",
+  "todoNewList": "New list",
+  "todoCounts": "{open} open · {done} done",
+  "@todoCounts": {
+    "placeholders": {
+      "open": {
+        "type": "int"
+      },
+      "done": {
+        "type": "int"
+      }
+    }
+  },
+  "todoKindStandard": "Tasks",
+  "todoKindStandardHint": "Tick off, due dates, repeats",
+  "todoKindShopping": "Shopping",
+  "todoKindShoppingHint": "Amounts, sorted by category",
+  "todoListName": "Name",
+  "todoNewTaskHint": "New task, e.g. clean the windows",
+  "todoNewItemHint": "New item, e.g. 2l milk",
+  "todoListEmpty": "Nothing on this list yet.",
+  "todoDone": "Done",
+  "todoDelete": "Delete task",
+  "todoDeleteConfirm": "Delete task?",
+  "todoDeleteListConfirm": "Delete list with all its tasks?",
+  "todoNoKey": "—",
+  "syncStuck": "{count, plural, =1{1 change could not be applied} other{{count} changes could not be applied}}",
+  "@syncStuck": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPending": "{count, plural, =1{1 change is waiting to sync.} other{{count} changes are waiting to sync.}}",
+  "@syncPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareTitle": "Sharing",
+  "shareOwner": "Owner",
+  "shareAssigned": "automatic · assigned",
+  "shareInherited": "inherited from {source}",
+  "@shareInherited": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "shareOwnShares": "Shared with",
+  "shareAddSubject": "Add person or group",
+  "shareSetOwn": "Set own sharing",
+  "shareLevelRead": "read",
+  "shareLevelCheck": "tick off",
+  "shareLevelWrite": "write",
+  "shareLevelReadHint": "See, search, comment, link",
+  "shareLevelCheckHint": "Also tick tasks off — nothing else",
+  "shareLevelWriteHint": "Also add, change and delete inside",
+  "shareRemove": "Remove",
+  "shareReadOnlyNote": "Only the owner can change who sees this.",
+  "shareNobody": "Only you.",
+  "todoDeleteList": "Delete list",
+  "trashTitle": "Trash",
+  "trashEmpty": "Nothing deleted. What you delete lands here first.",
+  "trashDeletedBy": "deleted by {name}, {when}",
+  "@trashDeletedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "trashRemaining": "{days, plural, =0{gone today} =1{1 day left} other{{days} days left}}",
+  "@trashRemaining": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "trashRestore": "Restore",
+  "trashNoContainer": "Where it was is gone. Restoring asks where it should go.",
+  "trashRestoreTo": "Restore to",
+  "trashNoTarget": "There is nowhere to put it yet. Create one first, then restore it.",
+  "trashNote": "{days, plural, =1{Deleted items stay here for 1 day, then they are deleted for good.} other{Deleted items stay here for {days} days, then they are deleted for good.}}",
+  "@trashNote": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsTitle": "Settings",
+  "settingsFamily": "Family",
+  "settingsNumbers": "Numbers",
+  "settingsNumbersNote": "Numbers already given out stay valid. A new prefix only affects what comes after.",
+  "settingsRetention": "Retention",
+  "settingsTrashDays": "Trash (days)",
+  "settingsLogDays": "Change log (days)",
+  "settingsLogNote": "The change log also sets how far the history of an item reaches back.",
+  "settingsBackup": "Backup",
+  "settingsBackupNow": "Back up now",
+  "settingsBackupDone": "Backup written.",
+  "settingsRestoreDone": "{rows, plural, =1{Restored 1 entry. Every device syncs at its next connection.} other{Restored {rows} entries. Every device syncs at its next connection.}}",
+  "@settingsRestoreDone": {
+    "placeholders": {
+      "rows": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsBackupNone": "No backup yet.",
+  "settingsRestore": "Restore",
+  "settingsLog": "Log",
+  "settingsLogShow": "Show log",
+  "settingsSaved": "Saved",
+  "calAll": "All",
+  "calViewList": "List",
+  "calViewMonth": "Month",
+  "calViewSection": "View",
+  "calCalendarsSection": "Calendars",
+  "calManage": "Manage calendars",
+  "calNothingPlanned": "nothing planned",
+  "calNothingPlannedCard": "Nothing planned.",
+  "calNewEvent": "Event",
+  "calEmpty": "No events yet. Create a calendar and add an event.",
+  "calToday": "Today",
+  "calReadOnly": "From a subscribed calendar. Read-only.",
+  "calSubscribedLocked": "Subscribed",
+  "calEventTitle": "Title",
+  "calEndBeforeStart": "The end is before the start.",
+  "calDeleteEvent": "Delete event",
+  "calDeleteEventConfirm": "Delete event?",
+  "calSubscriptionCheck": "Check address",
+  "calSubscriptionNothingUpcoming": "Nothing coming up.",
+  "calSubscriptionEventCount": "{count, plural, =1{1 event} other{{count} events}}",
+  "@calSubscriptionEventCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "calImportFile": "Import file",
+  "calImportDone": "{imported} imported, {updated} updated.",
+  "@calImportDone": {
+    "placeholders": {
+      "imported": {
+        "type": "int"
+      },
+      "updated": {
+        "type": "int"
+      }
+    }
+  },
+  "calTagsHint": "These tags apply to every event in the calendar — also imported and subscribed ones.",
+  "calAllDay": "All day",
+  "calTask": "Task",
+  "calTasksThisWeek": "Tasks due",
+  "calStart": "Start",
+  "calEnd": "End",
+  "calTime": "Time",
+  "calCalendar": "Calendar",
+  "calRepeat": "Repeat",
+  "calReminder": "Reminder",
+  "calLocation": "Location",
+  "calNote": "Note",
+  "calAssigned": "Assigned",
+  "calNewEventTitle": "New event",
+  "calEditEventTitle": "Edit event",
+  "calRepeatNone": "None",
+  "calRepeatDaily": "Daily",
+  "calRepeatWeekly": "Weekly",
+  "calRepeatMonthly": "Monthly",
+  "calRepeatYearly": "Yearly",
+  "calRepeatEvery": "Every",
+  "calRepeatUnitDay": "days",
+  "calRepeatUnitWeek": "weeks",
+  "calRepeatUnitMonth": "months",
+  "calRepeatUnitYear": "years",
+  "calRepeatWeekdays": "On these days",
+  "calRepeatMonthlyDay": "On day {day} of the month",
+  "@calRepeatMonthlyDay": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      }
+    }
+  },
+  "calRepeatMonthlyWeekday": "On the {nth} {weekday}",
+  "@calRepeatMonthlyWeekday": {
+    "placeholders": {
+      "nth": {
+        "type": "String"
+      },
+      "weekday": {
+        "type": "String"
+      }
+    }
+  },
+  "calRepeatEndNever": "Never ends",
+  "calRepeatEndAfter": "Ends after",
+  "calRepeatEndOn": "Ends on",
+  "calRepeatTimes": "occurrences",
+  "calRepeatNth1": "first",
+  "calRepeatNth2": "second",
+  "calRepeatNth3": "third",
+  "calRepeatNth4": "fourth",
+  "calRepeatNthLast": "last",
+  "calRepeatCustom": "Custom rule",
+  "calRepeatForeign": "This recurrence comes from another source and cannot be edited here.",
+  "calRepeatSummary": "{rule}",
+  "@calRepeatSummary": {
+    "placeholders": {
+      "rule": {
+        "type": "String"
+      }
+    }
+  },
+  "calScopeQuestion": "Change recurring event",
+  "calScopeOnlyThis": "This event only",
+  "calScopeFollowing": "This and all following",
+  "calScopeAll": "The whole series",
+  "calScopeDeleteQuestion": "Delete recurring event",
+  "calDefaultReminder": "Default reminder",
+  "calDefaultReminderHint": "For every event in this calendar without a reminder of its own — existing ones too.",
+  "calReminderFromCalendar": "{label} · from the calendar",
+  "@calReminderFromCalendar": {"placeholders": {"label": {"type": "String"}}},
+  "calReminderNone": "None",
+  "calReminderAtStart": "At start",
+  "calReminder5": "5 minutes before",
+  "calReminder15": "15 minutes before",
+  "calReminder30": "30 minutes before",
+  "calReminder60": "1 hour before",
+  "calReminder1440": "1 day before",
+  "calReminderNoBrowser": "The web version has no reminders. Use the app for them.",
+  "calOwnCalendars": "Own calendars",
+  "calNewCalendarShort": "Calendar",
+  "calNewCalendar": "New calendar",
+  "calCalendarName": "Name",
+  "calColor": "Colour",
+  "calDeleteCalendar": "Delete calendar",
+  "calDeleteCalendarBody": "The calendar and all its events go to the trash.",
+  "calSubscriptions": "Subscribed calendars (ICS)",
+  "calAddSubscription": "Add subscription",
+  "calSubscriptionUrl": "ICS address",
+  "calSubscriptionInterval": "Refresh interval",
+  "calSubscriptionTarget": "Target type",
+  "calSubscriptionTargetEvent": "Events",
+  "calSubscriptionTargetTask": "Tasks",
+  "calSubscriptionNote": "Subscribed events are read-only. The server fetches them regularly, even when no device is online.",
+  "calSubscriptionTargetLocked": "The target type is fixed when the subscription is created and cannot be changed afterwards.",
+  "calIntervalHourly": "Hourly",
+  "calIntervalDaily": "Daily",
+  "calIntervalWeekly": "Weekly",
+  "calSyncNow": "Refresh now",
+  "calSyncedAt": "Updated {when} · {interval}",
+  "@calSyncedAt": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      },
+      "interval": {
+        "type": "String"
+      }
+    }
+  },
+  "calSyncNever": "Not refreshed yet",
+  "calSyncError": "Fetch failed: {message}",
+  "@calSyncError": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "calDeleteSubscription": "Delete subscription",
+  "calDeleteSubscriptionBody": "The subscription takes its calendar and its events with it.",
+  "calInFeeds": "In the ICS link: {names}",
+  "@calInFeeds": {"placeholders": {"names": {"type": "String"}}},
+  "calFeedIncludes": "Calendars: {names}",
+  "@calFeedIncludes": {"placeholders": {"names": {"type": "String"}}},
+  "calFeeds": "Own ICS links",
+  "calFeedsNote": "Share a calendar as an address so other calendar apps can subscribe to it. Read-only, revocable at any time.",
+  "calNewFeed": "Create link",
+  "calFeedName": "Name",
+  "calFeedContent": "Content",
+  "calFeedContentFull": "Full",
+  "calFeedContentBusy": "Busy only",
+  "calFeedCopy": "Copy",
+  "calFeedCopied": "Address copied.",
+  "calFeedRevoke": "Revoke",
+  "calFeedRevokeBody": "Whoever has the address will see nothing afterwards.",
+  "calFeedCalendars": "Included calendars",
+  "calFeedNoCalendars": "No calendar selected yet.",
+  "todoDue": "Due",
+  "todoRepeat": "Repeat",
+  "todoNoDue": "No date",
+  "calDefaultCalendar": "Family",
+  "calRepeatEnd": "End",
+  "errorCalendarIcsUnreadable": "The file could not be read. Is that address really an ICS calendar?",
+  "errorCalendarImportIntoSubscription": "A subscribed calendar belongs to its source — import into one of your own calendars.",
+  "errorCalendarSubscriptionHttpError": "The server behind that address did not provide the file.",
+  "errorCalendarSubscriptionUnreachable": "The address could not be reached.",
+  "errorCalendarSubscriptionTooLarge": "The file is too large.",
+  "errorCalendarSubscriptionTooManyRedirects": "That address redirects in a circle.",
+  "errorCalendarSubscriptionBlocked": "That address is on the home network. The server fetches nothing from there.",
+  "errorCalendarSubscriptionFailed": "The refresh failed.",
+  "errorCalendarSubscriptionReadOnly": "You are not allowed to refresh this subscription.",
+  "errorNetUrlInvalid": "That is not a valid address.",
+  "errorNetUrlSchemeNotAllowed": "Only http and https.",
+  "errorNetHostUnknown": "This address cannot be resolved.",
+  "errorNetAddressNotAllowed": "That address is on the home network. The server fetches nothing from there.",
+  "wikiTitle": "Wiki",
+  "wikiEmpty": "Create a wiki page first.",
+  "wikiNewPage": "New page",
+  "wikiNewSubpage": "Subpage",
+  "wikiNewFolder": "Folder",
+  "wikiNewRecipe": "Recipe",
+  "wikiNewRecipeFolder": "Recipe collection",
+  "recipeFolderEmpty": "No recipes in this collection yet.",
+  "wikiCreateIn": "Create in {name}",
+  "@wikiCreateIn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "wikiPageTitle": "Title",
+  "wikiEdit": "Edit",
+  "wikiHistory": "History",
+  "wikiMove": "Move",
+  "wikiDelete": "Delete",
+  "wikiDeleteBody": "The page and all its subpages go to the trash.",
+  "wikiMoveTo": "Where to?",
+  "wikiMoveRoot": "Top level",
+  "wikiComments": "Comments · {count}",
+  "@wikiComments": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "wikiCommentHint": "Write a comment",
+  "wikiRestoreRevision": "Restore this version",
+  "wikiRevisionConflict": "Conflict",
+  "wikiRevision": "Version",
+  "wikiSaved": "Saved",
+  "wikiLinkInsert": "Link",
+  "wikiLinkPick": "Link to what?",
+  "linkPreviewOpen": "Open",
+  "linkTypeTodo": "Task",
+  "linkTypeTodoList": "List",
+  "webUpdateAvailable": "A new version of Hiwiski is available.",
+  "webUpdateReload": "Reload",
+  "linkTypeEvent": "Event",
+  "linkTypeWikiPage": "Page",
+  "linkOutgoing": "Linked from here",
+  "linkIncoming": "Links to this",
+  "linkNone": "None",
+  "linkShowAll": "Show all {count}",
+  "@linkShowAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "linkPickEmpty": "Nothing found to link to.",
+  "linkHintDescription": "Description, links with # e.g. #WIKI-3",
+  "linkHintNote": "Note, links with # e.g. #WIKI-3",
+  "wikiMdHeading": "Heading",
+  "wikiMdBold": "Bold",
+  "wikiMdItalic": "Italic",
+  "wikiMdList": "List",
+  "wikiMdCheck": "Checkbox",
+  "wikiMdQuote": "Quote",
+  "wikiMdCode": "Code",
+  "recipeServings": "Servings",
+  "recipeIngredients": "Ingredients",
+  "recipePreparation": "Preparation",
+  "recipeDuration": "Time",
+  "recipeSource": "Source",
+  "recipeMinutes": "{count} min",
+  "@recipeMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recipeToShoppingList": "Add to shopping list",
+  "recipeToShoppingListTitle": "{count, plural, =1{1 ingredient} other{{count} ingredients}} for {servings, plural, =1{1 serving} other{{servings} servings}} from {title}",
+  "@recipeToShoppingListTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "servings": {
+        "type": "int"
+      },
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "recipeNewList": "New shopping list",
+  "recipeListName": "Name",
+  "recipeTake": "Add",
+  "recipeImport": "Recipe from an address",
+  "recipeImportUrl": "Address",
+  "recipeImportFetch": "Fetch",
+  "recipeImportCheck": "Check and add",
+  "recipeImportUncertain": "This line could not be parsed with confidence.",
+  "recipeImportUncertainCount": "{count, plural, =1{1 line to check} other{{count} lines to check}}",
+  "@recipeImportUncertainCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recipeImportTarget": "Target folder",
+  "recipeStaple": "Staple",
+  "recipeNoIngredients": "No ingredients yet.",
+  "recipeAddIngredient": "Add ingredient",
+  "boardStart": "Start",
+  "boardGreeting": "Hello, {name}",
+  "@boardGreeting": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "boardCustomize": "Customise start",
+  "boardDone": "Done",
+  "boardEditHint": "Tap a widget to configure it. Only your own dashboard changes.",
+  "boardEmpty": "Nothing here yet. Set up what you want to see when you open the app.",
+  "boardAdd": "+ {name}",
+  "@boardAdd": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "boardUnknownWidget": "Your app version does not know this widget yet.",
+  "boardDashboard": "Dashboard",
+  "boardDashboardHint": "Open it on the wall tablet at this address — without signing in.",
+  "boardAddress": "Address",
+  "boardCopy": "Copy",
+  "boardCopied": "Address copied.",
+  "boardShowQr": "Show as QR",
+  "boardRegenerate": "Regenerate",
+  "boardRegenerateBody": "The wall tablet shows nothing until the new one is entered.",
+  "boardColumns": "Columns",
+  "boardArrange": "Arrange",
+  "boardOccupied": "There is already a widget there.",
+  "boardSize": "Size",
+  "boardWidth": "Width",
+  "boardHeight": "Height",
+  "boardConfigure": "Configure",
+  "boardRemove": "Remove",
+  "boardLastUpdated": "last updated {time}",
+  "@boardLastUpdated": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetClock": "Clock",
+  "widgetCalendar": "Calendar",
+  "widgetTodoLists": "Tasks",
+  "widgetTodoList": "Task list",
+  "widgetShoppingList": "Shopping list",
+  "widgetRecipe": "Recipe",
+  "widgetWikiPage": "Wiki page",
+  "widgetNote": "Note",
+  "widgetClock24h": "24-hour display",
+  "widgetClockSeconds": "Seconds",
+  "widgetClockDate": "Date",
+  "widgetCalendarWhich": "Which calendars",
+  "widgetCalendarRange": "Look ahead",
+  "widgetCalendarHidePast": "Hide today's past entries",
+  "widgetRangeToday": "Today",
+  "widgetRangeTomorrow": "Until tomorrow",
+  "widgetRange3": "3 days",
+  "widgetRange7": "7 days",
+  "widgetRange14": "14 days",
+  "widgetListsWhich": "Which lists",
+  "widgetListWhich": "Which list",
+  "widgetShowDone": "Show completed",
+  "widgetCount": "Count",
+  "widgetNoteText": "Text",
+  "widgetPageWhich": "Which page",
+  "widgetRecipeOfTheDay": "Suggestion of the day",
+  "widgetNothingToShow": "Nothing to show.",
+  "widgetNotConfigured": "Not configured yet.",
+  "widgetAllCalendars": "All calendars",
+  "widgetListCount": "{count, plural, =1{1 list} other{{count} lists}}",
+  "@widgetListCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchTitle": "Search",
+  "searchHint": "Search",
+  "searchTypeEvents": "Events",
+  "searchTypeTodos": "Tasks",
+  "searchTypeWiki": "Wiki",
+  "searchNothing": "Nothing found.",
+  "searchNothingHere": "Not found here.",
+  "searchOffline": "Searched on this device. Anything only on the server is missing.",
+  "searchStart": "Type what you are looking for.",
+  "searchJumpTo": "Go to {key}",
+  "@searchJumpTo": {
+    "placeholders": {
+      "key": {
+        "type": "String"
+      }
+    }
+  },
+  "historyTitle": "History",
+  "historyReachesBack": "The history reaches back to {date}.",
+  "@historyReachesBack": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "historyCreated": "created",
+  "historyOfEntry": "“{title}” {change}",
+  "@historyOfEntry": {
+    "description": "A change to a task in its list's history: “Milk” checked off.",
+    "placeholders": {"title": {"type": "String"}, "change": {"type": "String"}}
+  },
+  "historyChanged": "changed: {fields}",
+  "@historyChanged": {
+    "placeholders": {
+      "fields": {
+        "type": "String"
+      }
+    }
+  },
+  "historyDeleted": "deleted",
+  "historyEmpty": "No changes yet.",
+  "historyAll": "Show full history",
+  "historyVersionSaved": "saved a version",
+  "historyConflictVersion": "kept a conflicting version",
+  "historyOpenVersion": "Open version",
+  "historySomeone": "Someone",
+  "historyOffline": "The history is not on the device — it needs the server.",
+  "historyFieldText": "Text",
+  "historyFieldOrder": "Placement",
+  "historyFieldAmount": "Amount",
+  "infoSection": "Info",
+  "infoCreated": "Created",
+  "infoUpdated": "Last edited",
+  "todoDescription": "Description",
+  "stuckTitle": "Not applied",
+  "stuckIntro": "The server rejected these changes. Write them off or try again — until then they stay here.",
+  "stuckRetryAll": "Try again",
+  "stuckDiscardAll": "Discard",
+  "stuckDiscardConfirm": "Discard all?",
+  "stuckDiscardBody": "What is listed here will be gone. The server never took it anyway.",
+  "stuckEmpty": "Nothing is stuck.",
+  "stuckShow": "Show",
+  "navCollapse": "Collapse navigation",
+  "navExpand": "Expand navigation",
+  "calTomorrow": "Tomorrow",
+  "widgetOpenCount": "{count} open",
+  "@widgetOpenCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetNoListsChosen": "No lists selected.",
+  "widgetNoEvents": "No events in the selected period.",
+  "widgetNoCalendars": "No calendars",
+  "widgetCalendarsShown": "Shown calendars",
+  "widgetListsShown": "Shown lists",
+  "widgetListsHint": "Several lists show with their progress; a single list shows its open items to tick off.",
+  "widgetTitleCalendar": "Set up calendar widget",
+  "widgetTitleTodoLists": "Set up tasks widget",
+  "calReadOnlySubscription": "From a subscribed calendar. Read only.",
+  "calNoLocation": "No location",
+  "calNoAttendees": "Nobody assigned",
+  "calOpenMap": "Open in maps",
+  "calTimeRange": "{from} – {to}",
+  "@calTimeRange": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "calTimeFrom": "from {time}",
+  "@calTimeFrom": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "calEventFallback": "Event",
+  "actionEdit": "Edit",
+  "assignAction": "Assign",
+  "assignNobody": "Nobody",
+  "assignUnknown": "Someone not loaded here",
+  "propRepeat": "Repeat",
+  "propReminder": "Reminder",
+  "propCalendar": "Calendar",
+  "commentsTitle": "Comments",
+  "calAssignedHint": "Assignees see the event automatically.",
+  "todoAssignedHint": "Assignees see the task automatically and may check it off.",
+  "listAssignedHint": "Assignees see the list automatically and may edit it.",
+  "shareOnlyYou": "Only you",
+  "shareVerbRead": "see",
+  "shareVerbCheck": "check off",
+  "shareVerbWrite": "edit",
+  "tagAdd": "+ Tag",
+  "tagsInheritedFrom": "From the calendar {name}",
+  "@tagsInheritedFrom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tagsTitle": "Tags",
+  "tagNew": "New tag",
+  "tagEdit": "Edit tag",
+  "tagName": "Name",
+  "tagCreate": "Create",
+  "tagColor": "Color",
+  "tagsCount": "{count, plural, =1{1 tag} other{{count} tags}}",
+  "@tagsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tagUsage": "{count, plural, =0{unused} =1{1 item} other{{count} items}}",
+  "@tagUsage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tagsEmpty": "No tags yet. Tags sort lists, events and pages across the app.",
+  "tagsMine": "My tags",
+  "tagsShared": "Shared with me",
+  "tagsNote": "Deleting a tag removes it everywhere; the items stay.",
+  "groupName": "Name",
+  "groupIcon": "Symbol",
+  "groupInviteNew": "Invite a new person and add them right away",
+  "groupDeleteConfirm": "Delete “{name}”?",
+  "@groupDeleteConfirm": {"placeholders": {"name": {"type": "String"}}},
+  "groupDeleteNote": "Members lose the rights they had through this group. Groups are not kept in the trash.",
+  "groupNote": "Content can then be shared with the whole group.",
+  "listKind": "Kind",
+  "listEntries": "Entries",
+  "listEntriesValue": "{total, plural, =1{1 entry} other{{total} entries}}, {open} open",
+  "@listEntriesValue": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      },
+      "open": {
+        "type": "int"
+      }
+    }
+  },
+  "listRename": "Rename list",
+  "aisleProduce": "Fruit & vegetables",
+  "aisleBakery": "Bakery",
+  "aisleMeatSeafood": "Meat & fish",
+  "aisleDeli": "Deli",
+  "aisleDairyEggs": "Dairy & eggs",
+  "aisleBreakfast": "Breakfast",
+  "aislePantry": "Pantry",
+  "aisleSpicesCondiments": "Spices & condiments",
+  "aisleSnacksSweets": "Snacks & sweets",
+  "aisleBeverages": "Drinks",
+  "aisleFrozen": "Frozen",
+  "aisleBaby": "Baby",
+  "aislePersonalCare": "Personal care",
+  "aisleHousehold": "Household",
+  "aislePet": "Pet supplies",
+  "aisleOther": "Other",
+  "shoppingOtherAisles": "Other category",
+  "todoAisle": "Category",
+  "aisleNew": "New category…",
+  "aisleNewTitle": "New category",
+  "aisleRenameTitle": "Rename category",
+  "aisleNameLabel": "Name",
+  "aisles": "Categories",
+  "aislesEdit": "Edit categories",
+  "aisleAdd": "Add category",
+  "aisleHide": "Hide",
+  "aisleShow": "Show",
+  "aisleHidden": "hidden",
+  "aisleDelete": "Delete category",
+  "aisleDeleteConfirm": "{count, plural, =1{1 product in “{name}” moves to “Other”.} other{{count} products in “{name}” move to “Other”.}}",
+  "@aisleDeleteConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "aisleDeleteEmpty": "Delete “{name}”?",
+  "@aisleDeleteEmpty": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "aislesHint": "The shopping list groups by these categories, in this order. Drag an entry in a shopping list into another category, and the product lands there from then on.",
+  "aisleCreate": "Create",
+  "aisleProductSearch": "Search products",
+  "aisleProductAdd": "Add product",
+  "aisleRemoveProduct": "Remove from category",
+  "aisleMoveTo": "Move to",
+  "aisleNoProducts": "No products yet.",
+  "aisleOffline": "Categories can only be changed online.",
+  "errorCatalogAisleNameTaken": "There is already a category with that name.",
+  "errorCatalogAisleBuiltin": "Built-in categories can only be hidden.",
+  "errorCatalogAisleNotFound": "This category no longer exists.",
+  "todoToday": "today",
+  "todoMoreFields": "More fields",
+  "todoNewTask": "New task",
+  "todoTitle": "Title",
+  "todoList": "List",
+  "youSuffix": "{name} (you)",
+  "@youSuffix": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareFromList": "inherited from the list",
+  "todoSeriesRecent": "Series · recent occurrences",
+  "todoSeriesNone": "Nothing checked off yet.",
+  "todoSkipped": "skipped",
+  "recipeTime": "Time",
+  "recipeFolder": "Folder",
+  "wikiArea": "Area",
+  "wikiExpandAll": "Expand all",
+  "wikiCollapseAll": "Collapse all",
+  "wikiPages": "Pages",
+  "wikiTreeHide": "Hide page tree",
+  "wikiTreeShow": "Show page tree",
+  "searchTypeRecipes": "Recipes",
+  "pullForFilter": "Pull for filters",
+  "pullToCustomize": "Pull to customize",
+  "inviteFor": "For",
+  "inviteValid": "Valid",
+  "recipeImagePick": "Choose picture",
+  "recipeImageChange": "Change picture",
+  "recipeImageNotYetSynced": "The recipe isn't on the server yet. Try again once it has synced.",
+  "errorMediaNotAnImage": "That picture's format isn't supported — please use JPEG, PNG, GIF or WebP.",
+  "errorMediaTooLarge": "This image is too large. Try a smaller image.",
+  "errorMediaOwnerReadOnly": "You can only read this page, so you can't change its picture.",
+  "errorMediaQuotaExceeded": "Your space for pictures is used up. Remove pictures you no longer need, or ask the administrator for more space.",
+  "errorMediaBusy": "The server is busy with other pictures right now. Try again in a moment.",
+  "accountStorage": "Storage",
+  "storageData": "Data",
+  "storageImages": "Pictures",
+  "storageFree": "Free up storage",
+  "storageWeb": "In the web version, Hiwiski stores nothing on the device: data and pictures are loaded from the server each time.",
+  "storageDemo": "This is a demo: nothing is stored. Reloading the page starts over with the sample data.",
+  "@storageDemo": {
+    "description": "Account, Storage, in the public demo: nothing is kept, a reload starts over."
+  },
+  "storagePending": "{count, plural, =1{1 change is waiting to sync.} other{{count} changes are waiting to sync.}}",
+  "@storagePending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storagePendingWeb": "{count, plural, =1{1 change has not reached the server yet. Please keep the tab open until it has.} other{{count} changes have not reached the server yet. Please keep the tab open until they have.}}",
+  "@storagePendingWeb": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetMoreItems": "+{count} more",
+  "@widgetMoreItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "infoCreatedBy": "by {name}, {when}",
+  "@infoCreatedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "stampToday": "today {time}",
+  "@stampToday": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "stampYesterday": "yesterday {time}",
+  "@stampYesterday": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "historyFieldImage": "Picture",
+  "historyFieldKind": "Type",
+  "historyFieldStatus": "Status",
+  "historyMovedTo": "moved to “{column}”",
+  "@historyMovedTo": {"description": "A card moved on a board, in its history.", "placeholders": {"column": {"type": "String"}}},
+  "historyCheckedOff": "checked off",
+  "historyReopened": "opened again",
+  "historyArchived": "archived",
+  "historyRestored": "restored",
+  "historyFieldTimeZone": "Time zone",
+  "historyFieldOccurrences": "Single occurrences",
+  "wikiKindPage": "Page",
+  "wikiNewKind": "What should it be?",
+  "wikiNewEllipsis": "New …",
+  "recipeImportAction": "Import recipe",
+  "tagSearch": "Search tags",
+  "tagSearchNone": "No tag matches — \"+ Tag\" creates it.",
+  "listDescription": "Description",
+  "listEdit": "Edit list",
+  "calImportTitle": "Import calendar",
+  "calImportSource": "Source",
+  "calImportOr": "or",
+  "calImportClearLink": "Clear link",
+  "calImportPickFile": "Choose .ics file",
+  "calImportLinkOnce": "The link is fetched once — not a subscription, nothing is fetched again later.",
+  "calImportTarget": "Where to?",
+  "calImportTargetExisting": "Existing calendar",
+  "calImportTargetNew": "New calendar",
+  "calImportLocked": "Lock like a subscription",
+  "calImportLockedHint": "The events stay as they are in the file. A further import updates them.",
+  "calImportSubmit": "Import",
+  "calReadOnlyImported": "From a locked import. Read only — a further import updates it.",
+  "errorCalendarImportSourceMissing": "Choose a file or enter an address.",
+  "errorCalendarImportTargetExists": "That calendar exists already.",
+  "myAccountTitle": "My account",
+  "myAccountPictureSet": "Choose picture",
+  "myAccountPictureChange": "Change picture",
+  "myAccountPictureRemove": "Remove picture",
+  "myAccountPictureSaved": "Picture saved.",
+  "myAccountPictureRemoved": "Picture removed.",
+  "myAccountName": "Name",
+  "myAccountDisplayName": "Display name",
+  "myAccountUsername": "Username: {username} — stays as it is",
+  "@myAccountUsername": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "myAccountNameSaved": "Name saved.",
+  "myAccountSecurity": "Security",
+  "errorIdentityAvatarInvalid": "That picture does not belong to your account.",
+  "actionUndo": "Undo",
+  "archivedMark": "Archived",
+  "archivedBannerBy": "Archived by {name} on {date} — read-only.",
+  "@archivedBannerBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "archivedBannerOn": "Archived on {date} — read-only.",
+  "@archivedBannerOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "archiveRestore": "Restore",
+  "archiveDone": "Archived. It is kept, read-only.",
+  "archivePageTitle": "Archive page",
+  "archivePageBody": "{count, plural, =1{This page has 1 subpage. Archive it too?} other{This page has {count} subpages. Archive them too?}} Subpages left out stay in the tree.",
+  "@archivePageBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "archiveRestorePageTitle": "Restore page",
+  "archiveRestorePageBody": "{count, plural, =1{1 subpage is archived as well. Restore it too?} other{{count} subpages are archived as well. Restore them too?}}",
+  "@archiveRestorePageBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "archiveOnlyThisPage": "Only this page",
+  "archiveWithSubpages": "{count, plural, =1{With its subpage} other{With its {count} subpages}}",
+  "@archiveWithSubpages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeWidgetsTitle": "Widgets",
+  "homeWidgetsHint": "What the widgets on this device's home screen show. Add a widget on the home screen itself: touch and hold an empty spot, then choose Hiwiski.",
+  "homeWidgetsRefreshHint": "The widgets refresh themselves from the server, as often as the system allows; when it cannot be reached, they keep what they last showed. Without “Stay signed in” they show nothing.",
+  "homeWidgetAgenda": "Upcoming events",
+  "homeWidgetShopping": "Shopping list",
+  "homeWidgetTasks": "Task list",
+  "homeWidgetKanban": "Kanban column",
+  "homeWidgetNotSetUp": "Not set up",
+  "homeWidgetMissing": "No longer there — choose again",
+  "homeWidgetAllCalendars": "All calendars",
+  "homeWidgetNoList": "No list of this kind yet.",
+  "homeWidgetRemove": "Remove",
+  "customizeTitle": "Customize",
+  "customizeKeepFilters": "Keep filters when switching",
+  "customizeKeepFiltersHint": "The tag filter applies across calendar, tasks and wiki. Off: it is cleared when you leave an area.",
+  "customizeKeepAreas": "Areas keep their page",
+  "customizeKeepAreasHint": "Switching to calendar, tasks or wiki returns to the page you left there — a wiki page, an open list. Tapping the area you are in goes to its start. Off: an area always opens at its start.",
+  "customizeDoneLast": "Ticked-off entries move down",
+  "customizeDoneLastHint": "In task and shopping lists a ticked-off entry moves to the bottom. Off: it stays where it was.",
+  "customizeFormattedEditor": "Write texts formatted",
+  "customizeFormattedEditorHint": "Headings, bold, lists and boxes look while you write as they will on the page, and the Markdown behind them stays out of sight. Off, pages, descriptions and notes open as Markdown. The editor's bar switches either way.",
+  "editorShowFormatted": "Formatted",
+  "editorShowMarkdown": "Markdown",
+  "customizePullHint": "\"Pull for filters\" hint",
+  "customizePullHintHint": "On the phone a small hint above the start page, lists, the calendar and the wiki says the bar above them can be pulled down. After a few times it goes away by itself and gives its line back to the content. On: it always stays.",
+  "customizeUndo": "Offer “Undo” for",
+  "customizeUndoHint": "After deleting a task, ticked-off entries or a comment, the note with “Undo” shows this long. Only then is it deleted for good.",
+  "customizeUndoSeconds": "{seconds} s",
+  "@customizeUndoSeconds": {"placeholders": {"seconds": {"type": "int"}}},
+  "archiveTitle": "Archive",
+  "archiveEmpty": "Nothing archived. Archive a wiki page or a task list from its info bar — you can restore it at any time.",
+  "archiveGroupPages": "Wiki pages",
+  "archiveGroupRecipes": "Recipes",
+  "archiveGroupLists": "Task lists",
+  "archiveNote": "Archived items are never deleted by themselves. They keep their sharing and tags and open as before, read-only.",
+  "archiveArchivedBy": "archived by {name} · {when}",
+  "@archiveArchivedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "archiveWithSubpagesCount": "{count, plural, =1{with 1 subpage} other{with {count} subpages}}",
+  "@archiveWithSubpagesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "archiveTaskCount": "{count, plural, =0{no tasks} =1{1 task} other{{count} tasks}}",
+  "@archiveTaskCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "wikiArchive": "Archive page",
+  "todoArchiveList": "Archive list",
+  "searchIncludeArchive": "Archive",
+  "widgetListArchived": "This list is archived.",
+  "errorArchiveReadOnly": "It is archived and read-only. Restore it first.",
+  "calViewWeek": "Week",
+  "calWeekNumber": "Week {week}",
+  "@calWeekNumber": {
+    "placeholders": {
+      "week": {
+        "type": "int"
+      }
+    }
+  },
+  "calWeekNoTimed": "No events with a time this week.",
+  "calWeekSkipped": "Skipped: {from}–{to}",
+  "@calWeekSkipped": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "calPreviousWeek": "Previous week",
+  "calNextWeek": "Next week",
+  "calDisplaySection": "Display",
+  "calPinnedSetting": "All-day events on top",
+  "calPinnedSettingHint": "In the list those of today, in the month those of the chosen day below the grid. Off: they stay with their days.",
+  "widgetCalendarWeek": "Week overview",
+  "widgetTitleCalendarWeek": "Set up week overview",
+  "widgetWeekDays": "Days shown",
+  "widgetWeekDaysCount": "{count, plural, =1{1 day} other{{count} days}}",
+  "@widgetWeekDaysCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetWidthNormal": "Normal",
+  "widgetWidthWide": "Wide",
+  "widgetWidthFull": "Whole row",
+  "todoKindKanban": "Kanban",
+  "todoKindKanbanHint": "Cards in columns, from to-do to done",
+  "kanbanColumns": "Columns",
+  "kanbanColumnsHint": "2 to 8 columns. At least one is a done column: whatever lies there is done.",
+  "kanbanAddColumn": "Add column",
+  "kanbanColumnName": "Column name",
+  "kanbanDoneColumn": "Done column",
+  "kanbanMakeOpen": "Make it an open column",
+  "kanbanMakeDone": "Make it the done column",
+  "kanbanRemoveColumn": "Remove column",
+  "kanbanColumnColor": "Column color",
+  "kanbanDefaultTodo": "To do",
+  "kanbanDefaultDoing": "Doing",
+  "kanbanDefaultDone": "Done",
+  "kanbanNewColumn": "New column",
+  "kanbanEditColumns": "Edit columns",
+  "kanbanRemoveTitle": "Remove columns with cards?",
+  "kanbanMoveCards": "{count, plural, =1{1 card in “{from}” moves to “{to}”.} other{{count} cards in “{from}” move to “{to}”.}}",
+  "@kanbanMoveCards": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "kanbanAddCard": "Add card",
+  "kanbanNewCardHint": "New card",
+  "kanbanColumn": "Column",
+  "kanbanEmptyColumn": "No cards",
+  "kanbanConvert": "Convert to board",
+  "kanbanConvertTitle": "Convert to Kanban board",
+  "kanbanConvertBody": "Open tasks go into the first column, done ones into the done column. A board does not turn back into a list.",
+  "kanbanConvertRepeats": "{count, plural, =1{1 task repeats — a board has no repeats; it will be dropped.} other{{count} tasks repeat — a board has no repeats; they will be dropped.}}",
+  "@kanbanConvertRepeats": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "kanbanConvertAction": "Convert",
+  "kanbanColumnsTitle": "Columns",
+  "widgetKanban": "Kanban board",
+  "widgetTitleKanban": "Set up Kanban board",
+  "widgetKanbanWhich": "Which board",
+  "widgetKanbanWhole": "Whole board",
+  "widgetKanbanOneColumn": "One column",
+  "widgetKanbanWhichColumn": "Which column",
+  "widgetKanbanMore": "+{count} more",
+  "@widgetKanbanMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetKanbanNone": "No board yet. Create a list of the kind Kanban under Tasks.",
+  "errorTodoKindLocked": "The kind of a list cannot change any more — only a task list can become a board.",
+  "errorKanbanColumnsInvalid": "A board needs 2 to 8 named columns and exactly one done column.",
+  "errorKanbanNoRepeat": "Tasks on a Kanban board do not repeat.",
+  "unitMinutes": "{count} min",
+  "@unitMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unitHours": "{count} h",
+  "@unitHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unitDays": "{count} d",
+  "@unitDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unitKilobytes": "{count} KB",
+  "@unitKilobytes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unitMegabytes": "{size} MB",
+  "@unitMegabytes": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "unitMinutesSuffix": "min",
+  "accountSignOutSyncing": "Syncing your changes first …",
+  "accountSignOutSynced": "Everything is on the server.",
+  "accountSignOutLost": "{count, plural, =1{1 change could not be synced. If you sign out now, it is lost for good.} other{{count} changes could not be synced. If you sign out now, they are lost for good.}}",
+  "@accountSignOutLost": {"placeholders": {"count": {"type": "int"}}},
+  "accountSignOutAcknowledge": "I understand that these changes will be lost",
+  "accountSignOutAnyway": "Sign out anyway",
+  "customizeAutoSignOut": "Automatic sign-out",
+  "customizeAutoSignOutHint": "Hiwiski signs this device out by itself when it is signed out in another device's device list, when a sign-in without “Stay signed in” ends — the app or browser tab is closed, or 12 hours pass without use — and after 180 days without use.",
+  "wikiImageOpen": "Show large",
+  "wikiImagePrevious": "Previous image",
+  "wikiImageNext": "Next image",
+  "wikiImageGroup": "Image {index} of {count}",
+  "@wikiImageGroup": {"placeholders": {"index": {"type": "int"}, "count": {"type": "int"}}},
+  "wikiImagesInsert": "Insert images",
+  "wikiImagesUploading": "Adding images …",
+  "wikiImagesFailed": "The images could not be read. Try again or choose others.",
+  "todoViewSection": "View",
+  "todoViewTogether": "Together",
+  "todoViewByKind": "By kind",
+  "todoViewSidebar": "As a list",
+  "todoListsLabel": "Lists",
+  "todoListsHide": "Hide lists",
+  "todoListsShow": "Show lists",
+  "wikiSubpageCount": "{count, plural, =1{1 subpage} other{{count} subpages}}",
+  "@wikiSubpageCount": {"placeholders": {"count": {"type": "int"}}},
+  "wikiRecipeCount": "{count, plural, =1{1 recipe} other{{count} recipes}}",
+  "@wikiRecipeCount": {"placeholders": {"count": {"type": "int"}}},
+  "wikiMoveNotAllowed": "You may not change one of these pages — moving needs write access to the page, its new place and the pages that make room.",
+  "wikiTextNearLimit": "{count} of {limit} characters: close to what a page can sync.",
+  "@wikiTextNearLimit": {"placeholders": {"count": {"type": "int"}, "limit": {"type": "int"}}},
+  "wikiTextOverLimit": "{count} of {limit} characters: too long to sync. The text is kept on this device and syncs once it is shorter.",
+  "@wikiTextOverLimit": {"placeholders": {"count": {"type": "int"}, "limit": {"type": "int"}}},
+  "todoDeleteHold": "Delete",
+  "todoDeleteHint": "Hold to delete",
+  "todoDeleted": "“{title}” deleted",
+  "@todoDeleted": {"placeholders": {"title": {"type": "String"}}},
+  "commentDeleted": "Comment deleted",
+  "listUntickAll": "{count, plural, =0{Untick all} other{Untick all ({count})}}",
+  "@listUntickAll": {"placeholders": {"count": {"type": "int"}}},
+  "listDeleteDone": "{count, plural, =0{Delete ticked-off} other{Delete ticked-off ({count})}}",
+  "@listDeleteDone": {"placeholders": {"count": {"type": "int"}}},
+  "listDoneDeleted": "{count, plural, =1{1 ticked-off entry deleted} other{{count} ticked-off entries deleted}}",
+  "@listDoneDeleted": {"placeholders": {"count": {"type": "int"}}},
+  "customizeAccessLostLock": "Lock the device",
+  "customizeAccessLostLockHint": "Nothing is deleted. Signing in again as yourself opens it, with your changes not yet synced. If someone else signs in, your data is deleted. Until then it can be read on this device.",
+  "customizeAccessLostWipe": "Delete everything at once",
+  "customizeAccessLostWipeHint": "Nothing of yours stays on this device — for a device that may be lost. Changes not yet synced are lost.",
+  "accessLostTitle": "Access lost",
+  "accessLostBody": "This device lost its access to Hiwiski — it was signed out on another device, or its sign-in ended. Your data is still here, locked.",
+  "accessLostBodyNamed": "This device lost its access to Hiwiski — it was signed out on another device, or the sign-in of {name} ended. The data is still here, locked.",
+  "@accessLostBodyNamed": {"placeholders": {"name": {"type": "String"}}},
+  "accessLostPending": "{count, plural, =1{1 change is not on the server yet. Sign in again so it is not lost.} other{{count} changes are not on the server yet. Sign in again so they are not lost.}}",
+  "@accessLostPending": {"placeholders": {"count": {"type": "int"}}},
+  "accessLostSignIn": "Sign in again",
+  "accessLostDiscard": "Sign out and delete data",
+  "accessLostDiscardTitle": "Delete the data on this device?",
+  "accessLostDiscardBody": "Everything of yours is deleted from this device.",
+  "accessLostDiscardPending": "{count, plural, =1{Everything of yours is deleted from this device — and 1 change that is not on the server yet is lost.} other{Everything of yours is deleted from this device — and {count} changes that are not on the server yet are lost.}}",
+  "@accessLostDiscardPending": {"placeholders": {"count": {"type": "int"}}},
+  "loginKeepData": "Sign in as {name} to keep the data on this device. Signing in as someone else deletes it.",
+  "@loginKeepData": {"placeholders": {"name": {"type": "String"}}},
+  "loginKeepDataUnnamed": "Sign in again as yourself to keep the data on this device. Signing in as someone else deletes it.",
+  "localStart": "Use without a server",
+  "localStartLead": "Everything stays on this device. Later you can connect to a server and take it all along.",
+  "localNameTitle": "What should we call you?",
+  "localNameField": "Your name",
+  "localStartAction": "Start",
+  "localBack": "Continue without a server",
+  "localConnectLead": "Connect to your server. Everything on this device is carried over.",
+  "localMoveNotice": "Everything on this device goes along to this server.",
+  "localMoveSignIn": "Everything on this device goes into the account you sign in to — next to what is in it already.",
+  "accountLocal": "Only on this device",
+  "accountWithoutServer": "Without a server",
+  "localConnect": "Connect to a server",
+  "localConnectTitle": "Connect to a server?",
+  "localConnectBody": "Your lists, calendars, pages and categories go to the server and are yours there — private until you share them. What is in the trash stays behind.",
+  "localDelete": "Delete everything",
+  "localDeleteTitle": "Delete everything on this device?",
+  "localDeleteBody": "Your lists, calendars, pages and categories are deleted for good. No server keeps a copy.",
+  "demoBanner": "Demo — nothing you do here is kept. Reloading starts over.",
+  "demoReset": "Reset the demo",
+  "demoResetTitle": "Start the demo over?",
+  "demoResetBody": "Everything you changed is undone.",
+  "errorIdentityIdTaken": "This device's account already exists on the server. Sign in to it instead.",
+  "legalTitle": "Legal",
+  "@legalTitle": {
+    "description": "Account: the section with the operator's legal notice and privacy policy, shown only for an instance open to the public."
+  },
+  "legalNotice": "Legal notice",
+  "@legalNotice": {
+    "description": "The operator's legal notice (German: Impressum)."
+  },
+  "legalPrivacy": "Privacy policy",
+  "@legalPrivacy": {
+    "description": "The operator's privacy policy for this instance."
+  },
+  "aboutAppPrivacy": "App privacy policy",
+  "@aboutAppPrivacy": {
+    "description": "About: the privacy policy of the app itself, as the app stores ask for."
+  },
+  "aboutAppPrivacyHint": "What the app does with your data",
+  "@aboutAppPrivacyHint": {
+    "description": "About: under the app privacy policy row."
+  },
+  "setupChoiceFresh": "Start fresh",
+  "setupChoiceRestore": "Restore from a backup",
+  "setupChoiceLead": "A new family, or the family of a server that is gone — from its backup file.",
+  "setupBackupTitle": "Backup password",
+  "setupBackupLead": "Every backup is locked with this password. Without it no backup can be restored, and nobody can reset it — keep it in your password manager.",
+  "setupBackupNotAdmin": "Not your administrator password: whoever knows one should not have the other by that alone.",
+  "setupBackupPassword": "Backup password",
+  "setupBackupPasswordRepeat": "Repeat backup password",
+  "setupBackupSameAsAdmin": "Choose another one than your administrator password.",
+  "setupDoneBackups": "Backups go to the server's backup directory every night. Copy that directory off the machine now and then — to a NAS, a USB disk or a cloud drive: a copy on the same machine is not a backup.",
+  "setupRestoreFileTitle": "Your backup",
+  "setupRestoreFileLead": "Choose the backup file of your old server (ending in .hiwiski).",
+  "setupRestorePick": "Choose file",
+  "setupRestoreUploading": "Uploading … {percent} %",
+  "@setupRestoreUploading": {"placeholders": {"percent": {"type": "int"}}},
+  "setupRestoreUploaded": "{name} is on the server.",
+  "@setupRestoreUploaded": {"placeholders": {"name": {"type": "String"}}},
+  "setupRestorePasswordLead": "The backup password of the old server — the one this backup was locked with.",
+  "setupRestorePreviewTitle": "This backup",
+  "setupRestoreRunning": "Restoring — this can take a few minutes.",
+  "setupRestoreStart": "Restore",
+  "setupRestoreLead": "Members, groups and the administrator come from the backup; so does its backup password. Afterwards you sign in as before.",
+  "backupPreviewWhen": "Made on {when}",
+  "@backupPreviewWhen": {"placeholders": {"when": {"type": "String"}}},
+  "backupPreviewVersion": "Hiwiski {version}",
+  "@backupPreviewVersion": {"placeholders": {"version": {"type": "String"}}},
+  "backupPreviewMembers": "{count, plural, =1{1 member} other{{count} members}}",
+  "@backupPreviewMembers": {"placeholders": {"count": {"type": "int"}}},
+  "backupPreviewFamily": "Family: {name}",
+  "@backupPreviewFamily": {"placeholders": {"name": {"type": "String"}}},
+  "backupPreviewTitle": "Restore this backup?",
+  "backupPreviewWarning": "This replaces everything. Every device syncs anew afterwards. The current state is backed up first, so this can be undone.",
+  "backupReplaceEverything": "Replace everything",
+  "backupPasswordTitle": "Backup password",
+  "backupPasswordPrompt": "The backup password this backup was made with.",
+  "backupPasswordCurrent": "Current backup password",
+  "backupPasswordNew": "New backup password",
+  "backupPasswordRepeat": "Repeat new backup password",
+  "backupPasswordChange": "Change",
+  "backupPasswordChangeTitle": "Change the backup password",
+  "backupPasswordChangeHint": "The backups on the server open with the new password from then on. Backups already downloaded keep the old one.",
+  "backupPasswordForgot": "Forgot it? Set a new one",
+  "backupPasswordResetTitle": "Set a new backup password?",
+  "backupPasswordResetWarning": "The backups made so far open only with the old password — there is no other way in. Backups from now on use the new one.",
+  "backupPasswordSet": "Set",
+  "backupPasswordChanged": "Backup password changed.",
+  "backupPasswordNone": "No backup password is set, so nothing is backed up. Set one below.",
+  "settingsBackupLast": "Last backup {when}",
+  "@settingsBackupLast": {"placeholders": {"when": {"type": "String"}}},
+  "settingsBackupNext": "next {when}",
+  "@settingsBackupNext": {"placeholders": {"when": {"type": "String"}}},
+  "settingsBackupFailed": "The last backup failed: {reason}",
+  "@settingsBackupFailed": {"placeholders": {"reason": {"type": "String"}}},
+  "backupFailureDirectory": "the backup directory is not writable.",
+  "backupFailureDiskFull": "the disk is full.",
+  "backupFailureNoPassword": "no backup password is set.",
+  "backupFailureOther": "the server's log says why.",
+  "settingsBackupSchedule": "Schedule",
+  "settingsBackupDaily": "Daily",
+  "settingsBackupWeekly": "Weekly",
+  "settingsBackupWeekday": "Weekday",
+  "settingsBackupTime": "Time",
+  "settingsBackupKeep": "Keep",
+  "settingsBackupKeepConfirm": "Keep fewer backups?",
+  "settingsBackupKeepLower": "{count, plural, =1{This deletes the oldest backup.} other{This deletes the {count} oldest backups.}}",
+  "@settingsBackupKeepLower": {"placeholders": {"count": {"type": "int"}}},
+  "settingsBackupBeforeUpdate": "Before the update to {version}",
+  "@settingsBackupBeforeUpdate": {"placeholders": {"version": {"type": "String"}}},
+  "settingsBackupBeforeRestore": "Before a restore",
+  "settingsBackupOldPassword": "Opens only with the previous backup password",
+  "settingsBackupDownload": "Download",
+  "settingsBackupDownloaded": "Backup saved.",
+  "settingsRestoreFromFile": "Restore from a file",
+  "settingsBackupWhere": "Backups go to {directory} on the server — on the host, the directory HIWISKI_BACKUP_DIR names. A copy on the same machine is not a backup: copy it off, to a NAS, a USB disk or a cloud drive.",
+  "@settingsBackupWhere": {"placeholders": {"directory": {"type": "String"}}},
+  "errorBackupPasswordWrong": "That password does not open this backup.",
+  "errorBackupTooNew": "This backup comes from Hiwiski {version}. Install {version} or newer.",
+  "@errorBackupTooNew": {"placeholders": {"version": {"type": "String"}}},
+  "errorBackupInvalid": "This file is not a Hiwiski backup, or it is damaged.",
+  "errorBackupFailed": "The backup failed: {reason}",
+  "@errorBackupFailed": {"placeholders": {"reason": {"type": "String"}}},
+  "errorBackupPasswordMissing": "No backup password is set yet. Set one in the backup settings.",
+  "errorBackupPasswordTooShort": "A backup password needs at least 8 characters.",
+  "errorBackupNotFound": "This backup is gone.",
+  "errorBackupUploadNotFound": "The uploaded file is gone — upload it again.",
+  "errorSetupBackupPasswordSame": "The backup password must not be the administrator's password.",
+  "restoreRunningTitle": "A backup is being restored",
+  "restoreRunningBody": "Nothing can be changed until it is done — on every device. This can take a few minutes; the app may be closed meanwhile.",
+  "restoreRunningBanner": "A backup is being restored. Until it is done, nothing can be changed.",
+  "errorInstanceRestoring": "A backup is being restored right now. Try again once it is done.",
+  "leftBehindNotice": "{count, plural, =1{After a backup was restored, one entry is only on this device.} other{After a backup was restored, {count} entries are only on this device.}}",
+  "@leftBehindNotice": {"placeholders": {"count": {"type": "int"}}},
+  "leftBehindShow": "Show",
+  "leftBehindTitle": "Only on this device",
+  "leftBehindIntro": "The server was restored from a backup, and this device had seen more since: these entries are missing on the server, or older there. Bring them back, and they go to the server like any change.",
+  "leftBehindDeleted": "Deleted on this device — bringing it back deletes it again.",
+  "leftBehindRestoreOne": "Bring back",
+  "leftBehindRestoreAll": "Bring all back",
+  "leftBehindDiscardAll": "Let all go",
+  "leftBehindDiscardConfirm": "Let them go?",
+  "leftBehindDiscardBody": "They are then gone from this device, too. The server keeps the state of its backup.",
+  "leftBehindEmpty": "Nothing left to bring back.",
+  "errorBackupOtherFamily": "This backup belongs to another family ({name}). Set up a new instance and restore it there with the setup wizard.",
+  "@errorBackupOtherFamily": {"placeholders": {"name": {"type": "String"}}},
+  "exportAction": "Export",
+  "exportTitle": "Export",
+  "exportSaved": "Exported.",
+  "exportPageHint": "As Markdown — readable in any editor, and ready to be imported again.",
+  "exportListHint": "{count, plural, =1{1 entry} other{{count} entries}} as one Markdown file — readable in any editor, and ready to be imported again.",
+  "@exportListHint": {"placeholders": {"count": {"type": "int"}}},
+  "exportWithDone": "Include done entries",
+  "exportDoneCount": "{count} done",
+  "@exportDoneCount": {"placeholders": {"count": {"type": "int"}}},
+  "exportWithSubpages": "Include subpages",
+  "exportSubpageCount": "{count, plural, =1{1 subpage} other{{count} subpages}}",
+  "@exportSubpageCount": {"placeholders": {"count": {"type": "int"}}},
+  "exportWithImages": "Include images",
+  "exportImageCount": "{count, plural, =1{1 image} other{{count} images}}, packed with the text into a zip archive",
+  "@exportImageCount": {"placeholders": {"count": {"type": "int"}}},
+  "importAction": "Import from a file",
+  "importTitle": "Import",
+  "importTake": "Insert",
+  "importIntro": "This is created new — nothing that exists is changed.",
+  "importEmpty": "There is nothing to import in these files. An import reads Markdown files (.md) and zip archives of them.",
+  "importListLine": "{total, plural, =1{1 entry} other{{total} entries}}, {done} done",
+  "@importListLine": {"placeholders": {"total": {"type": "int"}, "done": {"type": "int"}}},
+  "importMore": "{count, plural, =1{and 1 more} other{and {count} more}}",
+  "@importMore": {"placeholders": {"count": {"type": "int"}}},
+  "importImageCount": "{count, plural, =1{1 image} other{{count} images}}",
+  "@importImageCount": {"placeholders": {"count": {"type": "int"}}},
+  "importTags": "Tags: {names}",
+  "@importTags": {"placeholders": {"names": {"type": "String"}}},
+  "importSkippedTitle": "Not imported",
+  "importSkipUnsupported": "neither a Markdown file nor a zip archive",
+  "importSkipBrokenArchive": "the archive cannot be opened",
+  "importSkipNotText": "not readable as text",
+  "importSkipNoTasks": "no tasks in it",
+  "importSkipTooLong": "the text is too long",
+  "importDoneLists": "{count, plural, =1{1 list imported.} other{{count} lists imported.}}",
+  "@importDoneLists": {"placeholders": {"count": {"type": "int"}}},
+  "importDonePages": "{count, plural, =1{1 page imported.} other{{count} pages imported.}}",
+  "@importDonePages": {"placeholders": {"count": {"type": "int"}}}
+}

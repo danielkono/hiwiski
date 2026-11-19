@@ -1,0 +1,83 @@
+Search:
+  get:
+    tags: [search]
+    operationId: search
+    summary: Search across everything the asker may see
+    description: |
+      The search uses prefix (`:*`) **and** word part: "kin" must match while typing,
+      and "kinder" must find "Kinderarzt". No stemmer splits German compounds; word
+      part matches rank 0, behind everything else.
+
+      **The share check sits in the same query as the matches.** Two steps would be a
+      time window, and a title alone already gives away too much.
+    parameters:
+      - name: q
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: types
+        in: query
+        required: false
+        description: Restrict to these entity types.
+        schema:
+          type: array
+          items:
+            type: string
+      - name: includeArchived
+        in: query
+        required: false
+        description: |
+          Also search the archive. Off by default: whoever searches
+          wants what is current. An entered number jumps to its item either way.
+        schema:
+          type: boolean
+          default: false
+    responses:
+      '200':
+        description: The matches
+        content:
+          application/json:
+            schema:
+              $ref: '../components/search.yaml#/SearchResult'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+
+ItemHistory:
+  get:
+    tags: [search]
+    operationId: getHistory
+    summary: The history of an item
+    description: |
+      From the change log. **The log retention period also limits how far back the
+      history reaches — and the UI says so**.
+
+      A list's history also holds the changes to the tasks in it, each naming its task
+      (`entryId`, `entryTitle`).
+
+      Over REST and not through the sync: the history only lives as long as the log
+      anyway, and mirroring it to every device would be the most expensive way of
+      almost never looking at it.
+    parameters:
+      - name: itemType
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: The changes, newest first
+        content:
+          application/json:
+            schema:
+              $ref: '../components/search.yaml#/History'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'

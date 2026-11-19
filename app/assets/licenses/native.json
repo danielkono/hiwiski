@@ -1,0 +1,202 @@
+{
+  "libraries": [
+    {
+      "name": "AndroidX",
+      "platforms": [
+        "android"
+      ],
+      "covers": [
+        "androidx."
+      ],
+      "license": "apache-2.0.txt"
+    },
+    {
+      "name": "Protocol Buffers (inside AndroidX Glance and DataStore)",
+      "platforms": [
+        "android"
+      ],
+      "covers": [
+        "androidx.glance:glance-appwidget-external-protobuf",
+        "androidx.datastore:datastore-preferences-external-protobuf"
+      ],
+      "license": "protobuf-bsd-3-clause.txt"
+    },
+    {
+      "name": "Kotlin",
+      "platforms": [
+        "android"
+      ],
+      "covers": [
+        "org.jetbrains.kotlin:"
+      ],
+      "license": "apache-2.0.txt"
+    },
+    {
+      "name": "kotlinx.coroutines, kotlinx.serialization",
+      "platforms": [
+        "android"
+      ],
+      "covers": [
+        "org.jetbrains.kotlinx:"
+      ],
+      "license": "apache-2.0.txt"
+    },
+    {
+      "name": "JetBrains Java Annotations",
+      "platforms": [
+        "android"
+      ],
+      "covers": [
+        "org.jetbrains:annotations"
+      ],
+      "license": "apache-2.0.txt"
+    },
+    {
+      "name": "OkHttp",
+      "platforms": [
+        "android"
+      ],
+      "covers": [
+        "com.squareup.okhttp3:"
+      ],
+      "license": "apache-2.0.txt",
+      "notice": "okhttp-notice.txt"
+    },
+    {
+      "name": "Okio",
+      "platforms": [
+        "android"
+      ],
+      "covers": [
+        "com.squareup.okio:"
+      ],
+      "license": "apache-2.0.txt"
+    },
+    {
+      "name": "Tink",
+      "platforms": [
+        "android"
+      ],
+      "covers": [
+        "com.google.crypto.tink:"
+      ],
+      "license": "apache-2.0.txt"
+    },
+    {
+      "name": "Gson",
+      "platforms": [
+        "android"
+      ],
+      "covers": [
+        "com.google.code.gson:"
+      ],
+      "license": "apache-2.0.txt"
+    },
+    {
+      "name": "Guava ListenableFuture",
+      "platforms": [
+        "android"
+      ],
+      "covers": [
+        "com.google.guava:listenablefuture"
+      ],
+      "license": "apache-2.0.txt"
+    },
+    {
+      "name": "Error Prone Annotations",
+      "platforms": [
+        "android"
+      ],
+      "covers": [
+        "com.google.errorprone:error_prone_annotations"
+      ],
+      "license": "apache-2.0.txt"
+    },
+    {
+      "name": "JSR 305 Annotations",
+      "platforms": [
+        "android"
+      ],
+      "covers": [
+        "com.google.code.findbugs:jsr305"
+      ],
+      "license": "apache-2.0.txt"
+    },
+    {
+      "name": "JSpecify",
+      "platforms": [
+        "android"
+      ],
+      "covers": [
+        "org.jspecify:"
+      ],
+      "license": "apache-2.0.txt"
+    },
+    {
+      "name": "ReLinker",
+      "platforms": [
+        "android"
+      ],
+      "covers": [
+        "com.getkeepsafe.relinker:"
+      ],
+      "license": "apache-2.0.txt"
+    },
+    {
+      "name": "Swift OpenAPI Runtime",
+      "platforms": [
+        "ios"
+      ],
+      "covers": [
+        "swift-openapi-runtime"
+      ],
+      "license": "apache-2.0.txt",
+      "notice": "swift-openapi-runtime-notice.txt"
+    },
+    {
+      "name": "Swift OpenAPI URLSession Transport",
+      "platforms": [
+        "ios"
+      ],
+      "covers": [
+        "swift-openapi-urlsession"
+      ],
+      "license": "apache-2.0.txt",
+      "notice": "swift-openapi-urlsession-notice.txt"
+    },
+    {
+      "name": "Swift HTTP Types",
+      "platforms": [
+        "ios"
+      ],
+      "covers": [
+        "swift-http-types"
+      ],
+      "license": "apache-2.0.txt",
+      "notice": "swift-http-types-notice.txt"
+    },
+    {
+      "name": "Swift Collections",
+      "platforms": [
+        "ios"
+      ],
+      "covers": [
+        "swift-collections"
+      ],
+      "license": "swift-collections-license.txt"
+    },
+    {
+      "name": "SQLite",
+      "platforms": [
+        "android",
+        "ios",
+        "macos",
+        "windows",
+        "linux",
+        "web"
+      ],
+      "covers": [],
+      "license": "sqlite-public-domain.txt"
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+# Version catalog. Every dependency gets its version from here, so that an update
+# happens in exactly one place.
+[versions]
+java = "25"
+
+springBoot = "4.1.2"
+springModulith = "2.1.1"
+
+# jOOQ and Flyway are pinned to the versions managed by Spring Boot. The code generator
+# in buildSrc must use exactly the same jOOQ version as the runtime, otherwise generated
+# code and library drift apart without anyone noticing.
+jooq = "3.21.9"
+flyway = "12.4.0"
+postgresql = "42.7.14"
+testcontainers = "2.0.5"
+
+openapiGenerator = "7.25.0"
+openapiDiff = "2.1.7"
+jib = "3.5.4"
+
+ical4j = "4.3.0"
+libRecur = "0.17.1"
+bucket4j = "8.10.1"
+bouncycastle = "1.86"
+twelvemonkeys = "3.15.3"
+jagged = "1.0.0"
+jakartaValidation = "3.1.1"
+swaggerAnnotations = "2.2.28"
+findbugsJsr305 = "3.0.2"
+snakeyaml = "2.5"
+
+[libraries]
+# --- Spring ---
+spring-modulith-bom = { module = "org.springframework.modulith:spring-modulith-bom", version.ref = "springModulith" }
+spring-modulith-starter-core = { module = "org.springframework.modulith:spring-modulith-starter-core" }
+spring-modulith-starter-jdbc = { module = "org.springframework.modulith:spring-modulith-starter-jdbc" }
+spring-modulith-test = { module = "org.springframework.modulith:spring-modulith-starter-test" }
+spring-modulith-docs = { module = "org.springframework.modulith:spring-modulith-docs" }
+
+# --- Persistence ---
+jooq = { module = "org.jooq:jooq", version.ref = "jooq" }
+jooq-codegen = { module = "org.jooq:jooq-codegen", version.ref = "jooq" }
+flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
+flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+
+# --- Testcontainers ---
+# Tests never run against an in-memory database: full-text search, JSONB, transactional
+# DDL and the row lock of the sequence counter are Postgres-specific.
+testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
+testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql", version.ref = "testcontainers" }
+testcontainers-junit = { module = "org.testcontainers:testcontainers-junit-jupiter", version.ref = "testcontainers" }
+
+# --- Domain libraries ---
+# Two libraries for two jobs: lib-recur expands rules, ical4j reads foreign files. ICS
+# is written by hand.
+lib-recur = { module = "org.dmfs:lib-recur", version.ref = "libRecur" }
+ical4j = { module = "org.mnode.ical4j:ical4j", version.ref = "ical4j" }
+bucket4j = { module = "com.bucket4j:bucket4j-core", version.ref = "bucket4j" }
+# In Spring Security, Argon2id comes from BouncyCastle.
+bouncycastle = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
+# Java reads no WebP; the server makes its preview, like for every other format.
+twelvemonkeys-webp = { module = "com.twelvemonkeys.imageio:imageio-webp", version.ref = "twelvemonkeys" }
+# Backups are age files: a standard format with its own tools, not a
+# home-made stream encryption.
+jagged-x25519 = { module = "com.exceptionfactory.jagged:jagged-x25519", version.ref = "jagged" }
+# The contract gate in buildSrc reads both spec versions structurally.
+snakeyaml = { module = "org.yaml:snakeyaml", version.ref = "snakeyaml" }
+openapi-diff-cli = { module = "org.openapitools.openapidiff:openapi-diff-cli", version.ref = "openapiDiff" }
+
+# --- Code produced by the generator needs these at compile time ---
+jakarta-validation = { module = "jakarta.validation:jakarta.validation-api", version.ref = "jakartaValidation" }
+swagger-annotations = { module = "io.swagger.core.v3:swagger-annotations-jakarta", version.ref = "swaggerAnnotations" }
+findbugs-jsr305 = { module = "com.google.code.findbugs:jsr305", version.ref = "findbugsJsr305" }
+
+[plugins]
+springBoot = { id = "org.springframework.boot", version.ref = "springBoot" }
+openapiGenerator = { id = "org.openapi.generator", version.ref = "openapiGenerator" }
+jib = { id = "com.google.cloud.tools.jib", version.ref = "jib" }

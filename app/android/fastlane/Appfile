@@ -1,0 +1,4 @@
+# The Play service account's key lives outside the repository. CI
+# writes it to a file of its own and points HIWISKI_PLAY_KEY there.
+json_key_file(File.expand_path(ENV.fetch("HIWISKI_PLAY_KEY", "~/.config/hiwiski/play-service-account.json")))
+package_name("de.danielkononov.hiwiski")

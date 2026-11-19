@@ -1,0 +1,37 @@
+# Pins that would otherwise rot: the action SHAs in
+# the workflows, the Caddy base of the site and demo images (tag and digest), the images
+# the compose files name, and fastlane with its gems (app/Gemfile.lock). Weekly pull requests, nothing merged by itself -- a new Caddy minor still
+# goes to every file at once, and a Postgres major
+# needs its upgrade steps before it is merged.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # One pull request for all gems: they are released for each other, and the release
+  # workflow installs exactly what the lockfile names.
+  - package-ecosystem: bundler
+    directory: /app
+    schedule:
+      interval: weekly
+    groups:
+      gems:
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directories:
+      - /deploy/site-image
+      - /deploy/demo-image
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker-compose
+    directories:
+      - /deploy
+    schedule:
+      interval: weekly

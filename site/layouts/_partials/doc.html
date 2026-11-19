@@ -1,0 +1,12 @@
+{{- /* A page with its title, lead and text; the sidebar for features and setup. */ -}}
+{{- $docs := in (slice "features" "setup") .Section }}
+<div class="{{ if $docs }}doc{{ else }}page{{ end }}">
+  {{- if $docs }}{{ partial "sidebar.html" . }}{{ end }}
+  <article class="prose">
+    <header class="page-head">
+      <h1 class="display">{{ .Title }}</h1>
+      {{- with .Params.lead }}<p class="lead">{{ . | markdownify }}</p>{{ end }}
+    </header>
+    {{ .Content }}
+  </article>
+</div>

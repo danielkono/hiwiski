@@ -1,0 +1,32 @@
+# Generates the Dart client from the same spec the server interfaces are generated
+# from. Run: dart run swagger_parser
+#
+# It reads the **bundled** version, not the source: the parser does not follow
+# references to other files. Refresh it with `./gradlew :api:updateBundledSpec` in the
+# server/ directory.
+swagger_parser:
+  schema_path: ../api/openapi.bundled.yaml
+  output_directory: lib/core/api/generated
+  language: dart
+  json_serializer: freezed
+  # Freezed 3 requires `abstract class`; without this flag the parser still generates
+  # the Freezed 2 form, and the code does not compile.
+  use_freezed3: true
+  root_client: false
+  put_clients_in_folder: true
+  enums_to_json: true
+  # Unknown enum values must not make the client throw; they land on a placeholder.
+  # Without this an old app breaks as soon as the server adds a value -- and extending
+  # enums is explicitly allowed.
+  unknown_enum_value: true
+  squash_clients: false
+  skipped_parameters: []
+  # Images stay out: the generator maps a binary body to `dart:io File`, which does not
+  # compile in the browser -- but the app runs there. The two calls are therefore
+  # written by hand in the repository, against the same endpoints from the same spec.
+  # This belongs documented, not discovered.
+  exclude_tags:
+    - images
+    # Archives in and out (backupFiles): the same reason, and they are streamed --
+    # written by hand as well (BackupFileClient).
+    - backupFiles

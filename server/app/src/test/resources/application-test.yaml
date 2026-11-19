@@ -1,0 +1,20 @@
+# The mandatory variables apply in tests too: the server deliberately
+# refuses to start without them, and a test that bypassed them would test a different server.
+hiwiski:
+  # A context started through @IntegrationTest gets directories of its own instead
+  # (TestDirectories); these are only for one started otherwise.
+  media-path: ${java.io.tmpdir}/hiwiski-test/media
+  backup-path: ${java.io.tmpdir}/hiwiski-test/backup
+  min-client-version: 2026.1.0
+  # Fixed, so the tests can run the wizard (Family.setUp); a real server prints a new one
+  # at every start until it is set up.
+  setup-code: TEST-CODE
+  # No scheduled backup in the middle of a test: a fresh family is due at once, and the
+  # archive it wrote would show up in every test that counts them.
+  backup-check-interval: PT1000H
+
+logging:
+  level:
+    org.testcontainers: WARN
+    com.github.dockerjava: WARN
+    tc: WARN

@@ -1,0 +1,14 @@
+<footer class="site-footer">
+  <div class="inner">
+    <nav>
+      <a href="/impressum">{{ T "legalNotice" }}</a>
+      <a href="{{ site.Language.Params.privacy }}">{{ T "privacy" }}</a>
+      <a href="{{ site.Language.Params.appPrivacy }}">{{ T "appPrivacy" }}</a>
+      {{- with site.GetPage "/support" }}<a href="{{ .RelPermalink }}">{{ T "support" }}</a>{{ end }}
+      {{- range .AllTranslations }}
+      <a href="{{ .RelPermalink }}" hreflang="{{ .Language.Locale }}" lang="{{ .Language.Locale }}"{{ if eq .Language.Lang site.Language.Lang }} aria-current="true"{{ end }}>{{ .Language.Label }}</a>
+      {{- end }}
+    </nav>
+    <p class="license">© {{ now.Year }} Daniel Kononov · {{ with site.GetPage "/license" }}<a href="{{ .RelPermalink }}">PolyForm Noncommercial 1.0.0</a>{{ end }} · {{ T "licenseShort" }}</p>
+  </div>
+</footer>

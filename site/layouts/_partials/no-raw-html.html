@@ -1,0 +1,20 @@
+{{- /* A repository file the site renders as it is: CHANGELOG.md, LICENSE.md. The
+       site's Markdown lets raw HTML through (hugo.toml: the how-tos' scenes are HTML),
+       and every branch edits the changelog -- so raw HTML in these files stops the
+       build instead of reaching the public pages.
+
+       The check looks at what Markdown made of the file, not at its source: in the
+       rendered HTML, text and code are escaped (`<version>` is `&lt;version&gt;`), so
+       every `<` left is a tag. Each one has to be a tag Markdown itself writes, with
+       the attributes it writes. A pattern over the source that skipped code spans
+       could be fooled by a stray backtick.
+
+       {{ partial "no-raw-html.html" (dict "name" "CHANGELOG.md" "text" .Content "page" $.Page) }} */ -}}
+{{- $html := .page.RenderString (dict "display" "block") .text -}}
+{{- $plain := `p|ul|ol|li|em|strong|code|pre|blockquote|del|table|thead|tbody|tr|th|td` -}}
+{{- $allowed := printf `^(?:</?(?:%s)>|<(?:hr|br) ?/?>|<h[1-6](?: id="[\w.-]*")?>|</h[1-6]>|<a href="(?:https?://|mailto:|#|/)[^"<>\s]*"(?: title="[^"<>]*")?>|</a>|<ol start="\d+">|<t[hd] style="text-align:(?:left|center|right)">|<input (?:checked="" )?disabled="" type="checkbox">|<div class="highlight">|</div>|<pre tabindex="0" class="chroma">|<code class="language-[\w-]+" data-lang="[\w-]+">|<span class="[\w ]+">|</span>)$` $plain -}}
+{{- range findRE `<[^>]*>?` $html -}}
+  {{- if not (findRE $allowed .) -}}
+    {{- errorf "%s holds raw HTML, which would reach the website as it is: %s -- write it as Markdown or in a code span" $.name . -}}
+  {{- end -}}
+{{- end -}}

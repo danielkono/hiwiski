@@ -1,0 +1,178 @@
+RefreshSubscription:
+  post:
+    tags: [calendar]
+    operationId: refreshCalendarSubscription
+    summary: Sync an ICS subscription right now
+    description: |
+      The server fetches the file at the configured interval anyway — that is the point
+      of a subscription: it lives on the server and not on the device, so that it keeps
+      running when no device is online.
+
+      This endpoint is the button next to it, for when someone does not want to wait for
+      the next run.
+
+      **A failure while fetching is not a failure of this call.** The subscription
+      stays, the error is noted on it, and the response says what happened. In an earlier version
+      the note ran in the same -- rolled back -- transaction, and instead of a readable
+      state on the subscription the user got a server error.
+    parameters:
+      - name: subscriptionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: The sync has run -- successfully or with a note
+        content:
+          application/json:
+            schema:
+              $ref: '../components/calendar.yaml#/RefreshResult'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+
+PreviewSubscription:
+  post:
+    tags: [calendar]
+    operationId: previewCalendarSubscription
+    summary: Look at an ICS address or file before subscribing or importing
+    description: |
+      Fetches the file (or reads the content sent along) and says what is in it — the
+      calendar's own name, how many events, the next ones — **without storing anything**.
+      Whoever subscribes or imports sees whether it is the right file before an empty or
+      a wrong calendar lands in the family's view.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/calendar.yaml#/SubscriptionPreviewRequest'
+    responses:
+      '200':
+        description: What the file holds
+        content:
+          application/json:
+            schema:
+              $ref: '../components/calendar.yaml#/SubscriptionPreview'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+
+ImportIcs:
+  post:
+    tags: [calendar]
+    operationId: importIcsFile
+    summary: Import an ICS file or address into a calendar
+    description: |
+      A one-off import, not a subscription: the events become ordinary events of the
+      calendar, editable like any other — unless the import creates a **locked**
+      calendar. The file comes along as content, or as an address fetched once. Events
+      are matched by UID and RECURRENCE-ID, so importing the same file twice updates
+      instead of doubling; nothing is deleted. With `newCalendar` the calendar is created
+      under the id in the path; otherwise it needs *write* on the calendar, and a
+      subscribed calendar takes no import.
+    parameters:
+      - name: calendarId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/calendar.yaml#/IcsImportRequest'
+    responses:
+      '200':
+        description: Imported
+        content:
+          application/json:
+            schema:
+              $ref: '../components/calendar.yaml#/IcsImportResult'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '404':
+        $ref: '../components/errors.yaml#/responses/NotFound'
+
+Agenda:
+  get:
+    tags: [calendar]
+    operationId: getAgenda
+    summary: The coming occurrences of the chosen calendars
+    description: |
+      What a home screen widget shows when it asks the server itself -- while the app
+      is closed, the widget's own refresh is the only one that runs. Events travel
+      through the sync; this is the one read of them over REST, and it only reads.
+
+      **Expanded here as the app expands them**: series, cancelled and moved
+      occurrences, multi-day events. Both sides check against
+      `golden/occurrences.json`. A device that showed something else in its widget than
+      in its calendar would be worse than one without a widget.
+
+      The window runs from the moment of the call to the end of the last day asked for,
+      in the caller's zone. An occurrence that began before and is still running is in
+      it. An event or a calendar the caller cannot see is left out as if it did not
+      exist.
+
+      Errors: `400 calendar.time_zone_invalid` for a zone that is not an IANA ID.
+    parameters:
+      - name: calendarIds
+        in: query
+        required: false
+        description: |
+          The calendars to read. Left out or empty: every calendar the caller can see,
+          as on the start board.
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+      - name: days
+        in: query
+        required: false
+        description: How many days, today included.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 31
+          default: 7
+      - name: timeZone
+        in: query
+        required: false
+        description: |
+          The device's zone, as an IANA ID. It decides where "today" ends and how a
+          timed event's instant reads. Left out: the family's zone.
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        description: At most this many occurrences, the earliest first.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+    responses:
+      '200':
+        description: The occurrences in the window, in the app's order
+        content:
+          application/json:
+            schema:
+              $ref: '../components/calendar.yaml#/Agenda'
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '401':
+        $ref: '../components/errors.yaml#/responses/Unauthorized'

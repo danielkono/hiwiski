@@ -1,0 +1,31 @@
+Hiwiski ist die Pinnwand aus der Küche, nur auf jedem Gerät der Familie: Termine, Aufgaben, die Einkaufsliste und alles, was man sonst nachfragen müsste – an einem Ort und selbst gehostet.
+
+Für alle Funktionen, vor allem für das gemeinsame Nutzen in der Familie, betreibst du den Hiwiski-Server selbst. Wie das geht, steht auf https://hiwiski.app.
+
+KALENDER
+• Ein moderner Kalender mit Liste, Woche und Monat.
+• Termine in mehreren Kalendern organisiert.
+• Kalender abonnieren oder als ICS importieren und exportieren.
+
+AUFGABEN UND EINKAUF
+• Einfache Aufgabenlisten mit Fälligkeit, Wiederholung, Zuständigen und Tags.
+• Eine Einkaufsliste, die sich merkt, wie ihr einkauft.
+• Kanban-Boards für größere Vorhaben, von der Idee bis fertig.
+
+WIKI UND REZEPTE
+• Verschachtelte Wiki-Seiten in Markdown, mit Bildern und Verlauf.
+• Eine eigene Ansicht für Rezepte, die sich auch von Webseiten importieren lassen.
+
+FÜR DIE GANZE FAMILIE
+• Für jede Plattform, dazu eine Web-Version im Browser.
+• Jedes Mitglied hat sein eigenes Start-Board.
+• Teilen mit einzelnen Mitgliedern oder Gruppen wie „Eltern“ oder „Kinder“. Jeder sieht, was mit ihm geteilt ist.
+• Eine Suche über alles: Termine, Aufgaben, Seiten und Rezepte.
+
+DEINE DATEN BLEIBEN BEI DIR
+• Keine Cloud, kein Konto bei einem Anbieter, kein Tracking, keine Werbung, kein Abo.
+• Funktioniert offline. Alles, was du eingibst, ist sofort da und wird abgeglichen, sobald der Server wieder erreichbar ist.
+• Fang allein auf einem Gerät an. Wenn die Familie mitmachen soll, richtest du deinen eigenen Hiwiski-Server ein – zum Beispiel auf einem NAS – und alles kommt mit.
+• Alle Daten lassen sich als verschlüsseltes Backup exportieren – kein Lock-in.
+
+Hiwiski ist ein Hobbyprojekt, frei für die private und nicht kommerzielle Nutzung. Mehr unter https://hiwiski.app

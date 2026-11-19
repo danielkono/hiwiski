@@ -1,0 +1,1 @@
+family,shopping list,kanban,recipes,todo,chores,household,self-hosted,offline,privacy,shared

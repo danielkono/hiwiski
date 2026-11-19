@@ -1,0 +1,54 @@
+# The website's own web server: static files, behind a proxy that does TLS.
+{
+	admin off
+	auto_https off
+	persist_config off
+}
+
+:8080 {
+	root * /srv
+	encode zstd gzip
+
+	header {
+		# Nothing from elsewhere. 'wasm-unsafe-eval'
+		# for CanvasKit and the database of the scenes, blob: for their workers, inline
+		# styles for a scene's height.
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'"
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	# Hugo puts a hash into the names of the stylesheet and the script: kept for a year.
+	# Everything else -- the pages, the screenshots, the scenes' build, whose files carry
+	# no hash -- is asked for anew and answered with 304 while unchanged.
+	@hashed path_regexp \.[0-9a-f]{64}\.(css|js)$
+	@unhashed not path_regexp \.[0-9a-f]{64}\.(css|js)$
+	header @hashed Cache-Control "public, max-age=31536000, immutable"
+	header @unhashed Cache-Control "no-cache"
+
+	# The address without a language picks one by the browser's: German to /de/,
+	# everything else to /en/. No cookie, no script.
+	@root path /
+	@germanRoot {
+		path /
+		header_regexp Accept-Language (?i)^\s*de\b
+	}
+	route {
+		redir @germanRoot /de/ 302
+		redir @root /en/ 302
+	}
+
+	file_server
+
+	# Each language has its own "not found".
+	handle_errors 404 {
+		@german path /de/*
+		route {
+			rewrite @german /de/404.html
+			rewrite * /en/404.html
+		}
+		file_server
+	}
+}

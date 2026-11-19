@@ -1,0 +1,9 @@
+# fastlane and everything it loads, at the versions Gemfile.lock names, with their
+# checksums: the lanes run next to the signing keys and the store accounts, and
+# `gem install fastlane` would fix fastlane's own version only -- each of its
+# dependencies would be whatever was newest that day (docs/releasing.md, "Signing and
+# store credentials"). One file for both lanes: Bundler looks for it from
+# app/android and app/ios upwards.
+source "https://rubygems.org"
+
+gem "fastlane", "2.241.1"

@@ -1,0 +1,34 @@
+{{- /* A view of the app: its screenshot, and with `live` a button that starts the
+       real view in its place. The frame takes the
+       screenshot's shape at any width, so the live view lays out as the picture did;
+       `height` (at 720 wide) only stands in while there is no screenshot.
+       {{< scene name="shopping-list" live=true >}}Caption{{< /scene >}} */ -}}
+{{- $name := .Get "name" }}
+{{- $live := .Get "live" | default false }}
+{{- $height := .Get "height" | default 520 }}
+{{- $caption := strings.TrimSpace .Inner }}
+{{- /* A scene without its screenshot yet is left out of a production build; a
+       local one shows where it will go. */ -}}
+{{- $shot := printf "static/scenes/%s/%s-light.png" .Page.Language.Lang $name }}
+{{- $ratio := printf "720 / %v" $height }}
+{{- $tall := $height }}
+{{- if fileExists $shot }}
+{{- /* Rendered at twice the size: 720 wide. */ -}}
+{{- with imageConfig $shot }}{{ $ratio = printf "%d / %d" .Width .Height }}{{ $tall = div .Height 2 }}{{ end }}
+{{- end }}
+{{- if or (fileExists $shot) hugo.IsDevelopment }}
+<figure class="scene" data-scene="{{ $name }}" data-lang="{{ .Page.Language.Lang }}" style="--scene-ratio: {{ $ratio | safeCSS }}; --scene-height: {{ $tall }}px">
+  <div class="frame">
+    {{ partial "poster.html" (dict "name" $name "lang" .Page.Language.Lang "alt" ($caption | plainify)) }}
+  </div>
+  <div class="bar">
+    {{- with $caption }}<figcaption>{{ . | markdownify }}{{ if $live }}<span class="hint">{{ T "sceneHint" }}</span>{{ end }}</figcaption>{{ end }}
+    {{- if $live }}
+    <span class="actions">
+      <button type="button" class="button filled try" data-loading="{{ T "sceneLoading" }}">{{ partial "icon.html" "play" }}{{ T "tryIt" }}</button>
+      <button type="button" class="button tonal back">{{ partial "icon.html" "arrow_back" }}{{ T "backToStart" }}</button>
+    </span>
+    {{- end }}
+  </div>
+</figure>
+{{- end }}

@@ -1,0 +1,70 @@
+BoardView:
+  type: object
+  required: [boardId, ownerId, layout, columns, widgets]
+  properties:
+    boardId:
+      type: string
+      format: uuid
+    ownerId:
+      type: string
+      format: uuid
+    name:
+      type: string
+    layout:
+      type: string
+      enum: [FLOW, GRID]
+    columns:
+      type: integer
+    widgets:
+      type: array
+      items:
+        $ref: '#/WidgetView'
+
+WidgetView:
+  type: object
+  required: [id, kind, gridX, gridY, gridW, gridH, position]
+  properties:
+    id:
+      type: string
+      format: uuid
+    kind:
+      description: |
+        **An unknown widget type shows a placeholder and never crashes.** An installed
+        app can be older than the server.
+      type: string
+    config:
+      type: object
+      additionalProperties: true
+    gridX:
+      type: integer
+    gridY:
+      type: integer
+    gridW:
+      type: integer
+    gridH:
+      type: integer
+    position:
+      type: integer
+
+DashboardTicket:
+  type: object
+  required: [ticket, expiresAt]
+  properties:
+    ticket:
+      type: string
+      description: |
+        Short-lived, for the SSE stream. A stream cannot be opened with a header, so
+        the ticket goes in the address and lives only for seconds.
+    expiresAt:
+      type: string
+      format: date-time
+
+BoardContent:
+  type: object
+  required: [items]
+  properties:
+    items:
+      type: array
+      description: Containers before their content -- a calendar before its events.
+      items:
+        $ref: './sync.yaml#/ChangeEnvelope'

@@ -1,0 +1,14 @@
+{{- /* A scene's screenshot, light and dark, rendered by the app's widget tests;
+       the stylesheet shows the one for the theme in
+       use. Missing in a local build without them. */ -}}
+{{- $light := printf "/scenes/%s/%s-light.png" .lang .name }}
+{{- $dark := printf "/scenes/%s/%s-dark.png" .lang .name }}
+<span class="poster">
+{{- if fileExists (printf "static%s" $light) }}
+  <img class="shot-light" src="{{ $light }}" alt="{{ .alt }}" loading="lazy">
+  <img class="shot-dark" src="{{ $dark }}" alt="{{ .alt }}" loading="lazy">
+{{- else }}
+  <span class="missing" role="img" aria-label="{{ .alt }}"><code>{{ .name }}</code></span>
+{{- end }}
+</span>
+{{- /**/ -}}

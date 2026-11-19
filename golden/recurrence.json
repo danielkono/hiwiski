@@ -1,0 +1,271 @@
+{
+  "description": "Recurrence rules both sides are checked against. Server and client use different libraries; an event the phone shows on Monday and the server on Tuesday is worse than no recurrence at all.",
+  "note": "All times are LOCAL TIME in the given zone, without offset. That is exactly how a series is stored in the database: local_start plus time_zone. Stored in UTC, it would shift when the clocks change.",
+  "cases": [
+    {
+      "name": "every week on Monday",
+      "why": "The everyday case. Without it, nothing else can be trusted.",
+      "rrule": "FREQ=WEEKLY;BYDAY=MO",
+      "start": "2026-10-05T08:00",
+      "timeZone": "Europe/Berlin",
+      "from": "2026-10-01T00:00",
+      "to": "2026-11-03T00:00",
+      "expected": [
+        "2026-10-05T08:00",
+        "2026-10-12T08:00",
+        "2026-10-19T08:00",
+        "2026-10-26T08:00",
+        "2026-11-02T08:00"
+      ]
+    },
+    {
+      "name": "every two weeks",
+      "why": "An interval. An earlier version's recurrence dialog did not offer it, even though both sides supported it.",
+      "rrule": "FREQ=WEEKLY;INTERVAL=2;BYDAY=MO",
+      "start": "2026-10-05T08:00",
+      "timeZone": "Europe/Berlin",
+      "from": "2026-10-01T00:00",
+      "to": "2026-12-01T00:00",
+      "expected": [
+        "2026-10-05T08:00",
+        "2026-10-19T08:00",
+        "2026-11-02T08:00",
+        "2026-11-16T08:00",
+        "2026-11-30T08:00"
+      ]
+    },
+    {
+      "name": "several weekdays",
+      "why": "Mon, Wed, Fri is the shape in which a family hands out tasks.",
+      "rrule": "FREQ=WEEKLY;BYDAY=MO,WE,FR",
+      "start": "2026-10-05T17:00",
+      "timeZone": "Europe/Berlin",
+      "from": "2026-10-05T00:00",
+      "to": "2026-10-17T00:00",
+      "expected": [
+        "2026-10-05T17:00",
+        "2026-10-07T17:00",
+        "2026-10-09T17:00",
+        "2026-10-12T17:00",
+        "2026-10-14T17:00",
+        "2026-10-16T17:00"
+      ]
+    },
+    {
+      "name": "COUNT limits the series",
+      "why": "Four more times is something people actually say.",
+      "rrule": "FREQ=DAILY;COUNT=4",
+      "start": "2026-10-05T07:30",
+      "timeZone": "Europe/Berlin",
+      "from": "2026-10-01T00:00",
+      "to": "2026-11-01T00:00",
+      "expected": [
+        "2026-10-05T07:30",
+        "2026-10-06T07:30",
+        "2026-10-07T07:30",
+        "2026-10-08T07:30"
+      ]
+    },
+    {
+      "name": "UNTIL limits the series",
+      "why": "Until the holidays is the other.",
+      "rrule": "FREQ=WEEKLY;BYDAY=MO;UNTIL=20261020T060000Z",
+      "start": "2026-10-05T08:00",
+      "timeZone": "Europe/Berlin",
+      "from": "2026-10-01T00:00",
+      "to": "2026-12-01T00:00",
+      "expected": [
+        "2026-10-05T08:00",
+        "2026-10-12T08:00",
+        "2026-10-19T08:00"
+      ]
+    },
+    {
+      "name": "second Tuesday of the month",
+      "why": "The nth weekday of the month. Parents' evening, paper recycling, the regulars' table.",
+      "rrule": "FREQ=MONTHLY;BYDAY=2TU",
+      "start": "2026-10-13T19:00",
+      "timeZone": "Europe/Berlin",
+      "from": "2026-10-01T00:00",
+      "to": "2027-01-15T00:00",
+      "expected": [
+        "2026-10-13T19:00",
+        "2026-11-10T19:00",
+        "2026-12-08T19:00",
+        "2027-01-12T19:00"
+      ]
+    },
+    {
+      "name": "last Friday of the month",
+      "why": "The same shape counted backwards.",
+      "rrule": "FREQ=MONTHLY;BYDAY=-1FR",
+      "start": "2026-10-30T18:00",
+      "timeZone": "Europe/Berlin",
+      "from": "2026-10-01T00:00",
+      "to": "2027-01-05T00:00",
+      "expected": [
+        "2026-10-30T18:00",
+        "2026-11-27T18:00",
+        "2026-12-25T18:00"
+      ]
+    },
+    {
+      "name": "monthly on the 15th",
+      "why": "Rent, pocket money, meter reading.",
+      "rrule": "FREQ=MONTHLY;BYMONTHDAY=15",
+      "start": "2026-10-15T09:00",
+      "timeZone": "Europe/Berlin",
+      "from": "2026-10-01T00:00",
+      "to": "2027-01-20T00:00",
+      "expected": [
+        "2026-10-15T09:00",
+        "2026-11-15T09:00",
+        "2026-12-15T09:00",
+        "2027-01-15T09:00"
+      ]
+    },
+    {
+      "name": "yearly",
+      "why": "Birthdays.",
+      "rrule": "FREQ=YEARLY",
+      "start": "2026-03-14T00:00",
+      "timeZone": "Europe/Berlin",
+      "from": "2026-01-01T00:00",
+      "to": "2029-01-01T00:00",
+      "expected": [
+        "2026-03-14T00:00",
+        "2027-03-14T00:00",
+        "2028-03-14T00:00"
+      ]
+    },
+    {
+      "name": "across the autumn clock change",
+      "why": "The clocks change on 2026-10-25; every Monday 8:00 stays 8:00 local time afterwards. Computed in UTC it would shift to 9:00 -- which is exactly why RECURRING has its own fields local_start and time_zone.",
+      "rrule": "FREQ=WEEKLY;BYDAY=MO",
+      "start": "2026-10-19T08:00",
+      "timeZone": "Europe/Berlin",
+      "from": "2026-10-19T00:00",
+      "to": "2026-11-10T00:00",
+      "expected": [
+        "2026-10-19T08:00",
+        "2026-10-26T08:00",
+        "2026-11-02T08:00",
+        "2026-11-09T08:00"
+      ]
+    },
+    {
+      "name": "across the spring clock change",
+      "why": "The same check in the other direction; the clocks change on 2026-03-29.",
+      "rrule": "FREQ=DAILY",
+      "start": "2026-03-27T08:00",
+      "timeZone": "Europe/Berlin",
+      "from": "2026-03-27T00:00",
+      "to": "2026-04-01T00:00",
+      "expected": [
+        "2026-03-27T08:00",
+        "2026-03-28T08:00",
+        "2026-03-29T08:00",
+        "2026-03-30T08:00",
+        "2026-03-31T08:00"
+      ]
+    },
+    {
+      "name": "daily, window cuts off at both ends",
+      "why": "The view only ever asks for a slice; it must not have to start at the first occurrence.",
+      "rrule": "FREQ=DAILY",
+      "start": "2026-10-01T12:00",
+      "timeZone": "Europe/Berlin",
+      "from": "2026-10-05T00:00",
+      "to": "2026-10-08T00:00",
+      "expected": [
+        "2026-10-05T12:00",
+        "2026-10-06T12:00",
+        "2026-10-07T12:00"
+      ]
+    },
+    {
+      "name": "UNTIL exactly on an occurrence",
+      "why": "The boundary itself: an UNTIL that falls on an occurrence includes it. The earlier UNTIL case fell between two and could not tell.",
+      "rrule": "FREQ=WEEKLY;BYDAY=MO;UNTIL=20261019T060000Z",
+      "start": "2026-10-05T08:00",
+      "timeZone": "Europe/Berlin",
+      "from": "2026-10-01T00:00",
+      "to": "2026-12-01T00:00",
+      "expected": [
+        "2026-10-05T08:00",
+        "2026-10-12T08:00",
+        "2026-10-19T08:00"
+      ]
+    },
+    {
+      "name": "02:30 on the day the clocks go back",
+      "why": "02:30 exists twice on 25 October. The series has it once.",
+      "rrule": "FREQ=DAILY",
+      "start": "2026-10-24T02:30",
+      "timeZone": "Europe/Berlin",
+      "from": "2026-10-24T00:00",
+      "to": "2026-10-27T00:00",
+      "expected": [
+        "2026-10-24T02:30",
+        "2026-10-25T02:30",
+        "2026-10-26T02:30"
+      ]
+    },
+    {
+      "name": "02:30 on the day the clocks go forward",
+      "why": "02:30 does not exist on 29 March. Both sides have to agree on where it goes.",
+      "rrule": "FREQ=DAILY",
+      "start": "2026-03-28T02:30",
+      "timeZone": "Europe/Berlin",
+      "from": "2026-03-28T00:00",
+      "to": "2026-03-31T00:00",
+      "expected": [
+        "2026-03-28T02:30",
+        "2026-03-29T03:30",
+        "2026-03-30T02:30"
+      ]
+    },
+    {
+      "name": "the 31st of every month",
+      "why": "Months without a 31st are skipped, not moved to the 30th.",
+      "rrule": "FREQ=MONTHLY;BYMONTHDAY=31",
+      "start": "2026-01-31T09:00",
+      "timeZone": "Europe/Berlin",
+      "from": "2026-01-01T00:00",
+      "to": "2026-08-01T00:00",
+      "expected": [
+        "2026-01-31T09:00",
+        "2026-03-31T09:00",
+        "2026-05-31T09:00",
+        "2026-07-31T09:00"
+      ]
+    },
+    {
+      "name": "a birthday on 29 February",
+      "why": "Every year, it comes only in leap years.",
+      "rrule": "FREQ=YEARLY",
+      "start": "2024-02-29T09:00",
+      "timeZone": "Europe/Berlin",
+      "from": "2024-01-01T00:00",
+      "to": "2029-01-01T00:00",
+      "expected": [
+        "2024-02-29T09:00",
+        "2028-02-29T09:00"
+      ]
+    },
+    {
+      "name": "a zone west of UTC",
+      "why": "Every case so far was in Berlin. An evening in New York crosses the UTC date line.",
+      "rrule": "FREQ=WEEKLY;BYDAY=MO;UNTIL=20261020T010000Z",
+      "start": "2026-10-05T20:00",
+      "timeZone": "America/New_York",
+      "from": "2026-10-01T00:00",
+      "to": "2026-11-01T00:00",
+      "expected": [
+        "2026-10-05T20:00",
+        "2026-10-12T20:00",
+        "2026-10-19T20:00"
+      ]
+    }
+  ]
+}

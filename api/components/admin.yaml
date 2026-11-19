@@ -1,0 +1,309 @@
+# Operations: trash, backup, settings, log.
+#
+# The third property -- easy for laypeople to set up -- is delivered here or not at
+# all. An operations chapter that is only written after the first release is one that
+# never gets written.
+
+TrashEntry:
+  type: object
+  description: |
+    Something deleted. The trash was forgotten in the design and is mandatory all
+    the same: without it every disappearance is final, and for a family app that is the
+    wrong promise.
+  required: [itemType, itemId, title, deletedAt, remainingDays, restorable]
+  properties:
+    itemType:
+      type: string
+    itemId:
+      type: string
+      format: uuid
+    title:
+      type: string
+    entityKey:
+      type: string
+      description: The citable number, if this type has one.
+    deletedAt:
+      type: string
+      format: date-time
+    deletedBy:
+      type: string
+      format: uuid
+    remainingDays:
+      type: integer
+      description: How much longer it is kept before the retention period removes it for good.
+    restorable:
+      type: boolean
+      description: |
+        `false` if the container is gone by now. Restoring then needs a
+        `targetContainerId`.
+
+RestoreRequest:
+  type: object
+  description: Where the item goes when it comes back.
+  properties:
+    targetContainerId:
+      type: string
+      format: uuid
+      description: |
+        The container to restore the item into -- a list for a task, a calendar for an
+        event, a parent page for a wiki page. Needs write access to it. Left out, the
+        item goes back where it was; that fails with `trash.container_gone` once its
+        container is gone. Not every type has a container: for the others it is
+        refused with `sync.no_container`.
+
+TrashList:
+  type: object
+  required: [entries, retentionDays]
+  properties:
+    entries:
+      type: array
+      items:
+        $ref: './admin.yaml#/TrashEntry'
+    retentionDays:
+      type: integer
+      description: |
+        How long anything stays in the trash. Here and not only in the instance
+        settings: those are for administrators, and everyone else was told the
+        default instead of what applies.
+
+InstanceSettings:
+  type: object
+  description: |
+    The instance settings. Administrator only.
+
+    Numbers already assigned stay valid when a prefix changes -- it only affects what
+    is created afterwards.
+  properties:
+    familyName:
+      type: string
+    timezone:
+      type: string
+    keyPrefixTodo:
+      type: string
+      example: TD
+    keyPrefixEvent:
+      type: string
+      example: EVT
+    keyPrefixWikiPage:
+      type: string
+      example: WIKI
+    keyPrefixRecipe:
+      type: string
+      example: REC
+    keyPrefixTodoList:
+      type: string
+      example: LST
+    trashRetentionDays:
+      type: integer
+    logRetentionDays:
+      type: integer
+      description: |
+        Also limits how far back the **history** reaches. Minimum 14 days; the UI says
+        both.
+    backupFrequency:
+      type: string
+      enum: [DAILY, WEEKLY]
+      description: |
+        How often the scheduled backup runs. There is no "off".
+        Default `DAILY`.
+    backupWeekday:
+      type: integer
+      minimum: 1
+      maximum: 7
+      description: For `WEEKLY` -- ISO, 1 is Monday. Default 1.
+    backupTime:
+      type: string
+      example: '02:00'
+      description: |
+        When the scheduled backup runs, `HH:mm` in the family's time zone. Default
+        `02:00`. A change takes effect at once.
+    backupKeep:
+      type: integer
+      minimum: 1
+      maximum: 30
+      description: |
+        How many archives are kept -- of every kind together. Default 7. Lowering it
+        deletes the oldest at once; the UI says first how many.
+
+BackupInfo:
+  type: object
+  description: |
+    An archive in the backup directory: data, images and a manifest, encrypted, as one
+    file. Everything here is read from the archive's header, without the password --
+    not secret, and not trusted either: on restore the manifest inside decides.
+  required: [id, createdAt, bytes, serverVersion, schemaVersion, reason, currentKey]
+  properties:
+    id:
+      type: string
+    createdAt:
+      type: string
+      format: date-time
+    bytes:
+      type: integer
+      format: int64
+    serverVersion:
+      type: string
+    schemaVersion:
+      type: string
+    reason:
+      type: string
+      enum: [SCHEDULED, ON_DEMAND, BEFORE_UPDATE, BEFORE_RESTORE]
+      description: Why it was made. The list names the last two.
+    updateTo:
+      type: string
+      description: For `BEFORE_UPDATE`, the version the server was updated to.
+    currentKey:
+      type: boolean
+      description: |
+        `false` for an archive made before the backup password was set anew: it opens
+        only with the old password.
+
+BackupList:
+  type: object
+  required: [backups, status]
+  properties:
+    backups:
+      type: array
+      items:
+        $ref: './admin.yaml#/BackupInfo'
+    status:
+      $ref: './admin.yaml#/BackupStatus'
+
+BackupStatus:
+  type: object
+  description: How backing up goes -- the status line on top of the backup settings.
+  required: [directory, passwordSet]
+  properties:
+    lastBackupAt:
+      type: string
+      format: date-time
+      description: The newest archive's time; absent while there is none.
+    nextDueAt:
+      type: string
+      format: date-time
+      description: When the scheduled backup runs next.
+    failure:
+      $ref: './admin.yaml#/BackupFailure'
+    directory:
+      type: string
+      description: |
+        The backup directory as the server sees it (`/data/backup` in the container).
+        On the host it is `HIWISKI_BACKUP_DIR`.
+    passwordSet:
+      type: boolean
+      description: |
+        `false` only on an instance set up before backups were encrypted: nothing is
+        backed up until a backup password is set.
+
+BackupFailure:
+  type: object
+  description: |
+    The last backup failed. Shown until the next one succeeds; the last good archive
+    stays where it is.
+  required: [at, reason]
+  properties:
+    at:
+      type: string
+      format: date-time
+    reason:
+      type: string
+      enum: [DIRECTORY_NOT_WRITABLE, DISK_FULL, NO_BACKUP_PASSWORD, OTHER]
+    trigger:
+      type: string
+      enum: [SCHEDULED, ON_DEMAND, BEFORE_UPDATE, BEFORE_RESTORE]
+
+BackupPreview:
+  type: object
+  description: |
+    What a restore would bring back, read from the decrypted manifest -- so a wrong
+    password shows up before anything is replaced.
+  required: [createdAt, serverVersion, schemaVersion, bytes, members]
+  properties:
+    createdAt:
+      type: string
+      format: date-time
+    serverVersion:
+      type: string
+    schemaVersion:
+      type: string
+    bytes:
+      type: integer
+      format: int64
+    members:
+      type: integer
+      description: How many members the archive holds.
+    familyName:
+      type: string
+
+BackupUpload:
+  type: object
+  description: |
+    An uploaded archive, waiting for its password. Deleted after the restore, or an hour
+    after the upload if nothing followed.
+  required: [id, bytes]
+  properties:
+    id:
+      type: string
+    bytes:
+      type: integer
+      format: int64
+
+BackupPasswordEntry:
+  type: object
+  required: [password]
+  properties:
+    password:
+      type: string
+      format: password
+      description: The backup password the archive was made with.
+
+BackupPasswordChange:
+  type: object
+  required: [currentPassword, newPassword]
+  properties:
+    currentPassword:
+      type: string
+      format: password
+    newPassword:
+      type: string
+      format: password
+      minLength: 8
+
+BackupPasswordReset:
+  type: object
+  required: [newPassword]
+  properties:
+    newPassword:
+      type: string
+      format: password
+      minLength: 8
+
+RestoreResult:
+  type: object
+  description: |
+    **A restore replaces everything.** Afterwards all devices have to sync from
+    scratch -- the sequence numbers no longer match what the devices have seen. The
+    server detects this through an instance identifier newly generated on restore and
+    answers every device with `resyncRequired`. Without this identifier devices would
+    silently keep working on a state that no longer exists -- the worst data loss
+    imaginable in this app.
+  required: [instanceId, rows]
+  properties:
+    instanceId:
+      type: string
+      format: uuid
+      description: The **new** identifier. Every device uses it to tell that its state is no longer valid.
+    rows:
+      type: integer
+
+LogLines:
+  type: object
+  description: |
+    The server log, in English and structured. Personal data and content are not in
+    it: IDs yes, titles no.
+  required: [lines]
+  properties:
+    lines:
+      type: array
+      items:
+        type: string
