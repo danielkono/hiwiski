@@ -12,6 +12,8 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
 
 ## Unreleased
 
+## 2026.1.13 — 2026-11-19 {#2026.1.13}
+
 ### Added
 
 - **Hiwiski's source code is public.** *Account → About Hiwiski → Source code* opens
