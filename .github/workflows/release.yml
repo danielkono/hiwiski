@@ -822,10 +822,12 @@ jobs:
         working-directory: app/ios
         run: bundle exec fastlane metadata version:"${VERSION%%-*}" screenshots:"$CHANGED"
 
-  # The maintainer's servers follow every release, once the images are pushed.
+  # The maintainer's servers follow every release, once it is published: the deployment
+  # refuses a version that has no GitHub release yet, and the GitHub release waits for
+  # both apps, so the pushed images alone are not enough to start it.
   deploy:
     name: Deploy
-    needs: [version, server-image, demo-image, site-image]
+    needs: [version, server-image, demo-image, site-image, release]
     if: github.ref_type == 'tag'
     runs-on: ubuntu-slim
     timeout-minutes: 5
