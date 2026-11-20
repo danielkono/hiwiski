@@ -204,10 +204,11 @@ jobs:
         run: ./gradlew :app:testDebugUnitTest --no-daemon
 
   # On macOS, whose minutes count ten times while the repository is private: a build for
-  # the simulator, without signing, and the widgets' unit tests.
+  # the simulator, without signing, and the widgets' unit tests. On the same image as the
+  # release's iOS job, so these checks run with the Xcode the store build is made with.
   ios:
     name: iOS widgets
-    runs-on: macos-latest
+    runs-on: xcode-27
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

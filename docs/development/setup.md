@@ -18,7 +18,7 @@ Only for releasing the apps yourself:
 
 | Tool | What for |
 | --- | --- |
-| **Xcode** with the iOS platform | iOS and macOS builds |
+| **Xcode** 27 or newer, with the iOS platform | iOS and macOS builds; from April 2027 App Store Connect takes only builds made with the iOS 27 SDK |
 | **Android SDK** (Android Studio) and JDK 17 | Android builds |
 | **Ruby** with Bundler, for **fastlane** as `app/Gemfile.lock` pins it: `bundle install` in `app/`, then `bundle exec fastlane …` runs the gems `release.yml` runs | uploading to TestFlight and Google Play — see [`../releasing.md`](../releasing.md) |
 
