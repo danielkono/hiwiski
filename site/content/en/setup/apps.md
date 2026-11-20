@@ -14,7 +14,7 @@ The server address in the app is `http://<address>:<HIWISKI_HTTP_PORT>`. If the 
 
 - **Use the IP address**, or a name your router resolves. Android often cannot resolve `.local` names.
 - **iOS asks for local network access.** Without "Allow" the app cannot reach the server; access can be allowed later under *Settings → Hiwiski → Local Network*.
-- **On the home network the connection is unencrypted by default.** The app and the sign-in point this out. The options for TLS are under [Encryption on the home network]({{< relref "setup/encryption" >}}).
+- **On the home network the connection is unencrypted by default.** The sign-in points this out. The options for TLS are under [Encryption on the home network]({{< relref "setup/encryption" >}}).
 
 ## Sign in and invite the family
 

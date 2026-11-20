@@ -91,6 +91,10 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
   waiting to be synced, the sign-out dialog no longer waits for the server either;
   with changes still waiting, "Sign out anyway" makes its last try while the dialog
   stays open and says so, instead of on the start screen.
+- **Connecting to a server goes straight on.** Once the app reaches a Hiwiski server
+  at the address entered, it goes on to sign-in or to the setup wizard by itself —
+  there is no "Continue" to tap any more. The sign-in screen shows the server and
+  says when the connection is unencrypted.
 
 ### Upgrade notes
 

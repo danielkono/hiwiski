@@ -76,17 +76,6 @@
   "serverField": "Address",
   "serverHint": "hiwiski.local:8080",
   "serverConnect": "Connect",
-  "serverConnected": "Connected to {familyName}, version {version}.",
-  "@serverConnected": {
-    "placeholders": {
-      "familyName": {
-        "type": "String"
-      },
-      "version": {
-        "type": "String"
-      }
-    }
-  },
   "serverCleartextTitle": "This connection is not encrypted",
   "serverCleartextBody": "HTTPS is not set up. Inside your own home network that is acceptable — over the open internet it is not. Your server's setup guide explains how to add a certificate.",
   "serverUnreachable": "No Hiwiski server answered at this address.",
