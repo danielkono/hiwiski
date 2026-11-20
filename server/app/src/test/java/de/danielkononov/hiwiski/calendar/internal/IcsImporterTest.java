@@ -172,6 +172,81 @@ class IcsImporterTest {
         assertThat(parsed.unreadable()).containsExactly("n1");
     }
 
+    // RFC 5545, 3.8.1.11: a called-off meeting stood in the calendar as if it took place.
+    @Test
+    void aCancelledEventIsNoEvent() {
+        var parsed = importer.read(calendar(
+                "UID:c1", "SUMMARY:Parents' evening", "STATUS:CANCELLED", "DTSTART:20261012T170000Z"));
+
+        assertThat(parsed.entries()).isEmpty();
+        assertThat(parsed.unreadable()).isEmpty();
+    }
+
+    // Google writes a cancelled occurrence as an override with STATUS:CANCELLED, not as
+    // an EXDATE.
+    @Test
+    void aCancelledOverrideCancelsItsOccurrence() {
+        String ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//test//EN\r\n"
+                + "BEGIN:VEVENT\r\nUID:s1\r\nSUMMARY:Lesson\r\n"
+                + "DTSTART;TZID=Europe/Berlin:20261005T080000\r\nRRULE:FREQ=WEEKLY\r\nEND:VEVENT\r\n"
+                + "BEGIN:VEVENT\r\nUID:s1\r\nSUMMARY:Lesson\r\nSTATUS:CANCELLED\r\n"
+                + "RECURRENCE-ID;TZID=Europe/Berlin:20261012T080000\r\n"
+                + "DTSTART;TZID=Europe/Berlin:20261012T080000\r\nEND:VEVENT\r\n"
+                + "BEGIN:VEVENT\r\nUID:s2\r\nSUMMARY:Choir\r\nSTATUS:CANCELLED\r\n"
+                + "RECURRENCE-ID;TZID=Europe/Berlin:20261012T190000\r\n"
+                + "DTSTART;TZID=Europe/Berlin:20261012T190000\r\nEND:VEVENT\r\n"
+                + "END:VCALENDAR\r\n";
+
+        var entries = importer.parse(ics);
+
+        assertThat(entries).hasSize(1);
+        assertThat(entries.getFirst().exceptions()).containsEntry("2026-10-12T08:00", Map.of("cancelled", true));
+    }
+
+    @Test
+    void anExcludedDateCancelsThatDaysOccurrence() {
+        var entry = importer.parse(calendar(
+                        "UID:s1",
+                        "SUMMARY:Lesson",
+                        "DTSTART;TZID=Europe/Berlin:20261005T080000",
+                        "RRULE:FREQ=WEEKLY",
+                        "EXDATE;VALUE=DATE:20261012"))
+                .getFirst();
+
+        assertThat(entry.exceptions()).containsEntry("2026-10-12T08:00", Map.of("cancelled", true));
+    }
+
+    // RFC 5545, 3.3.10: beside a start with a zone, UNTIL is a UTC instant. Read as its
+    // midnight, a date lost the series its last day.
+    @Test
+    void aSeriesEndingOnADateKeepsThatDay() {
+        var entry = importer.parse(calendar(
+                        "UID:s1",
+                        "SUMMARY:Holiday club",
+                        "DTSTART;TZID=Europe/Berlin:20261005T090000",
+                        "RRULE:FREQ=DAILY;UNTIL=20261010"))
+                .getFirst();
+
+        assertThat(entry.rrule()).isEqualTo("FREQ=DAILY;UNTIL=20261010T215959Z");
+        assertThat(RecurrenceTestAccess.create().expand(
+                        entry.rrule(),
+                        java.time.LocalDateTime.parse(entry.localStart()),
+                        entry.timeZone(),
+                        java.time.LocalDateTime.parse("2026-10-01T00:00"),
+                        java.time.LocalDateTime.parse("2026-11-01T00:00")))
+                .hasSize(6)
+                .last()
+                .isEqualTo(java.time.LocalDateTime.parse("2026-10-10T09:00"));
+    }
+
+    @Test
+    void aSeriesEndingAtATimeWithoutZoneEndsInItsOwn() {
+        assertThat(IcsImporter.untilInUtc("FREQ=DAILY;UNTIL=20261010T090000;BYHOUR=9", java.time.ZoneId.of("Europe/Berlin")))
+                .isEqualTo("FREQ=DAILY;UNTIL=20261010T070000Z;BYHOUR=9");
+        assertThat(IcsImporter.untilInUtc("FREQ=DAILY;UNTIL=20261010T070000Z", java.time.ZoneId.of("Europe/Berlin")))
+                .isEqualTo("FREQ=DAILY;UNTIL=20261010T070000Z");
+    }
+
     @Test
     void anAllDayEndEqualToItsStartIsThatDay() {
         var entry = importer.parse(calendar(

@@ -4,6 +4,7 @@ import de.danielkononov.hiwiski.recurrence.Recurrence;
 import java.io.StringReader;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -14,6 +15,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import net.fortuna.ical4j.data.CalendarBuilder;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.component.VEvent;
@@ -91,11 +94,13 @@ class IcsImporter {
              */
             Map<String, Object> exceptions,
             /** For an override: the occurrence it replaces, as the file states it. */
-            Temporal original) {
+            Temporal original,
+            // STATUS:CANCELLED -- for an override, the occurrence is cancelled.
+            boolean cancelled) {
 
         Entry withExceptions(Map<String, Object> exceptions) {
             return new Entry(uid, recurrenceId, title, description, location, timeForm, startsAt, endsAt,
-                    startDate, endDate, localStart, localEnd, timeZone, rrule, exceptions, original);
+                    startDate, endDate, localStart, localEnd, timeZone, rrule, exceptions, original, cancelled);
         }
     }
 
@@ -140,7 +145,14 @@ class IcsImporter {
                 continue;
             }
             try {
-                entries.add(toEntry(event));
+                Entry entry = toEntry(event);
+                if (entry.cancelled() && entry.recurrenceId() == null) {
+                    // A cancelled event is no event (RFC 5545, 3.8.1.11). Read as one, a
+                    // called-off meeting stood in the calendar as if it took place; left
+                    // out, a subscription removes it like any event that has gone.
+                    continue;
+                }
+                entries.add(entry);
             } catch (RuntimeException e) {
                 // A single broken event must not cost the whole file. The rest is
                 // usable, and the count on the subscription says how many arrived.
@@ -199,7 +211,11 @@ class IcsImporter {
             Optional<Map.Entry<String, Object>> moved =
                     master == null ? Optional.empty() : movedOccurrence(master, entry);
             if (moved.isEmpty()) {
-                standalone.add(entry);
+                // A cancelled occurrence of a series that is not in the file cancels
+                // nothing here, and is no event either.
+                if (!entry.cancelled()) {
+                    standalone.add(entry);
+                }
                 continue;
             }
             Map<String, Object> exceptions = new LinkedHashMap<>(master.exceptions());
@@ -212,10 +228,20 @@ class IcsImporter {
                 .toList();
     }
 
-    /** The override as an exception of the series: its original key and where it went. */
+    /**
+     * The override as an exception of the series: its original key and where it went --
+     * or, cancelled, that it does not take place. Google writes a cancelled occurrence
+     * this way rather than as an EXDATE, and it showed as if it took place.
+     */
     private static Optional<Map.Entry<String, Object>> movedOccurrence(Entry master, Entry override) {
         if (override.original() == null) {
             return Optional.empty();
+        }
+        if (override.cancelled()) {
+            String original = "ALL_DAY".equals(master.timeForm())
+                    ? key(dateOf(override.original()))
+                    : key(toLocal(override.original(), ZoneId.of(master.timeZone())));
+            return Optional.of(Map.entry(original, Map.of("cancelled", true)));
         }
         if ("ALL_DAY".equals(master.timeForm())) {
             if (override.startDate() == null) {
@@ -280,19 +306,39 @@ class IcsImporter {
         return value instanceof LocalDate date ? date : toLocal(value, ZoneOffset.UTC).toLocalDate();
     }
 
-    /** The cancelled occurrences of a series ({@code EXDATE}), in its own zone. */
-    private static Map<String, Object> cancelled(VEvent event, ZoneId zone) {
+    /**
+     * The cancelled occurrences of a series ({@code EXDATE}), in its own zone.
+     *
+     * @param time the series' time of day; {@code null} for a series of whole days
+     */
+    private static Map<String, Object> cancelled(VEvent event, ZoneId zone, LocalTime time) {
         Map<String, Object> exceptions = new LinkedHashMap<>();
         for (var property : event.getProperties("EXDATE")) {
             if (!(property instanceof ExDate<?> exdate)) {
                 continue;
             }
             for (Temporal date : exdate.getDates()) {
-                String key = date instanceof LocalDate day ? key(day) : key(toLocal(date, zone));
+                // RFC 5545 wants an EXDATE in the value type of DTSTART; some files
+                // exclude a day from a series with a time, or a time from one of whole
+                // days. Keyed as written, neither matched an occurrence, and the day
+                // stayed in the calendar: it is the occurrence on that day.
+                String key = switch (date) {
+                    case LocalDate day when time != null -> key(day.atTime(time));
+                    case LocalDate day -> key(day);
+                    default -> time == null ? key(dayOf(date)) : key(toLocal(date, zone));
+                };
                 exceptions.put(key, Map.of("cancelled", true));
             }
         }
         return exceptions;
+    }
+
+    /** The date a date-time is written with -- in its own zone, or UTC for an instant. */
+    private static LocalDate dayOf(Temporal value) {
+        return switch (value) {
+            case java.time.Instant instant -> instant.atZone(ZoneOffset.UTC).toLocalDate();
+            default -> LocalDate.from(value);
+        };
     }
 
     private Entry toEntry(VEvent event) {
@@ -301,7 +347,8 @@ class IcsImporter {
         Temporal original = event.getProperty("RECURRENCE-ID")
                 .map(property -> (Temporal) ((RecurrenceId<?>) property).getDate())
                 .orElse(null);
-        String rrule = storableRule(uid, value(event, "RRULE").orElse(null));
+        String rule = value(event, "RRULE").orElse(null);
+        boolean cancelled = value(event, "STATUS").map(status -> status.trim().equalsIgnoreCase("CANCELLED")).orElse(false);
 
         Temporal start = event.<Temporal>getStartDate().map(property -> property.getDate()).orElse(null);
         Temporal end = event.<Temporal>getEndDate().map(property -> property.getDate()).orElse(null);
@@ -316,6 +363,7 @@ class IcsImporter {
                 .flatMap(TimeZoneIds::resolve);
 
         if (start instanceof LocalDate date) {
+            String rrule = storableRule(uid, rule);
             // All-day is a date, not a point in time -- and with a rule a series of whole
             // days, which the app expands over dates.
             return new Entry(uid, recurrenceId, title(event), description(event), location(event),
@@ -325,9 +373,13 @@ class IcsImporter {
                     // before the start.
                     end instanceof LocalDate endDate && endDate.isAfter(date) ? endDate.minusDays(1) : date,
                     null, null, null, rrule,
-                    rrule == null ? Map.of() : cancelled(event, ZoneOffset.UTC), original);
+                    rrule == null ? Map.of() : cancelled(event, ZoneOffset.UTC, null), original, cancelled);
         }
 
+        // Beside a start with a time, UNTIL is read in UTC before the rule is checked: a
+        // date there was refused, and the series came in as a single event.
+        ZoneId zone = named.orElse(start instanceof LocalDateTime ? ZoneId.systemDefault() : ZoneOffset.UTC);
+        String rrule = rule == null ? null : storableRule(uid, untilInUtc(rule, zone));
         if (rrule != null) {
             // Every series is stored in local time, or it shifts when the clocks change
             // -- and only RECURRING is expanded at all: a UTC or
@@ -336,19 +388,49 @@ class IcsImporter {
             // assumes for it.
             // A zone that could not be resolved to an IANA ID keeps its instants, in UTC:
             // off by an hour across a clock change, but there -- it used to be skipped.
-            ZoneId zone = named.orElse(start instanceof LocalDateTime ? ZoneId.systemDefault() : ZoneOffset.UTC);
             String zoneId = zone.equals(ZoneOffset.UTC) ? "UTC" : zone.getId();
             LocalDateTime localStart = toLocal(start, zone);
             LocalDateTime localEnd = end == null ? null : toLocal(end, zone);
             return new Entry(uid, recurrenceId, title(event), description(event), location(event),
                     "RECURRING", null, null, null, null,
                     localStart.toString(), localEnd == null ? null : localEnd.toString(), zoneId, rrule,
-                    cancelled(event, zone), original);
+                    cancelled(event, zone, localStart.toLocalTime()), original, cancelled);
         }
 
         return new Entry(uid, recurrenceId, title(event), description(event), location(event),
-                "TIMED", toOffset(start), toOffset(end), null, null, null, null, null, rrule, Map.of(), original);
+                "TIMED", toOffset(start), toOffset(end), null, null, null, null, null, rrule, Map.of(), original,
+                cancelled);
     }
+
+    /**
+     * {@code UNTIL} as RFC 5545 wants it beside a start with a time: a UTC instant.
+     *
+     * <p>Some files end such a series on a date ({@code UNTIL=20261010}), or on a time
+     * without a zone. Read as that date's midnight, the series lost its last day; a date
+     * means that day, up to its end -- as the app writes "ends on" -- and a time without
+     * a zone is one in the series' own.
+     */
+    static String untilInUtc(String rrule, ZoneId zone) {
+        Matcher until = LOCAL_UNTIL.matcher(rrule);
+        if (!until.find()) {
+            return rrule;
+        }
+        LocalDateTime end = until.group(2) == null
+                ? LocalDate.parse(until.group(1), BASIC_DATE).atTime(23, 59, 59)
+                : LocalDateTime.parse(until.group(1) + until.group(2).toUpperCase(java.util.Locale.ROOT), BASIC_DATE_TIME);
+        String instant = UTC_STAMP.format(end.atZone(zone).withZoneSameInstant(ZoneOffset.UTC));
+        return rrule.substring(0, until.start()) + "UNTIL=" + instant + rrule.substring(until.end());
+    }
+
+    /** An {@code UNTIL} that is not a UTC instant: a date, or a date-time without {@code Z}. */
+    private static final Pattern LOCAL_UNTIL =
+            Pattern.compile("(?i)UNTIL=(\\d{8})(T\\d{6})?(?![0-9TZtz])");
+
+    private static final DateTimeFormatter BASIC_DATE = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+    private static final DateTimeFormatter BASIC_DATE_TIME = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss");
+
+    private static final DateTimeFormatter UTC_STAMP = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'");
 
     private static LocalDateTime toLocal(Temporal value, ZoneId zone) {
         return switch (value) {
