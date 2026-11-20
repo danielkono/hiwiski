@@ -14,15 +14,14 @@ import '../../../../core/ui/failure_text.dart';
 import '../../../../core/ui/notice_bar.dart';
 import '../../../../core/ui/hiwiski_mark.dart';
 import '../../../../domain/common/server_address.dart';
-import '../../../../core/ui/cleartext_warning.dart';
 import '../../view/session_keys.dart';
 import '../server_address_view_model.dart';
 
 /// **Before everything else**.
 ///
-/// In the browser prefilled with the origin, otherwise empty with an example. After
-/// connecting, the family name and server version as confirmation — without them
-/// nobody knows whether they reached the right server.
+/// In the browser prefilled with the origin, otherwise empty with an example. Once a
+/// Hiwiski server answers, the screen moves on by itself: into the wizard, or to
+/// sign-in, which names the server and says whether the connection is unencrypted.
 class ServerAddressScreen extends ConsumerStatefulWidget {
   const ServerAddressScreen({super.key});
 
@@ -58,18 +57,34 @@ class _ServerAddressScreenState extends ConsumerState<ServerAddressScreen> {
     super.dispose();
   }
 
-  void _connect() {
+  Future<void> _connect() async {
+    // Enter is not the disabled button: pressed while connecting, it started a
+    // second connection.
+    if (ref.read(connectMutation).isPending) return;
     final address = ServerAddress.parse(_controller.text);
     setState(() => _malformed = address == null);
     if (address == null) return;
-    // The mutation's state holds the outcome; build shows it.
-    connectMutation
-        .run(
-          ref,
-          (tsx) =>
-              tsx.get(serverAddressViewModelProvider.notifier).connect(address),
-        )
-        .ignore();
+    final Handshake handshake;
+    try {
+      handshake = await connectMutation.run(
+        ref,
+        (tsx) =>
+            tsx.get(serverAddressViewModelProvider.notifier).connect(address),
+      );
+    } on Object {
+      // The mutation's state holds the error; build shows it.
+      return;
+    }
+    if (!mounted) return;
+    // A Hiwiski server answered: on at once, without a confirmation that only asked
+    // for one more tap — sign-in names the server and warns of a connection without
+    // encryption. The router does not move on to sign-in by itself: the server
+    // address is reachable while signed out too.
+    if (handshake.setupCompleted) {
+      const LoginRoute().go(context);
+    } else {
+      const SetupRoute().go(context);
+    }
   }
 
   /// "Use without a server": a name, and the app starts on this device alone.
@@ -95,10 +110,6 @@ class _ServerAddressScreenState extends ConsumerState<ServerAddressScreen> {
     final l = L.of(context);
     final state = ref.watch(serverAddressViewModelProvider);
     final connecting = ref.watch(connectMutation);
-    final connected = switch (connecting) {
-      MutationSuccess(:final value) => value,
-      _ => null,
-    };
     final error = switch (connecting) {
       _ when _malformed => l.serverUnreachable,
       MutationError(:final error) => switch (HiwiskiFailure.from(error)) {
@@ -149,30 +160,9 @@ class _ServerAddressScreenState extends ConsumerState<ServerAddressScreen> {
           ),
           child: Text(l.serverConnect),
         ),
-        if (connected != null) ...[
-          const SizedBox(height: HiwiskiMetrics.space20),
-          _ConnectedCard(handshake: connected),
-          const SizedBox(height: HiwiskiMetrics.space20),
-          // After connecting, things move on — into the wizard if the instance is
-          // new, otherwise to sign-in. Without this button you were stuck here: the
-          // server address is reachable while signed out too, and the router does not redirect.
-          FilledButton.tonal(
-            onPressed: () =>
-                ref.read(serverAddressViewModelProvider).session.stage ==
-                    .setupRequired
-                ? const SetupRoute().go(context)
-                : const LoginRoute().go(context),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(
-                HiwiskiMetrics.buttonHeightLarge,
-              ),
-            ),
-            child: Text(l.actionContinue),
-          ),
-        ],
         // The other way in: no server at all — only in the apps, and only before
         // anything else.
-        if (state.offerLocal && connected == null) ...[
+        if (state.offerLocal) ...[
           const SizedBox(height: HiwiskiMetrics.space28),
           Text(
             l.localStartLead,
@@ -245,58 +235,6 @@ class _LocalNameDialogState extends State<_LocalNameDialog> {
             child: Text(l.localStartAction),
           ),
         ),
-      ],
-    );
-  }
-}
-
-class _ConnectedCard extends StatelessWidget {
-  const _ConnectedCard({required this.handshake});
-
-  final Handshake handshake;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = L.of(context);
-    final scheme = context.scheme;
-
-    return Column(
-      crossAxisAlignment: .stretch,
-      children: [
-        Container(
-          padding: const .all(HiwiskiMetrics.space14),
-          decoration: BoxDecoration(
-            color: scheme.secondaryContainer,
-            borderRadius: const .all(.circular(HiwiskiMetrics.radiusCard)),
-          ),
-          child: Row(
-            spacing: HiwiskiMetrics.space12,
-            children: [
-              Icon(
-                HiwiskiSymbols.checkCircle,
-                fill: 1,
-                color: scheme.onSecondaryContainer,
-              ),
-              Expanded(
-                child: Text(
-                  l.serverConnected(
-                    handshake.familyName ?? l.appName,
-                    handshake.serverVersion,
-                  ),
-                  style: context.texts.bodyMedium?.copyWith(
-                    color: scheme.onSecondaryContainer,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Plain-language warning: one sentence on what it means, and that it is acceptable
-        // on a home network. Not hidden behind a dismiss.
-        if (handshake.cleartext) ...[
-          const SizedBox(height: HiwiskiMetrics.space12),
-          const CleartextWarning(),
-        ],
       ],
     );
   }

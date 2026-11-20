@@ -51,8 +51,8 @@ class ServerAddressViewModel extends _$ServerAddressViewModel {
   /// Back to using the app without a server, as it was.
   Future<void> backToLocal() => ref.read(sessionStoreProvider).backToLocal();
 
-  /// Returns the handshake, so the screen can show family name and version as
-  /// confirmation.
+  /// Returns the handshake: whether the server is set up yet decides where the
+  /// screen goes on to — the wizard or sign-in.
   @command
   Future<Handshake> connect(ServerAddress address) =>
       ref.read(sessionStoreProvider).connect(address);

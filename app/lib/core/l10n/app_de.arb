@@ -55,7 +55,6 @@
   "serverField": "Adresse",
   "serverHint": "hiwiski.local:8080",
   "serverConnect": "Verbinden",
-  "serverConnected": "Verbunden mit {familyName}, Version {version}.",
   "serverCleartextTitle": "Diese Verbindung ist unverschlüsselt",
   "serverCleartextBody": "HTTPS ist nicht eingerichtet. Im eigenen Heimnetz ist das vertretbar — über das offene Internet nicht. Wie du ein Zertifikat einrichtest, steht in der Anleitung deines Servers.",
   "serverUnreachable": "Unter dieser Adresse antwortet kein Hiwiski-Server.",
