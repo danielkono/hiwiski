@@ -12,7 +12,10 @@ import 'package:hiwiski/core/ui/hiwiski_page.dart';
 import 'package:hiwiski/components/tags/tags_view_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// The page frame: the filter bar sits in the same place whatever it holds.
+import 'support/floating_button.dart';
+
+/// The page frame: the filter bar sits in the same place whatever it holds, and a
+/// floating button comes with the content, not after it.
 const _body = Key('body');
 
 void main() {
@@ -111,7 +114,63 @@ void main() {
     await go(tester, router, '/start');
     expect(bodyTop(), equals(tags));
   });
+
+  // The wiki and the board build their content in the place where the loading
+  // frame stood. Their floating button must be fully there in the first frame of
+  // the content, as it is on screens that use a widget of their own for it.
+  testWidgets('the floating button is there in full with the content', (
+    tester,
+  ) async {
+    final container = ProviderContainer(
+      overrides: [
+        localSettingsProvider.overrideWithValue(settings),
+        tagsViewModelProvider.overrideWith(_NoTags.new),
+      ],
+    );
+    addTearDown(container.dispose);
+    final loaded = ValueNotifier(false);
+    addTearDown(loaded.dispose);
+    final header = PageHeader(title: 'Wiki', onBack: () {});
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          theme: HiwiskiTheme.light(),
+          localizationsDelegates: const [
+            L.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
+          supportedLocales: L.supportedLocales,
+          home: ValueListenableBuilder(
+            valueListenable: loaded,
+            builder: (context, loaded, _) => loaded
+                ? HiwiskiPage(
+                    header: header,
+                    body: const SizedBox.expand(key: _body),
+                    floatingActionButton: FloatingActionButton.extended(
+                      key: _button,
+                      onPressed: () {},
+                      label: const Text('New page'),
+                    ),
+                  )
+                : HiwiskiPage.loading(header: header),
+          ),
+        ),
+      ),
+    );
+    // The loading strip runs for as long as it is shown: no pumpAndSettle.
+    await tester.pump();
+
+    loaded.value = true;
+    await tester.pump();
+    expect(find.byKey(_button), findsOneWidget);
+    expect(shownInFull(tester, find.byKey(_button)), isTrue);
+    await tester.pumpAndSettle();
+  });
 }
+
+const _button = Key('button');
 
 class _NoTags extends TagsViewModel {
   @override

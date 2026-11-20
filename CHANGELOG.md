@@ -42,6 +42,11 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
     occurrence. Other calendar programs showed one occurrence more than Hiwiski.
   - An event with a fixed time that carries a repeat rule goes out once, as Hiwiski
     shows it.
+- **The wiki's "New page" button and the dashboard's "+" button no longer fly in.**
+  Once the screen had loaded, they grew in and turned, unlike the buttons of the
+  tasks and the calendar, which are simply there. In the wiki the button also no
+  longer shrinks away and turns back in when a page opens and closes in place on
+  the phone.
 
 ## 2026.1.14 — 2026-11-19 {#2026.1.14}
 
