@@ -298,3 +298,32 @@ a.card:hover { background: var(--surface-high); }
 
 /* Release notes */
 .changelog h2 { font-size: 1.5rem; }
+
+/* --- Apps: one card per platform ---------------------------------------------- */
+.apps { max-width: 60rem; }
+.apps .prose { max-width: none; margin-top: 16px; }
+.platform { display: flex; flex-direction: column; gap: 20px; }
+.platform p { margin: 0; }
+.platform .actions { margin-top: auto; }
+.platform-head { display: flex; gap: 16px; align-items: center; }
+.platform-head > div { flex: 1; }
+.platform-head .icon-chip { margin: 0; flex: none; }
+.platform-head .title { margin: 0; }
+.chip {
+  flex: none; align-self: start; padding: 4px 12px; border-radius: 999px;
+  font-size: 0.8rem; font-weight: 500; background: var(--tertiary-container); color: var(--on-tertiary-container);
+}
+/* Numbered steps, each with the button that does it right below its text. */
+.steps { list-style: none; counter-reset: step; padding: 0; margin: 0; display: grid; gap: 16px; }
+.steps li { counter-increment: step; display: grid; grid-template-columns: 32px 1fr; gap: 8px 12px; align-items: start; margin: 0; }
+.steps li::before {
+  content: counter(step); grid-row: span 2; display: grid; place-items: center; width: 32px; height: 32px;
+  border-radius: 50%; background: var(--primary-container); color: var(--on-primary-container); font-weight: 500;
+}
+.steps li > span { padding-top: 4px; }
+.steps li .button { justify-self: start; }
+/* The QR code only helps at a computer; on a phone the links are right there. A light
+   background in both themes, or some cameras do not read it. */
+.qr { flex-direction: row; align-items: center; }
+.qr img { flex: none; background: #fff; border-radius: var(--radius-s); }
+@media (max-width: 899px) { .qr { display: none; } }

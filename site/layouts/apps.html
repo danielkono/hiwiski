@@ -1,0 +1,89 @@
+{{- /* Where the apps come from: one card per platform. The texts are the page's
+       (front matter), the links are site.Params.apps in hugo.toml -- which of them are
+       set decides whether a platform shows its store, its public test or "soon", so
+       moving from the test to the stores changes no template. */ -}}
+{{ define "main" }}
+{{- $apps := site.Params.apps }}
+<div class="page apps">
+  <header class="page-head">
+    <h1 class="display">{{ .Title }}</h1>
+    {{- with .Params.lead }}<p class="lead">{{ . | markdownify }}</p>{{ end }}
+    {{- with site.Params.version }}
+    <p class="label">{{ T "version" }} {{ . }}{{ with site.GetPage "/whats-new" }} · <a href="{{ .RelPermalink }}">{{ .Title }}</a>{{ end }}</p>
+    {{- end }}
+  </header>
+
+  <div class="grid two platforms">
+    {{- range .Params.platforms }}
+    {{- $links := index $apps .id | default dict }}
+    <section class="card platform" id="{{ .id }}">
+      <div class="platform-head">
+        <span class="icon-chip">{{ partial "icon.html" .icon }}</span>
+        <div>
+          <h2 class="title">{{ .name }}</h2>
+          <p class="label">{{ .requires }}</p>
+        </div>
+        <span class="chip">{{ if $links.store }}{{ T "available" }}{{ else if $links.test }}{{ T "testVersion" }}{{ else }}{{ T "soon" }}{{ end }}</span>
+      </div>
+      {{- if $links.store }}
+      <p class="actions">
+        <a class="button filled" href="{{ $links.store }}">{{ .storeButton }}</a>
+        {{- with $links.test }}<a class="button text" href="{{ . }}">{{ T "testVersion" }}</a>{{ end }}
+      </p>
+      {{- else if $links.test }}
+      <ol class="steps">
+        {{- range .steps }}
+        {{- /* A step names its link either directly (`url`) or as one of the
+               platform's links in hugo.toml (`link`). A step whose link is not set
+               there is left out: the group's, once the test is open to everyone. */}}
+        {{- $url := .url }}
+        {{- with .link }}{{ $url = index $links . }}{{ end }}
+        {{- if or $url (not .link) }}
+        {{- $button := .button }}
+        <li>
+          <span>{{ .text | markdownify }}</span>
+          {{- with $url }}<a class="button tonal" href="{{ . }}">{{ $button }}</a>{{ end }}
+        </li>
+        {{- end }}
+        {{- end }}
+      </ol>
+      {{- else }}
+      <p>{{ $.Params.soonText | markdownify }}</p>
+      {{- end }}
+    </section>
+    {{- end }}
+
+    {{- with .Params.web }}
+    <section class="card platform" id="web">
+      <div class="platform-head">
+        <span class="icon-chip">{{ partial "icon.html" "language" }}</span>
+        <div>
+          <h2 class="title">{{ .name }}</h2>
+          <p class="label">{{ .requires }}</p>
+        </div>
+      </div>
+      <p>{{ T "webPlatform" }}</p>
+      <p class="actions"><a class="button tonal" href="{{ site.Params.demo }}">{{ partial "icon.html" "play" }}{{ T "tryDemo" }}</a></p>
+    </section>
+    {{- end }}
+
+    {{- /* For a visitor at a computer: the phone's camera opens this page there, where
+           every link above can be tapped. Drawn by Hugo at build time, so nothing is
+           loaded from elsewhere. */}}
+    {{- with .Params.qr }}
+    {{- $code := images.QR $.Permalink (dict "level" "medium" "scale" 5) }}
+    <section class="card low platform qr" aria-hidden="true">
+      <img src="{{ $code.RelPermalink }}" width="{{ $code.Width }}" height="{{ $code.Height }}" alt="">
+      <div>
+        <h2 class="title">{{ .title }}</h2>
+        <p>{{ .text }}</p>
+      </div>
+    </section>
+    {{- end }}
+  </div>
+
+  <article class="prose">
+    {{ .Content }}
+  </article>
+</div>
+{{ end }}

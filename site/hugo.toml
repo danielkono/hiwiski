@@ -16,12 +16,32 @@ defaultContentLanguageInSubdir = true
   # Whether search engines may index the site. A page can still keep itself out with
   # `noindex` in its front matter.
   indexable = true
-  # The released version, shown on the download page. Empty for a local build.
+  # The released version, shown on the apps page. Empty for a local build.
   version = ''
   # Where the scenes' web build is served.
   embedBase = '/embed/'
   demo = 'https://demo.hiwiski.app/'
   github = 'https://github.com/danielkono/hiwiski'
+  # Where testers send what they noticed: TestFlight and Google Play's test name the
+  # same address.
+  feedback = 'feedback@danielkononov.de'
+
+  # Where each app comes from, for the apps page and its link on the home page.
+  # `store` once the app is in its store, `test` for the public test. Whatever is set is
+  # shown; a platform with neither says "soon". Moving from the test to the stores is a
+  # change here, not in a template.
+  [params.apps.ios]
+    store = ''
+    # TestFlight's public link. Apple reviews the first build of each version before
+    # the link offers it.
+    test = 'https://testflight.apple.com/join/MhTFxGNk'
+  [params.apps.android]
+    store = ''
+    # Google Play's opt-in page; the same address serves a closed and an open test.
+    test = 'https://play.google.com/apps/testing/de.danielkononov.hiwiski'
+    # A closed test admits only the members of this group, which anyone may join. Empty
+    # once the test is open to everyone: the step that asks to join then disappears.
+    group = 'https://groups.google.com/g/hiwiski-testers'
 
 [languages.de]
   label = 'Deutsch'

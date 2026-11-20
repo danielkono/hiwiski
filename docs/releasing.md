@@ -7,8 +7,8 @@ How a version comes about, what it produces, and where it goes.
 | Server image, with the web app inside | `ghcr.io/danielkono/hiwiski:<version>` (amd64, arm64) | `release.yml` |
 | Demo image (the web app without a server) | `ghcr.io/danielkono/hiwiski-demo:<version>` | `release.yml` |
 | Website image | `ghcr.io/danielkono/hiwiski-site:<version>` ([`development/website.md`](development/website.md)) | `release.yml` |
-| Android app | Google Play, internal test track | `release.yml` |
-| iOS app | TestFlight | `release.yml` |
+| Android app | Google Play, internal test track; a release also to the public test, by hand | `release.yml` |
+| iOS app | TestFlight; a release also to the public test, by hand | `release.yml` |
 | Store listings | App Store and Google Play: texts, release notes, pictures | `release.yml` on a tag, or `fastlane metadata` ([`development/store.md`](development/store.md)) |
 | Setup files and release notes | the GitHub release: `docker-compose.yml`, `Caddyfile`, `env.example`, the version's section of `CHANGELOG.md` | `release.yml`, release tags only, once both apps are uploaded |
 
@@ -82,6 +82,24 @@ it -- run the failed jobs again.
 
 Promoting the builds beyond testing (Play production, App Store review) happens in the
 store consoles.
+
+### The public test
+
+Until the apps are in the stores, anyone can install a release through a public test.
+It gets each release by hand, in the consoles; intermediate builds stay with the
+internal testers:
+
+- **TestFlight:** the release's build goes to the external group with the public link,
+  and its *What to Test* is the text of `release_notes.txt`. Apple reviews the first
+  build of every version before the link offers it — about a day.
+- **Google Play:** the release is promoted from internal testing to closed testing.
+  Google reviews it, from a few hours to a few days. The closed test admits the members
+  of a Google Group anyone can join.
+
+A TestFlight build expires after 90 days: releases closer together than that keep the
+link working. The links themselves are on the website's apps page, taken from
+`params.apps` in `site/hugo.toml` ([`development/website.md`](development/website.md),
+"The apps page").
 
 If the secrets `DEPLOY_REPO` and `DEPLOY_TOKEN` are set, the release's last job asks
 the workflow `deploy.yml` in that repository to deploy the version (`gh workflow run …

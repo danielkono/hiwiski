@@ -8,6 +8,7 @@
       {{- with .Params.intro }}<p>{{ . | markdownify }}</p>{{ end }}
       <p class="actions">
         <a class="button filled" href="{{ site.Params.demo }}">{{ partial "icon.html" "play" }}{{ T "tryDemo" }}</a>
+        {{- with site.GetPage "/apps" }}<a class="button tonal" href="{{ .RelPermalink }}">{{ partial "icon.html" "smartphone" }}{{ T "getApp" }}</a>{{ end }}
         {{- with site.GetPage "/setup" }}<a class="button tonal" href="{{ .RelPermalink }}">{{ T "setUpServer" }}</a>{{ end }}
       </p>
     </div>

@@ -23,7 +23,7 @@ pages and keys) and `hugo --panicOnWarning`.
 
 | Path | What |
 | --- | --- |
-| `hugo.toml` | configuration: languages, menus, parameters (`version`, `indexable`, the demo's address) |
+| `hugo.toml` | configuration: languages, menus, parameters (`version`, `indexable`, the demo's address, the apps' links) |
 | `content/de/`, `content/en/` | the pages, one tree per language |
 | `i18n/de.toml`, `i18n/en.toml` | short UI texts: buttons, menus, footer |
 | `layouts/` | templates; `_partials/` for header, footer, meta tags, icons; `_shortcodes/` for `scene` and `steps` |
@@ -83,6 +83,29 @@ What the embed build must respect:
 - The sample data is the demo's (`app/assets/demo/demo-<lang>.json`); the language comes
   from the page (`<html lang>`), not the browser. `demo_seed_test.dart` keeps both
   languages in step.
+
+## The apps page
+
+`/apps` (`content/*/apps.md`, `layouts/apps.html`) says where each app comes from, and
+the home page's first box links to it. The page's texts — the steps of each platform,
+their buttons — are in its front matter; the links are in `hugo.toml`:
+
+| `params.apps.<platform>` | What |
+| --- | --- |
+| `store` | the app's page in its store, once it is there |
+| `test` | the public test: TestFlight's public link, Google Play's opt-in page |
+| `group` | Android only: the Google Group a closed test admits; empty once the test is open |
+
+Whichever is set decides what the card shows: `store` the store's button (and the test
+as a second one), only `test` the steps to install the test version, neither "soon". A
+step that names a link (`link: group`) disappears while that link is empty, so moving
+from the closed to the open test, and from the test to the stores, changes `hugo.toml`
+and no template. `params.feedback` is the address testers write to; TestFlight and
+Google Play's test name the same one.
+
+The QR code beside the cards opens the page on a phone. Hugo draws it at build time
+(`images.QR`), so the page loads nothing from elsewhere; it is hidden on narrow screens,
+where the links can be tapped.
 
 ## Release notes
 
