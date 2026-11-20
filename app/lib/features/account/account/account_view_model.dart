@@ -193,7 +193,10 @@ class AccountViewModel extends _$AccountViewModel {
     return sync.watchPendingCount().first;
   }
 
-  Future<void> signOut() => ref.read(sessionStoreProvider).signOut();
+  /// [synced]: the confirmation ran the last sync itself — see
+  /// `SessionStore.signOut`.
+  Future<void> signOut({bool synced = false}) =>
+      ref.read(sessionStoreProvider).signOut(synced: synced);
 
   /// Without a server: the member made on this device and all their data go.
   Future<void> discardLocal() => ref.read(sessionStoreProvider).discardLocal();

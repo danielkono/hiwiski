@@ -1090,6 +1090,7 @@
   "unitMegabytes": "{size} MB",
   "unitMinutesSuffix": "min",
   "accountSignOutSyncing": "Deine Änderungen werden zuerst synchronisiert …",
+  "accountSignOutRetrying": "Es wird noch einmal versucht zu synchronisieren, einen Moment …",
   "accountSignOutSynced": "Alles ist auf dem Server.",
   "accountSignOutLost": "{count, plural, =1{1 Änderung konnte nicht synchronisiert werden. Meldest du dich jetzt ab, ist sie endgültig verloren.} other{{count} Änderungen konnten nicht synchronisiert werden. Meldest du dich jetzt ab, sind sie endgültig verloren.}}",
   "accountSignOutAcknowledge": "Ich verstehe, dass diese Änderungen verloren gehen",

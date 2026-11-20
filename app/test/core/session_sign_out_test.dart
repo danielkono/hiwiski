@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
+import 'package:flutter/foundation.dart' show AsyncCallback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hiwiski/app/background_sync.dart';
@@ -96,6 +97,83 @@ void main() {
     expect(server.loggedOutAfterPush, isTrue);
     expect(await db.select(db.outboxEntries).get(), isEmpty);
     expect(tokens.token, isNull);
+  });
+
+  // Away from home, the home server does not answer: the logout used to come first,
+  // and the device stayed signed in on the start screen until it timed out.
+  test('a server that does not answer does not hold the sign-out up', () async {
+    await db
+        .into(db.todoLists)
+        .insert(TodoListsCompanion.insert(id: 'l1', ownerId: 'anna'));
+    final release = server.holdLogout = Completer();
+
+    final signingOut = container.read(sessionStoreProvider).signOut();
+    await server.logoutStarted.future;
+
+    expect(
+      container.read(sessionProvider).stage,
+      equals(SessionStage.signedOut),
+    );
+    expect(tokens.token, isNull);
+    expect(await db.select(db.todoLists).get(), isEmpty);
+    expect(server.pulls, isZero, reason: 'nothing waited to go out');
+
+    // Whoever signs in meanwhile keeps their token: the logout goes out in the name
+    // of the one it drops, and nothing is cleared after it.
+    tokens.token = 'next';
+    release.complete();
+    await signingOut;
+    expect(server.logoutAuthorization, equals('Bearer token'));
+    expect(tokens.token, equals('next'));
+  });
+
+  test('the last sync asks the server nothing when nothing waits', () async {
+    server.offline = true;
+
+    await container.read(syncEngineProvider).syncLast();
+
+    expect(server.authorizationsTo('hiwiski.test'), isEmpty);
+  });
+
+  // The sign-in shows as soon as the session ends, while a run still under way is
+  // waited for: clearing the device after the next member is in took their data.
+  test('signing in waits until the sign-out has cleared the device', () async {
+    final engine = container.read(syncEngineProvider);
+    final release = server.holdPull = Completer();
+    final running = engine.syncNow();
+    await server.pullStarted.future;
+    final store = container.read(sessionStoreProvider);
+    final ended = Completer<void>();
+    final listening = container.listen(sessionProvider, (_, next) {
+      if (next.stage == .signedOut && !ended.isCompleted) ended.complete();
+    });
+    addTearDown(listening.close);
+    String? ownerAtRedeem = 'not asked';
+    server.onRedeem = () async => ownerAtRedeem = await db.owner;
+
+    final signingOut = store.signOut();
+    await ended.future;
+    final redeeming = store
+        .redeemInvitation(
+          'code',
+          const RedeemInvitationRequest(
+            displayName: 'Ben',
+            username: 'ben',
+            password: 'secret',
+            device: DeviceRegistration(deviceName: 'Phone', platform: .ios),
+          ),
+        )
+        .onError<Object>((_, _) {});
+    await pumpEventQueue();
+    expect(server.redeems, isZero, reason: 'the run is still under way');
+
+    release.complete();
+    await running;
+    await signingOut;
+    await redeeming;
+
+    expect(server.redeems, equals(1));
+    expect(ownerAtRedeem, isNull, reason: 'the device was cleared before');
   });
 
   test('nothing a run receives after a sign-out is written', () async {
@@ -513,6 +591,15 @@ class _FakeServer implements HttpClientAdapter {
   final pushed = <String>[];
   bool loggedOutAfterPush = false;
   bool loggedOut = false;
+
+  /// Holds the logout back — a server that does not answer.
+  Completer<void>? holdLogout;
+  final logoutStarted = Completer<void>();
+  String? logoutAuthorization;
+
+  /// Hears an invitation being redeemed, before it is answered.
+  AsyncCallback? onRedeem;
+  int redeems = 0;
   bool unauthorized = false;
   int? failWith;
 
@@ -571,9 +658,25 @@ class _FakeServer implements HttpClientAdapter {
       );
     }
     if (path.endsWith('/api/v1/auth/logout')) {
+      logoutAuthorization = options.headers['Authorization'] as String?;
+      if (holdLogout case final hold?) {
+        logoutStarted.complete();
+        await hold.future;
+      }
       loggedOut = true;
       loggedOutAfterPush = pushed.isNotEmpty;
       return ResponseBody.fromString('', 204);
+    }
+    if (path.endsWith('/redeem')) {
+      redeems++;
+      await onRedeem?.call();
+      return ResponseBody.fromString(
+        jsonEncode({'code': 'invitation.invalid'}),
+        404,
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+        },
+      );
     }
     final body = jsonDecode(jsonEncode(options.data)) as Map<String, dynamic>;
     if (path.endsWith('/api/v1/sync/push')) {

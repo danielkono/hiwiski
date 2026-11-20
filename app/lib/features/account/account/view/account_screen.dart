@@ -113,11 +113,11 @@ class AccountScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
-    final confirmed = await showDialog<bool>(
+    final choice = await showDialog<_SignOutChoice>(
       context: context,
       builder: (context) => const _SignOutDialog(),
     );
-    if (!(confirmed ?? false) || !context.mounted) return;
+    if (choice == null || !context.mounted) return;
     // To start first: the router remembers where someone was sent away from to
     // sign in — whoever signs out deliberately starts on start next time. The
     // screen goes with the next frame; the mutation keeps the ViewModel until the
@@ -125,9 +125,20 @@ class AccountScreen extends ConsumerWidget {
     const HomeRoute().go(context);
     await signOutMutation.run(
       ref,
-      (tsx) => tsx.get(accountViewModelProvider.notifier).signOut(),
+      (tsx) => tsx
+          .get(accountViewModelProvider.notifier)
+          .signOut(synced: choice == .synced),
     );
   }
+}
+
+/// How the sign-out was confirmed.
+enum _SignOutChoice {
+  /// Nothing waited: the sign-out's own last sync has nothing to send.
+  signOut,
+
+  /// "Sign out anyway": the dialog tried once more itself, in view.
+  synced,
 }
 
 /// "Sign out": **first the last sync, then the question** — so it names what is
@@ -144,22 +155,44 @@ class _SignOutDialog extends ConsumerStatefulWidget {
 class _SignOutDialogState extends ConsumerState<_SignOutDialog> {
   bool _acknowledged = false;
 
+  /// "Sign out anyway" was tapped, and the last try runs.
+  bool _leaving = false;
+
   @override
   void initState() {
     super.initState();
-    _sync();
+    // After the first frame, not inside it: starting the mutation changes its state,
+    // and Riverpod refuses that while the tree is being built — in a debug build the
+    // dialog showed a server error at once instead of the sync.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _sync();
+    });
   }
+
+  Future<int> _run() => syncBeforeSignOutMutation.run(
+    ref,
+    (tsx) => tsx.get(accountViewModelProvider.notifier).syncBeforeSignOut(),
+  );
 
   void _sync() {
     _acknowledged = false;
     // Shown from the mutation's state below; a failure is shown there too.
-    syncBeforeSignOutMutation
-        .run(
-          ref,
-          (tsx) =>
-              tsx.get(accountViewModelProvider.notifier).syncBeforeSignOut(),
-        )
-        .ignore();
+    _run().ignore();
+  }
+
+  /// "Sign out anyway": one more try at the changes still waiting — **in the
+  /// dialog, in view.** The sign-out used to make it after the dialog had closed:
+  /// offline, the start screen stood there signed in for a connection timeout, and
+  /// nothing said why.
+  Future<void> _leave() async {
+    setState(() => _leaving = true);
+    try {
+      await _run();
+    } on Object catch (error) {
+      // Lost all the same: the member has confirmed it.
+      debugPrint('hiwiski: last try before sign-out failed: $error');
+    }
+    if (mounted) Navigator.of(context).pop(_SignOutChoice.synced);
   }
 
   @override
@@ -186,6 +219,7 @@ class _SignOutDialogState extends ConsumerState<_SignOutDialog> {
           Text(l.accountSignOutBody),
           const SizedBox(height: HiwiskiMetrics.space16),
           switch (sync) {
+            _ when _leaving => _Progress(l.accountSignOutRetrying),
             MutationError(:final error) => Text(
               failureText(context, HiwiskiFailure.from(error)),
               style: TextStyle(color: scheme.error),
@@ -216,27 +250,16 @@ class _SignOutDialogState extends ConsumerState<_SignOutDialog> {
                 ),
               ],
             ),
-            _ => Row(
-              spacing: HiwiskiMetrics.space12,
-              children: [
-                const SizedBox.square(
-                  dimension: HiwiskiMetrics.icon20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: HiwiskiMetrics.strokeBold,
-                  ),
-                ),
-                Expanded(child: Text(l.accountSignOutSyncing)),
-              ],
-            ),
+            _ => _Progress(l.accountSignOutSyncing),
           },
         ],
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(false),
+          onPressed: () => Navigator.of(context).pop(),
           child: Text(l.actionCancel),
         ),
-        if ((lost ?? 0) > 0 || sync is MutationError<int>)
+        if (!_leaving && ((lost ?? 0) > 0 || sync is MutationError<int>))
           TextButton(
             onPressed: () => setState(_sync),
             child: Text(l.actionRetry),
@@ -247,14 +270,41 @@ class _SignOutDialogState extends ConsumerState<_SignOutDialog> {
             backgroundColor: scheme.error,
             foregroundColor: scheme.onError,
           ),
-          onPressed: ready ? () => Navigator.of(context).pop(true) : null,
+          onPressed: switch (lost) {
+            _ when !ready || _leaving => null,
+            0 => () => Navigator.of(context).pop(_SignOutChoice.signOut),
+            _ => _leave,
+          },
           child: Text(
-            (lost ?? 0) > 0 ? l.accountSignOutAnyway : l.accountSignOut,
+            (lost ?? 0) > 0 || _leaving
+                ? l.accountSignOutAnyway
+                : l.accountSignOut,
           ),
         ),
       ],
     );
   }
+}
+
+/// A sync under way in the sign-out dialog, and what it is for.
+class _Progress extends StatelessWidget {
+  const _Progress(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    spacing: HiwiskiMetrics.space12,
+    children: [
+      const SizedBox.square(
+        dimension: HiwiskiMetrics.icon20,
+        child: CircularProgressIndicator(
+          strokeWidth: HiwiskiMetrics.strokeBold,
+        ),
+      ),
+      Expanded(child: Text(text)),
+    ],
+  );
 }
 
 class _AccountPage extends ConsumerWidget {

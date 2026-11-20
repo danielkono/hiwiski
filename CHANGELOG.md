@@ -83,6 +83,14 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
   headings were squeezed to the height of a normal line. Now each image takes the
   room it needs, and its thumbnail shows the whole picture: as wide as its shape
   makes it instead of a landscape crop, which cut most of a portrait photo away.
+- **Signing out away from home signs out at once.** With the server out of reach, the
+  app went to the start screen after "Sign out" but stayed signed in for a while
+  without a word — trying again only made it longer. Now the device is signed out and
+  cleared right away, and the server is told afterwards; a device it never reaches
+  stays in the family's device list until someone removes it there. With nothing
+  waiting to be synced, the sign-out dialog no longer waits for the server either;
+  with changes still waiting, "Sign out anyway" makes its last try while the dialog
+  stays open and says so, instead of on the start screen.
 
 ### Upgrade notes
 

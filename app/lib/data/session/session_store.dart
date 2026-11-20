@@ -16,7 +16,8 @@ import 'session_repository.dart';
 /// The sync as the session needs it: one last run before signing out, and a stop
 /// before the device is cleared.
 abstract interface class SessionSync {
-  /// One run — after a background run that is under way, so it really is the last.
+  /// One run — after a background run that is under way, so it really is the last;
+  /// none when nothing waits to go out.
   Future<void> syncLast();
 
   Future<void> stop();
@@ -438,8 +439,8 @@ class SessionStore extends Store<SessionState> {
     String username,
     String password, {
     required bool staySignedIn,
-  }) async => _adopt(
-    await _repository.signIn(username, password, staySignedIn: staySignedIn),
+  }) => _adopt(
+    () => _repository.signIn(username, password, staySignedIn: staySignedIn),
   );
 
   /// A device used without a server brings its member: the administrator is created
@@ -447,7 +448,7 @@ class SessionStore extends Store<SessionState> {
   Future<void> runSetup(SetupRequest request) async {
     final local = connectingFromLocal ? _repository.localMember : null;
     await _adopt(
-      await _repository.runSetup(
+      () => _repository.runSetup(
         local == null
             ? request
             : request.copyWith(admin: request.admin.copyWith(id: local.id)),
@@ -495,7 +496,7 @@ class SessionStore extends Store<SessionState> {
   ) async {
     final local = connectingFromLocal ? _repository.localMember : null;
     await _adopt(
-      await _repository.redeemInvitation(
+      () => _repository.redeemInvitation(
         code,
         local == null ? request : request.copyWith(memberId: local.id),
       ),
@@ -519,9 +520,11 @@ class SessionStore extends Store<SessionState> {
 
   /// Signs this device out.
   ///
-  /// The token is dropped locally even if the server is unreachable: whoever wants to
+  /// **Signed out on the device at once, the server told last.** Whoever wants to
   /// sign out wants to sign out, and a device that stays signed in after the tap is a
-  /// trap.
+  /// trap. The logout used to come first: with the home server out of reach, the
+  /// device stayed signed in on the start screen for a connection timeout without a
+  /// word, and every new try only made it longer.
   ///
   /// Signing out **clears the device**: afterwards nothing of whoever left remains
   /// here — on a family computer someone else may well sign in next.
@@ -529,42 +532,69 @@ class SessionStore extends Store<SessionState> {
   /// Before that, one last sync so that changes still waiting are not lost — it waits
   /// for a run already under way and the one after it. Whatever is still waiting after
   /// that (offline) was named by the confirmation beforehand.
-  Future<void> signOut() async {
+  ///
+  /// [synced]: the caller has just run the last sync itself, in view — the
+  /// confirmation stays open with it while it tries once more to get the waiting
+  /// changes out. A second one here kept the start screen standing, signed in, for
+  /// another connection timeout before the sign-in showed.
+  Future<void> signOut({bool synced = false}) async {
     final sync = _sync;
-    // From here on, a dead token is the member's own doing: the server answers the
-    // logout by revoking it, and the sync run or the signal stream still open learns
-    // that and reports "signed out elsewhere" — which locked the device with "Access
-    // lost" right after a deliberate sign-out, so the member had to sign out twice.
+    // From here on, a dead or missing token is the member's own doing: it is dropped
+    // while a sync run may still be under way, and a 401 on that run's next request
+    // reported "signed out elsewhere" — which locked the device with "Access lost"
+    // right after a deliberate sign-out, so the member had to sign out twice.
     _signingOut = true;
+    final departed = Completer<void>();
+    _departure = departed.future;
+    final String? token;
     try {
-      await _signOut(sync);
+      token = await _leave(sync, lastSync: !synced);
     } finally {
       _signingOut = false;
+      departed.complete();
+    }
+    if (token == null) return;
+    try {
+      await _repository.logoutAs(token);
+    } on HiwiskiFailure catch (failure) {
+      // Unreachable: the device is signed out all the same. It stays in the
+      // family's device list until someone removes it there.
+      debugPrint('hiwiski: logout not reported to the server: $failure');
     }
   }
 
-  Future<void> _signOut(SessionSync sync) async {
+  /// The sign-out on the device, until it is cleared — whoever signs in next waits
+  /// for it. The sign-in shows while a sync run still under way is waited for, and
+  /// clearing the device after the next member had signed in would take their data
+  /// along.
+  Future<void>? _departure;
+
+  /// Everything of a sign-out that happens on the device. Returns the token it
+  /// dropped, for telling the server afterwards.
+  Future<String?> _leave(SessionSync sync, {required bool lastSync}) async {
     try {
-      await sync.syncLast();
+      if (lastSync) await sync.syncLast();
     } on Object catch (failure) {
       // Offline, rejected, or broken on this side — the confirmation said what gets
       // lost then. Any failure: one that was not the server's used to stop the
       // sign-out itself, and the member could not sign out at all.
       debugPrint('hiwiski: last sync before sign-out failed: $failure');
     }
+    String? token;
     try {
-      await _repository.logout();
-    } on HiwiskiFailure catch (failure) {
-      // Signing out does not depend on the server -- see above.
-      debugPrint('hiwiski: logout not reported to the server: $failure');
+      token = await _repository.token();
+    } on Object catch (failure) {
+      // An unreadable token only means the server is not told.
+      debugPrint('hiwiski: token not readable for the logout: $failure');
     }
-    await _repository.clearToken();
     // End the session first, then clear: without a member no sync starts any more,
     // and one still running is stopped and waited for — otherwise its answers would
     // write the departed member's rows back into the cleared database.
     value = value.copyWith(stage: .signedOut, clearSession: true);
+    await _repository.clearToken();
     await sync.stop();
     await _wipe();
+    return token;
   }
 
   /// This device was signed out elsewhere — in the device list of another one. The
@@ -725,7 +755,12 @@ class SessionStore extends Store<SessionState> {
     }).ignore();
   }
 
-  Future<void> _adopt(SignedIn signedIn) async {
+  /// A session begins: [signIn] asks the server and stores the new token — only once
+  /// a sign-out still under way is through, which drops the token it finds and
+  /// clears the device (see [_departure]).
+  Future<void> _adopt(Future<SignedIn> Function() signIn) async {
+    await _departure;
+    final signedIn = await signIn();
     // Someone else than the locked member clears the device here; the same member
     // keeps it, and their waiting changes go out.
     await _claimLocalData(signedIn.session);

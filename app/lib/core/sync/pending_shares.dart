@@ -87,6 +87,13 @@ class PendingShares {
         entry[WireFields.itemId] == itemId;
   }
 
+  /// Whether any share still waits to go out — from disk, like [flush]: a background
+  /// run may have queued one this isolate's copy does not have.
+  Future<bool> waiting() async {
+    await _settings.reload();
+    return _settings.pendingShares.isNotEmpty;
+  }
+
   /// After every run that got the outbox out.
   Future<void> flush() async {
     if (_flushing) return;
