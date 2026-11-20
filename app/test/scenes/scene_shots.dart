@@ -33,7 +33,8 @@ import 'package:hiwiski/domain/session/session_state.dart';
 ///
 /// [server]: signed in, with a [SceneServer] behind the app — for what only a server
 /// has. [open] then does what a member would on the screen: opens a sheet, fills it
-/// in, scrolls to the part shown.
+/// in, scrolls to the part shown. [handshake]: what the server said, for a screen
+/// that depends on it.
 class SceneShot(
   final String name,
   final double height,
@@ -42,6 +43,7 @@ class SceneShot(
   final Future<void> Function(ProviderContainer, Demo, HiwiskiDatabase)?
   prepare,
   final SessionStage stage = .localOnly,
+  final Handshake? handshake,
   final double width = sceneWidth,
   final bool server = false,
   final Future<void> Function(WidgetTester tester, Demo demo, L l)? open,
@@ -128,6 +130,15 @@ final sceneShots = [
     520,
     (_, _) async => const SetupRoute().location,
     stage: .setupRequired,
+    // The default the guide describes: a home server asks for no setup code.
+    handshake: const Handshake(
+      apiVersion: 'v1',
+      serverVersion: '2026.1.0',
+      minClientVersion: '0',
+      setupCompleted: false,
+      cleartext: false,
+      setupCodeRequired: false,
+    ),
   ),
   SceneShot(
     'trash',

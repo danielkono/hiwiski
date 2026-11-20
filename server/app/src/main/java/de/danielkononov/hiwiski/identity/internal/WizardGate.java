@@ -2,6 +2,7 @@ package de.danielkononov.hiwiski.identity.internal;
 
 import de.danielkononov.hiwiski.identity.SetupGate;
 import de.danielkononov.hiwiski.platform.HiwiskiException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -31,7 +32,7 @@ class WizardGate implements SetupGate {
     }
 
     @Override
-    public void requireCode(String given, String client) {
+    public void requireCode(@Nullable String given, String client) {
         code.require(given, client);
     }
 

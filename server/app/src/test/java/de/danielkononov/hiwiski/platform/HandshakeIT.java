@@ -26,6 +26,9 @@ class HandshakeIT {
                 .isEqualTo(false)
                 .jsonPath("$.familyName")
                 .doesNotExist()
+                // The tests run with a fixed setup code, which switches it on.
+                .jsonPath("$.setupCodeRequired")
+                .isEqualTo(true)
                 // A family's own server names no legal notice: it needs none.
                 .jsonPath("$.legalNoticeUrl")
                 .doesNotExist()

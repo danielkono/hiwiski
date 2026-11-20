@@ -38,15 +38,32 @@ The first start takes about a minute: the server waits for Postgres and creates 
 
 ## 4. The setup wizard
 
-Until the wizard has run, the server prints a **setup code** to its log at every start. The wizard asks for it, so nobody else can set up your server before you do:
+Open `http://<address>:<HIWISKI_HTTP_PORT>` in a browser. The wizard asks for the family name and the time zone, creates your account as the administrator and creates the first groups, such as "Parents".
+
+{{< scene name="setup-wizard" height=520 >}}The setup wizard.{{< /scene >}}
+
+Next: [Connecting the apps]({{< relref "setup/apps" >}}).
+
+### A server on the internet: the setup code {#setup-code}
+
+Until the wizard has run, **whoever opens it first becomes the administrator.** On a home network that is you: nobody else reaches the server. So by default the wizard asks for nothing more.
+
+Is the server reachable from the internet — a port forwarded on the router, a VPS, a tunnel? Then switch the **setup code** on **before the first start**, in `.env`:
+
+```sh
+HIWISKI_SETUP_CODE_REQUIRED=true
+```
+
+The server then prints a code to its log at every start until the setup is done, and the wizard asks for it. Only whoever can read the log — whoever runs the server — can set it up:
 
 ```sh
 docker compose logs app | grep "Setup code"
 # ... WARN ... Setup code: K7M4-2QXP -- the setup wizard asks for it. ...
 ```
 
-Open `http://<address>:<HIWISKI_HTTP_PORT>` in a browser. The wizard asks for the setup code, the family name and the time zone, creates your account as the administrator and creates the first groups, such as "Parents". The code changes with every restart until the setup is done; take the one from the latest start.
+The code changes with every restart until the setup is done; take the one from the latest start. Once the setup has run, the wizard is closed for good, and the setting no longer matters.
 
-{{< scene name="setup-wizard" height=520 >}}The setup wizard.{{< /scene >}}
-
-Next: [Connecting the apps]({{< relref "setup/apps" >}}).
+| Variable | What |
+| --- | --- |
+| `HIWISKI_SETUP_CODE_REQUIRED` | `true`: the wizard asks for the setup code from the log. Default `false`. |
+| `HIWISKI_SETUP_CODE` | Rarely needed: a fixed code instead of a new one at every start, for an automated install. Set, it switches the code on as well. |

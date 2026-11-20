@@ -446,6 +446,16 @@ RedeemInvitationRequest:
 
 # --- Setup --------------------------------------------------------------------
 
+SetupCodeCheck:
+  type: object
+  description: The setup code alone, checked before the wizard's steps.
+  required: [setupCode]
+  properties:
+    setupCode:
+      type: string
+      description: As in `SetupRequest.setupCode`.
+      example: K7M4-2QXP
+
 SetupRequest:
   type: object
   description: |
@@ -458,10 +468,13 @@ SetupRequest:
       description: |
         The one-time code the server prints to its log at every start while it is not
         set up (`Setup code: K7M4-2QXP`), or the one `HIWISKI_SETUP_CODE` names. Without
-        it whoever reached a fresh server first became its administrator. Optional in
-        the contract only so older clients get `403 setup.code_invalid` instead of a
-        validation error; the server always requires it. Case, dashes and spaces do not
-        matter.
+        it whoever reached a fresh server first becomes its administrator -- harmless on
+        a home network, not on a server reachable from the internet. Asked for only where
+        the operator switched it on (`HIWISKI_SETUP_CODE_REQUIRED`, or a fixed
+        `HIWISKI_SETUP_CODE`); `Handshake.setupCodeRequired` says which. Where it is
+        asked for, a missing one is `403 setup.code_invalid` rather than a validation
+        error, so it is optional in the contract; elsewhere it is ignored. Case, dashes
+        and spaces do not matter.
       example: K7M4-2QXP
     familyName:
       type: string

@@ -55,8 +55,13 @@ hiwiski:
   # them empty.
   legal-notice-url: ${HIWISKI_LEGAL_NOTICE_URL:}
   privacy-url: ${HIWISKI_PRIVACY_URL:}
+  # Whether the setup wizard asks for the code from the server's log (SetupCodeRequirement).
+  # Off: on a home network the family sets up without it. On for a server reachable from
+  # the internet, where whoever opens the wizard first would become its administrator.
+  setup-code-required: ${HIWISKI_SETUP_CODE_REQUIRED:false}
   # The code the setup wizard asks for. Empty: a new one at every start until the setup
-  # has run, printed to the log. Set only for an automated deployment.
+  # has run, printed to the log. Set only for an automated deployment; set, it switches
+  # the code on.
   setup-code: ${HIWISKI_SETUP_CODE:}
   # Whose X-Forwarded-For the server believes, besides loopback: IP addresses, comma
   # separated (TrustedProxies). The compose files name their Caddy;

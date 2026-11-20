@@ -112,12 +112,13 @@ HIWISKI_DB_USER=hiwiski
 HIWISKI_DB_PASSWORD=hiwiski
 HIWISKI_MEDIA_PATH=/Users/<you>/hiwiski-dev/media
 HIWISKI_BACKUP_PATH=/Users/<you>/hiwiski-dev/backups
-HIWISKI_SETUP_CODE=dev-setup-code
 ```
 
 The two directories must exist and be writable — the server checks at start.
-`HIWISKI_SETUP_CODE` fixes the setup code, which is otherwise random and printed to the
-log at every start until the instance is set up. Every other variable has a default
+The setup wizard asks for no setup code, as on a family's server. To try it the way a
+server reachable from the internet runs, set `HIWISKI_SETUP_CODE_REQUIRED=true` — the
+code is then in the log — or `HIWISKI_SETUP_CODE=dev-setup-code`, which fixes the code
+and switches it on as well. Every other variable has a default
 (`server/app/src/main/resources/application.yaml`; what they do is in
 `deploy/.env.example`).
 

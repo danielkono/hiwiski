@@ -6,6 +6,7 @@ import de.danielkononov.hiwiski.platform.CurrentRequest;
 import de.danielkononov.hiwiski.platform.InstanceSettings;
 import de.danielkononov.hiwiski.platform.RestoreInProgress;
 import de.danielkononov.hiwiski.platform.SettingKey;
+import de.danielkononov.hiwiski.platform.SetupCodeRequirement;
 import java.net.URI;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,16 +30,19 @@ class HandshakeController implements PlatformApi {
     private final HiwiskiProperties properties;
     private final @Nullable BuildProperties build;
     private final RestoreInProgress restore;
+    private final SetupCodeRequirement setupCode;
 
     HandshakeController(
             InstanceSettings settings,
             HiwiskiProperties properties,
             @Nullable BuildProperties build,
-            RestoreInProgress restore) {
+            RestoreInProgress restore,
+            SetupCodeRequirement setupCode) {
         this.settings = settings;
         this.properties = properties;
         this.build = build;
         this.restore = restore;
+        this.setupCode = setupCode;
     }
 
     @Override
@@ -52,6 +56,10 @@ class HandshakeController implements PlatformApi {
                         properties.minClientVersion(),
                         setupCompleted,
                         isCleartext());
+        // The wizard shows the code's field only where the server checks it: a field
+        // that asks for something the family has no use for is the hurdle the setting
+        // takes away.
+        handshake.setSetupCodeRequired(setupCode.required());
 
         // As long as the instance is not set up, there is no family name. An empty
         // placeholder would be a claim.

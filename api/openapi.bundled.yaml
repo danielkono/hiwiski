@@ -118,9 +118,11 @@ paths:
         Reachable without login, but only **once**: if `setup.completed` is set, the
         server answers with `409`.
 
-        Only with the **setup code** from the server's log (`setupCode`): a wrong or
-        missing one answers `403 setup.code_invalid`, checked before anything else; ten
-        wrong ones per client address are free, then one every thirty seconds (`429`).
+        Where the operator switched the **setup code** on (`Handshake.setupCodeRequired`),
+        only with the code from the server's log (`setupCode`): a wrong or missing one
+        answers `403 setup.code_invalid`, checked before anything else; ten wrong ones per
+        client address are free, then one every thirty seconds (`429`). Without it the
+        code is ignored.
 
         Creates the family name, time zone, the administrator account and the first
         groups and logs the device in right away -- otherwise the first user would have
@@ -176,17 +178,80 @@ paths:
       summary: Set up the instance
       tags:
       - setup
+  /api/v1/setup/code:
+    post:
+      description: |
+        The wizard asks for the code first and checks it here at once -- otherwise a wrong
+        one came back only after every step was filled in. Checked exactly like
+        `runSetup` and from the same budget: a wrong or missing code is
+        `403 setup.code_invalid`, ten wrong ones per client address are free, then one
+        every thirty seconds (`429`); each check counts as a try, so it makes guessing no
+        easier. Where no code is asked for, every code is right.
+
+        Then, like the wizard: an instance set up already is `409
+        setup.already_completed` -- only to whoever holds the code. Changes nothing.
+      operationId: checkSetupCode
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetupCodeCheck"
+        required: true
+      responses:
+        "204":
+          description: "The code is right, and the instance is not set up yet"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Invalid in domain terms
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: |
+            Not shared -- or `auth.password_change_required`: a session whose password
+            has to be changed first may call almost nothing (`Session.mustChangePassword`).
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Conflict
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: |
+            Too many requests: `auth.too_many_attempts` after repeated failed logins. The
+            `Retry-After` header and the `retryAfterSeconds` parameter say when to try again.
+          headers:
+            Retry-After:
+              description: Seconds until the next attempt is accepted.
+              schema:
+                type: integer
+      security: []
+      summary: Check the setup code before the wizard's steps
+      tags:
+      - setup
   /api/v1/setup/uploads:
     post:
       description: |
         As `uploadBackup`, without a sign-in -- there is no one yet -- but with the setup
-        code. Once the instance is set up it is `409 setup.already_completed`.
+        code where one is asked for. Once the instance is set up it is
+        `409 setup.already_completed`.
       operationId: uploadSetupBackup
       parameters:
-      - description: "The setup code from the server's log, as in `SetupRequest.setupCode`."
+      - description: |
+          The setup code from the server's log, as in `SetupRequest.setupCode`.
+          Left out where the server asks for none (`Handshake.setupCodeRequired`); missing
+          where it does, it is `403 setup.code_invalid`.
         in: header
         name: X-Hiwiski-Setup-Code
-        required: true
+        required: false
         schema:
           type: string
       requestBody:
@@ -241,10 +306,13 @@ paths:
         an archive of a newer server `400 admin.backup_too_new`.
       operationId: inspectSetupBackup
       parameters:
-      - description: "The setup code from the server's log, as in `SetupRequest.setupCode`."
+      - description: |
+          The setup code from the server's log, as in `SetupRequest.setupCode`.
+          Left out where the server asks for none (`Handshake.setupCodeRequired`); missing
+          where it does, it is `403 setup.code_invalid`.
         in: header
         name: X-Hiwiski-Setup-Code
-        required: true
+        required: false
         schema:
           type: string
       - in: path
@@ -318,10 +386,13 @@ paths:
         then on. Nobody is signed in: the wizard goes on to the sign-in screen.
       operationId: restoreSetupBackup
       parameters:
-      - description: "The setup code from the server's log, as in `SetupRequest.setupCode`."
+      - description: |
+          The setup code from the server's log, as in `SetupRequest.setupCode`.
+          Left out where the server asks for none (`Handshake.setupCodeRequired`); missing
+          where it does, it is `403 setup.code_invalid`.
         in: header
         name: X-Hiwiski-Setup-Code
-        required: true
+        required: false
         schema:
           type: string
       - in: path
@@ -3089,10 +3160,13 @@ paths:
 components:
   parameters:
     SetupCodeHeader:
-      description: "The setup code from the server's log, as in `SetupRequest.setupCode`."
+      description: |
+        The setup code from the server's log, as in `SetupRequest.setupCode`.
+        Left out where the server asks for none (`Handshake.setupCodeRequired`); missing
+        where it does, it is `403 setup.code_invalid`.
       in: header
       name: X-Hiwiski-Setup-Code
-      required: true
+      required: false
       schema:
         type: string
   responses:
@@ -3341,6 +3415,7 @@ components:
         minClientVersion: 2026.1.0
         familyName: Familie Berger
         setupCompleted: true
+        setupCodeRequired: true
         restoring: true
         cleartext: true
         instanceId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
@@ -3370,6 +3445,13 @@ components:
           type: string
         setupCompleted:
           description: "If `false`, the app goes straight into the setup wizard."
+          type: boolean
+        setupCodeRequired:
+          description: |
+            Whether the setup wizard asks for the setup code from the server's log
+            (`SetupRequest.setupCode`). Off unless the operator switched it on, for a server
+            reachable from the internet. Absent from a server older than this field, which
+            always asked for it.
           type: boolean
         restoring:
           description: |
@@ -3441,10 +3523,13 @@ components:
           description: |
             The one-time code the server prints to its log at every start while it is not
             set up (`Setup code: K7M4-2QXP`), or the one `HIWISKI_SETUP_CODE` names. Without
-            it whoever reached a fresh server first became its administrator. Optional in
-            the contract only so older clients get `403 setup.code_invalid` instead of a
-            validation error; the server always requires it. Case, dashes and spaces do not
-            matter.
+            it whoever reached a fresh server first becomes its administrator -- harmless on
+            a home network, not on a server reachable from the internet. Asked for only where
+            the operator switched it on (`HIWISKI_SETUP_CODE_REQUIRED`, or a fixed
+            `HIWISKI_SETUP_CODE`); `Handshake.setupCodeRequired` says which. Where it is
+            asked for, a missing one is `403 setup.code_invalid` rather than a validation
+            error, so it is optional in the contract; elsewhere it is ignored. Case, dashes
+            and spaces do not matter.
           example: K7M4-2QXP
           type: string
         familyName:
@@ -3519,6 +3604,18 @@ components:
       required:
       - session
       - token
+      type: object
+    SetupCodeCheck:
+      description: "The setup code alone, checked before the wizard's steps."
+      example:
+        setupCode: K7M4-2QXP
+      properties:
+        setupCode:
+          description: As in `SetupRequest.setupCode`.
+          example: K7M4-2QXP
+          type: string
+      required:
+      - setupCode
       type: object
     BackupUpload:
       description: |

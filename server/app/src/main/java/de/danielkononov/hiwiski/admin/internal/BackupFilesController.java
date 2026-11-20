@@ -6,6 +6,7 @@ import de.danielkononov.hiwiski.identity.CurrentUser;
 import de.danielkononov.hiwiski.identity.SetupGate;
 import java.io.IOException;
 import java.io.InputStream;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
@@ -53,7 +54,7 @@ class BackupFilesController implements BackupFilesApi {
     }
 
     @Override
-    public ResponseEntity<BackupUpload> uploadSetupBackup(String setupCode, Resource body) throws IOException {
+    public ResponseEntity<BackupUpload> uploadSetupBackup(Resource body, @Nullable String setupCode) throws IOException {
         // The code before anything is read, the fresh instance before anything is stored.
         setup.requireCode(setupCode, setup.currentClient());
         setup.requireFresh();

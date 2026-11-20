@@ -60,7 +60,7 @@ class SecurityConfig {
                                         // Reachable before any login.
                                         .requestMatchers(HttpMethod.GET, "/api/v1/handshake")
                                         .permitAll()
-                                        .requestMatchers(HttpMethod.POST, "/api/v1/setup")
+                                        .requestMatchers(HttpMethod.POST, "/api/v1/setup", "/api/v1/setup/code")
                                         .permitAll()
                                         // Restoring on a fresh server: the setup code
                                         // in a header instead of a sign-in.

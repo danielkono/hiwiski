@@ -125,7 +125,7 @@ Future<ui.Image> _render(
       localSettingsProvider.overrideWithValue(settings),
       hiwiskiApiProvider.overrideWithValue(api),
       deviceTimeZoneProvider.overrideWithValue('Europe/Berlin'),
-      sessionFrom(SessionState(stage: shot.stage)),
+      sessionFrom(SessionState(stage: shot.stage, handshake: shot.handshake)),
       if (shot.server) ...quietSync,
     ],
   );

@@ -31,6 +31,13 @@ Handshake:
     setupCompleted:
       type: boolean
       description: If `false`, the app goes straight into the setup wizard.
+    setupCodeRequired:
+      type: boolean
+      description: |
+        Whether the setup wizard asks for the setup code from the server's log
+        (`SetupRequest.setupCode`). Off unless the operator switched it on, for a server
+        reachable from the internet. Absent from a server older than this field, which
+        always asked for it.
     restoring:
       type: boolean
       description: |

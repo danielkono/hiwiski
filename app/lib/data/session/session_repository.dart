@@ -122,15 +122,20 @@ class SessionRepository {
   Future<SignedIn> runSetup(SetupRequest request) async =>
       _adopt(await HiwiskiApi.run(() => _api.setup.runSetup(body: request)));
 
-  /// Restoring on a fresh server: the archive goes
-  /// up with the setup code, then its password opens the preview and the restore.
+  /// The setup code alone, before the wizard's steps: a wrong one is said at once.
+  Future<void> checkSetupCode(String setupCode) => HiwiskiApi.run(
+    () => _api.setup.checkSetupCode(body: SetupCodeCheck(setupCode: setupCode)),
+  );
+
+  /// Restoring on a fresh server: the archive goes up — with the setup code where the
+  /// server asks for one — then its password opens the preview and the restore.
   Future<UploadedBackup> uploadSetupBackup(
-    String setupCode,
+    String? setupCode,
     Stream<List<int>> bytes,
     int length, {
     void Function(double done)? onProgress,
   }) => HiwiskiApi.run(
-    () => _api.backupFiles.upload(
+    () => _api.backupFiles.uploadForSetup(
       bytes,
       length,
       setupCode: setupCode,
@@ -141,7 +146,7 @@ class SessionRepository {
   );
 
   Future<BackupPreview> inspectSetupBackup(
-    String setupCode,
+    String? setupCode,
     String id,
     String password,
   ) => HiwiskiApi.run(
@@ -153,7 +158,7 @@ class SessionRepository {
   );
 
   Future<RestoreResult> restoreSetupBackup(
-    String setupCode,
+    String? setupCode,
     String id,
     String password,
   ) => HiwiskiApi.run(

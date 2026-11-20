@@ -38,15 +38,32 @@ Der erste Start dauert etwa eine Minute: Der Server wartet auf Postgres und legt
 
 ## 4. Der Einrichtungsassistent
 
-Bis der Assistent gelaufen ist, schreibt der Server bei jedem Start einen **Einrichtungscode** in sein Protokoll. Der Assistent fragt danach, damit niemand anderes deinen Server vor dir einrichtet:
+Öffne `http://<Adresse>:<HIWISKI_HTTP_PORT>` im Browser. Der Assistent fragt nach Familienname und Zeitzone, legt dein Konto als Admin an und erstellt die ersten Gruppen, zum Beispiel „Eltern“.
+
+{{< scene name="setup-wizard" height=520 >}}Der Einrichtungsassistent.{{< /scene >}}
+
+Weiter geht es mit [Apps verbinden]({{< relref "setup/apps" >}}).
+
+### Ein Server im Internet: der Einrichtungscode {#setup-code}
+
+Bis der Assistent gelaufen ist, **wird Admin, wer ihn als Erstes öffnet.** Im Heimnetz bist das du: Niemand sonst erreicht den Server. Deshalb fragt der Assistent standardmäßig nach nichts weiter.
+
+Ist der Server aus dem Internet erreichbar – eine Portfreigabe im Router, ein VPS, ein Tunnel? Dann schalte den **Einrichtungscode** **vor dem ersten Start** in der `.env` ein:
+
+```sh
+HIWISKI_SETUP_CODE_REQUIRED=true
+```
+
+Der Server schreibt dann bei jedem Start einen Code in sein Protokoll, bis die Einrichtung fertig ist, und der Assistent fragt danach. Einrichten kann ihn so nur, wer das Protokoll lesen kann – wer den Server betreibt:
 
 ```sh
 docker compose logs app | grep "Setup code"
 # ... WARN ... Setup code: K7M4-2QXP -- the setup wizard asks for it. ...
 ```
 
-Öffne `http://<Adresse>:<HIWISKI_HTTP_PORT>` im Browser. Der Assistent fragt nach dem Einrichtungscode, Familienname und Zeitzone, legt dein Konto als Admin an und erstellt die ersten Gruppen, zum Beispiel „Eltern“. Der Code ändert sich bei jedem Neustart, bis die Einrichtung fertig ist; nimm den vom letzten Start.
+Der Code ändert sich bei jedem Neustart, bis die Einrichtung fertig ist; nimm den vom letzten Start. Ist die Einrichtung gelaufen, ist der Assistent für immer geschlossen, und die Einstellung spielt keine Rolle mehr.
 
-{{< scene name="setup-wizard" height=520 >}}Der Einrichtungsassistent.{{< /scene >}}
-
-Weiter geht es mit [Apps verbinden]({{< relref "setup/apps" >}}).
+| Variable | Was |
+| --- | --- |
+| `HIWISKI_SETUP_CODE_REQUIRED` | `true`: Der Assistent fragt nach dem Einrichtungscode aus dem Protokoll. Standard `false`. |
+| `HIWISKI_SETUP_CODE` | Selten nötig: ein fester Code statt eines neuen bei jedem Start, für eine automatisierte Installation. Gesetzt, schaltet er den Code ebenfalls ein. |

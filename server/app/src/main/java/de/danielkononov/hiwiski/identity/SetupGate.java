@@ -1,11 +1,13 @@
 package de.danielkononov.hiwiski.identity;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * The setup wizard's gate, for a module that offers a step of its own in it: restoring
  * an archive on a fresh server.
  *
  * <p>The same two barriers as the wizard itself: the setup code from the server's log,
- * and an instance that nobody has set up yet.
+ * where the operator switched it on, and an instance that nobody has set up yet.
  */
 public interface SetupGate {
 
@@ -14,9 +16,10 @@ public interface SetupGate {
 
     /**
      * Refuses a missing or wrong setup code with {@code 403 setup.code_invalid}, and too
-     * many wrong ones from one address with {@code 429}.
+     * many wrong ones from one address with {@code 429}. Lets everything through where
+     * no code is asked for.
      */
-    void requireCode(String code, String client);
+    void requireCode(@Nullable String code, String client);
 
     /**
      * Refuses an instance set up already with {@code 409 setup.already_completed}: the

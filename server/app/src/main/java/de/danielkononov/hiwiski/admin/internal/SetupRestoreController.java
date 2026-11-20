@@ -7,6 +7,7 @@ import de.danielkononov.hiwiski.api.model.RestoreResult;
 import de.danielkononov.hiwiski.identity.SetupGate;
 import java.io.IOException;
 import java.nio.file.Files;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -14,8 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
  * Restoring on a fresh server, from the setup wizard -- for a new machine after the old
  * one is gone.
  *
- * <p>No sign-in, there is no one yet; the setup code instead, on every call, and an
- * instance nobody has set up.
+ * <p>No sign-in, there is no one yet; the setup code instead, on every call where the
+ * operator switched it on, and an instance nobody has set up.
  */
 @RestController
 class SetupRestoreController implements SetupRestoreApi {
@@ -29,15 +30,16 @@ class SetupRestoreController implements SetupRestoreApi {
     }
 
     @Override
-    public ResponseEntity<BackupPreview> inspectSetupBackup(String setupCode, String id, BackupPasswordEntry entry) {
+    public ResponseEntity<BackupPreview> inspectSetupBackup(
+            String id, BackupPasswordEntry entry, @Nullable String setupCode) {
         setup.requireCode(setupCode, setup.currentClient());
         setup.requireFresh();
         return ResponseEntity.ok(AdminController.toApi(backups.inspect(backups.uploaded(id), entry.getPassword())));
     }
 
     @Override
-    public ResponseEntity<RestoreResult> restoreSetupBackup(String setupCode, String id, BackupPasswordEntry entry)
-            throws IOException {
+    public ResponseEntity<RestoreResult> restoreSetupBackup(
+            String id, BackupPasswordEntry entry, @Nullable String setupCode) throws IOException {
         setup.requireCode(setupCode, setup.currentClient());
         var file = backups.uploaded(id);
         var outcome = backups.restoreOnFreshInstance(file, entry.getPassword());

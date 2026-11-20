@@ -455,10 +455,14 @@ class SessionStore extends Store<SessionState> {
     );
   }
 
+  /// The setup code alone, before the wizard's steps.
+  Future<void> checkSetupCode(String setupCode) =>
+      _repository.checkSetupCode(setupCode);
+
   /// Restoring an archive in place of the setup. Nobody is signed in by it: the
   /// members come from the archive, and the handshake after leads to the sign-in.
   Future<UploadedBackup> uploadSetupBackup(
-    String setupCode,
+    String? setupCode,
     Stream<List<int>> bytes,
     int length, {
     void Function(double done)? onProgress,
@@ -470,13 +474,13 @@ class SessionStore extends Store<SessionState> {
   );
 
   Future<BackupPreview> inspectSetupBackup(
-    String setupCode,
+    String? setupCode,
     String id,
     String password,
   ) => _repository.inspectSetupBackup(setupCode, id, password);
 
   Future<void> restoreSetupBackup(
-    String setupCode,
+    String? setupCode,
     String id,
     String password,
   ) async {

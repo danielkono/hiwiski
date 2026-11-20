@@ -1,5 +1,9 @@
+import 'package:hiwiski/core/api/generated/export.dart' hide Mutation;
+import 'package:hiwiski/core/api/hiwiski_failure.dart';
 import 'package:hiwiski/core/l10n/generated/app_localizations.dart';
 import 'package:hiwiski/app/data_providers.dart';
+import 'package:hiwiski/data/session/session_repository.dart';
+import 'package:hiwiski/domain/session/session_state.dart';
 import 'package:hiwiski/core/storage/local_settings.dart';
 import 'package:hiwiski/core/theme/hiwiski_theme.dart';
 import 'package:hiwiski/features/setup/view/setup_keys.dart';
@@ -7,8 +11,11 @@ import 'package:hiwiski/features/setup/view/setup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'support/fakes.dart';
 
 /// The wizard builds every step at the same place in the widget tree.
 ///
@@ -26,14 +33,20 @@ void main() {
     settings = await LocalSettings.open();
   });
 
-  Future<void> pump(WidgetTester tester) async {
+  Future<void> pump(
+    WidgetTester tester, {
+    List<Override> overrides = const [],
+  }) async {
     tester.view.physicalSize = const Size(900, 1400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [localSettingsProvider.overrideWithValue(settings)],
+        overrides: [
+          localSettingsProvider.overrideWithValue(settings),
+          ...overrides,
+        ],
         child: MaterialApp(
           theme: HiwiskiTheme.light(),
           localizationsDelegates: const [
@@ -152,6 +165,106 @@ void main() {
           .widget<OutlinedButton>(find.byKey(SetupKeys.restoreBackup))
           .onPressed,
       isNull,
+    );
+  });
+
+  // The default: on a home network the family sets up without reading the server's
+  // log first.
+  testWidgets('a server that asks for no code opens both ways at once', (
+    tester,
+  ) async {
+    await pump(tester, overrides: [sessionAt(_setupWithoutCode)]);
+    expect(find.byKey(SetupKeys.setupCode), findsNothing);
+    expect(
+      tester.widget<FilledButton>(find.byKey(SetupKeys.startFresh)).onPressed,
+      isNotNull,
+    );
+    expect(
+      tester
+          .widget<OutlinedButton>(find.byKey(SetupKeys.restoreBackup))
+          .onPressed,
+      isNotNull,
+    );
+  });
+
+  // A wrong code came back only after every step was filled in.
+  testWidgets('a wrong code is said before the steps', (tester) async {
+    final server = _CheckingCode();
+    await pump(
+      tester,
+      overrides: [sessionAt(_setupWithCode, repository: server)],
+    );
+    await tester.enterText(find.byKey(SetupKeys.setupCode), 'WRON-GCOD');
+    await tester.pump();
+    await tester.tap(find.byKey(SetupKeys.startFresh));
+    await tester.pumpAndSettle();
+
+    expect(server.checked, equals(['WRON-GCOD']));
+    expect(find.byKey(SetupKeys.familyName), findsNothing);
+    expect(find.textContaining('Der Einrichtungscode stimmt nicht'), findsOne);
+
+    await tester.enterText(find.byKey(SetupKeys.setupCode), 'K7M4-2QXP');
+    await tester.pump();
+    await tester.tap(find.byKey(SetupKeys.startFresh));
+    await tester.pumpAndSettle();
+
+    expect(server.checked, equals(['WRON-GCOD', 'K7M4-2QXP']));
+    expect(find.byKey(SetupKeys.familyName), findsOneWidget);
+    expect(
+      find.textContaining('Der Einrichtungscode stimmt nicht'),
+      findsNothing,
+    );
+  });
+
+  // Its operator switched the code on after the handshake: without the field the
+  // wizard could only show the error again.
+  testWidgets('a code refused anyway brings its field back', (tester) async {
+    final server = _RefusingSetup();
+    await pump(
+      tester,
+      overrides: [sessionAt(_setupWithoutCode, repository: server)],
+    );
+    await tester.tap(find.byKey(SetupKeys.startFresh));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(SetupKeys.familyName), 'Familie');
+    await tester.enterText(find.byKey(SetupKeys.timezone), 'Europe/Berlin');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FilledButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(SetupKeys.displayName), 'Markus');
+    await tester.enterText(find.byKey(SetupKeys.username), 'markus');
+    await tester.enterText(find.byKey(SetupKeys.password), 'correct horse');
+    await tester.enterText(
+      find.byKey(SetupKeys.passwordRepeat),
+      'correct horse',
+    );
+    await tester.pump();
+    await tester.tap(find.byType(FilledButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(SetupKeys.backupPassword),
+      'battery staple',
+    );
+    await tester.enterText(
+      find.byKey(SetupKeys.backupPasswordRepeat),
+      'battery staple',
+    );
+    await tester.pump();
+    await tester.tap(find.byType(FilledButton));
+    await tester.pumpAndSettle();
+    // The groups, then the last step.
+    await tester.tap(find.byType(FilledButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FilledButton));
+    await tester.pumpAndSettle();
+
+    expect(server.sent, isNotNull);
+    expect(server.sent?.setupCode, isNull, reason: 'none was asked for');
+    expect(find.byKey(SetupKeys.setupCode), findsOneWidget);
+    expect(
+      tester.widget<FilledButton>(find.byKey(SetupKeys.startFresh)).onPressed,
+      isNull,
+      reason: 'from now on the code is needed',
     );
   });
 
@@ -287,4 +400,79 @@ void main() {
     );
     expect(editable.focusNode.hasFocus, isTrue);
   });
+}
+
+/// A fresh server that asks for no setup code.
+const _setupWithoutCode = SessionState(
+  stage: .setupRequired,
+  serverAddress: 'https://hiwiski.local',
+  handshake: Handshake(
+    apiVersion: 'v1',
+    serverVersion: '2026.1.0',
+    minClientVersion: '0',
+    setupCompleted: false,
+    cleartext: false,
+    setupCodeRequired: false,
+  ),
+);
+
+/// A fresh server that asks for the setup code — and can check it before the steps.
+const _setupWithCode = SessionState(
+  stage: .setupRequired,
+  serverAddress: 'https://hiwiski.local',
+  handshake: Handshake(
+    apiVersion: 'v1',
+    serverVersion: '2026.1.0',
+    minClientVersion: '0',
+    setupCompleted: false,
+    cleartext: false,
+    setupCodeRequired: true,
+  ),
+);
+
+/// Takes only `K7M4-2QXP`, and remembers every code it was asked about.
+class _CheckingCode implements SessionRepository {
+  final checked = <String>[];
+
+  @override
+  Member? get localMember => null;
+
+  @override
+  Future<void> checkSetupCode(String setupCode) async {
+    checked.add(setupCode);
+    if (setupCode != 'K7M4-2QXP') {
+      throw const HiwiskiFailure(
+        code: FailureCodes.setupCodeInvalid,
+        status: 403,
+      );
+    }
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// Refuses the setup for a missing code, as a server does whose operator switched it
+/// on after the app's handshake.
+class _RefusingSetup implements SessionRepository {
+  SetupRequest? sent;
+
+  @override
+  Member? get localMember => null;
+
+  @override
+  Future<DeviceRegistration> thisDevice({bool staySignedIn = true}) async =>
+      const DeviceRegistration(deviceName: 'Test', platform: .web);
+
+  @override
+  Future<SignedIn> runSetup(SetupRequest request) async {
+    sent = request;
+    throw const HiwiskiFailure(
+      code: FailureCodes.setupCodeInvalid,
+      status: 403,
+    );
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

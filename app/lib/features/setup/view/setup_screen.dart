@@ -22,9 +22,9 @@ import 'setup_keys.dart';
 
 /// The setup wizard: **exactly once, for the first person.**
 ///
-/// It starts with the setup code and two ways on: **start fresh** —
-/// five steps with progress, the backup password among them — or **restore from a
-/// backup**, for a new machine after the old one is gone. Afterwards
+/// It starts with the setup code, where the server asks for one, and two ways on:
+/// **start fresh** — five steps with progress, the backup password among them — or
+/// **restore from a backup**, for a new machine after the old one is gone. Afterwards
 /// `setup.completed` is set and the wizard can never be reached again — the server
 /// rejects a second run, not just the UI.
 ///
@@ -62,6 +62,11 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   int _step = 0;
   bool _busy = false;
   String? _error;
+
+  /// The server refused a code although its handshake said it asks for none — its
+  /// operator switched it on meanwhile. From then on the field is shown, or the
+  /// wizard could only repeat the error.
+  bool _codeRefused = false;
 
   final _setupCode = TextEditingController();
   final _familyName = TextEditingController();
@@ -180,9 +185,39 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   /// Back to the setup code — where a wrong one is corrected.
   void _backToCode(String error) => setState(() {
     _error = error;
+    _codeRefused = true;
     _way = .choose;
     _step = 0;
   });
+
+  bool get _asksForCode =>
+      ref.read(setupViewModelProvider).codeRequired || _codeRefused;
+
+  /// What the server gets as the code: nothing where it asks for none.
+  String? get _code => _asksForCode ? _setupCode.text.trim() : null;
+
+  /// Into one of the two ways — the code checked first, where the server asks for one
+  /// and can check it: a wrong one came back only after every step was filled in.
+  Future<void> _choose(_Way way) async {
+    final code = _code;
+    if (code != null && ref.read(setupViewModelProvider).codeCheckable) {
+      try {
+        await setupCodeMutation.run(
+          ref,
+          (tsx) => tsx.get(setupViewModelProvider.notifier).checkCode(code),
+        );
+      } on Object catch (error) {
+        _fail(error);
+        return;
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _error = null;
+      _way = way;
+      _step = 0;
+    });
+  }
 
   void _continue() {
     setState(() => _error = null);
@@ -216,7 +251,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   Future<void> _pickAndUpload() async {
     final picked = await pickArchive();
     if (picked == null || !mounted) return;
-    final code = _setupCode.text.trim();
+    final code = _code;
     try {
       final upload = await setupUploadMutation.run(
         ref,
@@ -238,7 +273,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   Future<void> _inspect() async {
     final uploaded = _uploaded;
     if (uploaded == null) return;
-    final code = _setupCode.text.trim();
+    final code = _code;
     final password = _restorePassword.text;
     try {
       final preview = await setupInspectMutation.run(
@@ -269,7 +304,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   Future<void> _restoreArchive() async {
     final uploaded = _uploaded;
     if (uploaded == null) return;
-    final code = _setupCode.text.trim();
+    final code = _code;
     final password = _restorePassword.text;
     setState(() => _step = _restoreSteps - 1);
     try {
@@ -324,7 +359,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
           .read(setupViewModelProvider.notifier)
           .setUp(
             (device) => SetupRequest(
-              setupCode: _setupCode.text.trim(),
+              setupCode: _code,
               familyName: _familyName.text.trim(),
               timezone: _timezone.text.trim(),
               admin: SetupAdmin(
@@ -350,6 +385,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
           _error = failureText(context, failure);
           // The code comes before both ways: back there, so it can be corrected.
           if (failure.code == FailureCodes.setupCodeInvalid) {
+            _codeRefused = true;
             _way = .choose;
             _step = 0;
           }
@@ -370,6 +406,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     final fromLocal = state.localName != null;
     final busy =
         _busy ||
+        ref.watch(setupCodeMutation).isPending ||
         ref.watch(setupUploadMutation).isPending ||
         ref.watch(setupInspectMutation).isPending ||
         ref.watch(setupRestoreMutation).isPending;
@@ -458,28 +495,31 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     );
   }
 
-  /// The setup code, then the two ways on.
+  /// The setup code, where the server asks for one, then the two ways on.
   List<Widget> _chooseStep(L l, bool busy) => [
     const HiwiskiMark(),
     const SizedBox(height: HiwiskiMetrics.space14),
     Text(l.setupTitle, style: context.texts.headlineLarge),
     const SizedBox(height: HiwiskiMetrics.space20),
-    // The code from the server's log: without it whoever reached a fresh server first
-    // became its administrator.
-    TextField(
-      key: SetupKeys.setupCode,
-      controller: _setupCode,
-      autofocus: true,
-      autocorrect: false,
-      textCapitalization: .characters,
-      style: context.tokens.text.monoSmall,
-      decoration: InputDecoration(
-        labelText: l.setupCode,
-        helperText: l.setupCodeHint,
-        helperMaxLines: 4,
+    // The code from the server's log: without it whoever reaches a fresh server first
+    // becomes its administrator. Only where its operator switched it on — on a home
+    // network that is the family, and the log is a hurdle they have no use for.
+    if (_asksForCode) ...[
+      TextField(
+        key: SetupKeys.setupCode,
+        controller: _setupCode,
+        autofocus: true,
+        autocorrect: false,
+        textCapitalization: .characters,
+        style: context.tokens.text.monoSmall,
+        decoration: InputDecoration(
+          labelText: l.setupCode,
+          helperText: l.setupCodeHint,
+          helperMaxLines: 4,
+        ),
       ),
-    ),
-    const SizedBox(height: HiwiskiMetrics.space20),
+      const SizedBox(height: HiwiskiMetrics.space20),
+    ],
     Text(
       l.setupChoiceLead,
       style: context.texts.bodySmall?.copyWith(
@@ -490,12 +530,9 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     ListenableBuilder(
       listenable: _setupCode,
       builder: (context, _) {
-        final ready = !busy && _setupCode.text.trim().isNotEmpty;
-        void go(_Way way) => setState(() {
-          _error = null;
-          _way = way;
-          _step = 0;
-        });
+        final ready =
+            !busy && (!_asksForCode || _setupCode.text.trim().isNotEmpty);
+        void go(_Way way) => unawaited(_choose(way));
         return Column(
           crossAxisAlignment: .stretch,
           spacing: HiwiskiMetrics.space12,
