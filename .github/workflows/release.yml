@@ -573,11 +573,15 @@ jobs:
   # needs no Apple ID: match reads the distribution certificate and profile from the
   # maintainer's private repository, and the App Store Connect key does the rest
   # (docs/releasing.md, "Signing and store credentials").
+  #
+  # On the image `xcode-27`, not `macos-latest`: from April 2027 App Store Connect takes
+  # only builds made with the iOS 27 SDK, and `macos-latest` still brings no Xcode newer
+  # than 26.
   ios:
     name: iOS
     needs: version
     if: github.ref_type == 'tag' || inputs.ios
-    runs-on: macos-latest
+    runs-on: xcode-27
     timeout-minutes: 40
     # Like play: release tags and main only, so a run from another branch does not
     # reach the keys.
