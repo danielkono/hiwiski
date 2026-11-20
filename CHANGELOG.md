@@ -12,6 +12,8 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
 
 ## Unreleased
 
+## 2026.1.15 — 2026-11-20 {#2026.1.15}
+
 ### Changed
 
 - **The setup wizard no longer asks for a setup code.** Open the server's address and
@@ -29,10 +31,10 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
   the text to the server — like the text itself. For the moment the phone needs to
   prepare the photos, "Save" is greyed out; the images are then saved along.
   Saving while the pictures were still uploading used to lose them from the text, and
-  a task or page created offline could not get any until it had been synced. Until an image is up, it counts among the
-  changes still waiting, which signing out names; a device that shows the text before
-  the upload shows the image once the item is opened again. A recipe's picture is
-  still uploaded right away.
+  a task or page created offline could not get any until it had been synced. Until an
+  image is up, it counts among the changes still waiting, which signing out names; a
+  device that shows the text before the upload shows the image once the item is opened
+  again. A recipe's picture is still uploaded right away.
 
 ### Fixed
 
