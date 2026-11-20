@@ -54,6 +54,11 @@ class MarkdownTextController extends TextEditingController {
 
   MarkdownPreview? _preview;
 
+  /// The shape of each image of the text once it was decoded, by id. The thumbnails
+  /// are made anew whenever the text is drawn; kept here, one that knows its shape
+  /// keeps it instead of starting square again and jumping back.
+  final _imageAspects = <String, double>{};
+
   /// The text read for drawing — once per text, not per cursor move.
   MarkdownPreview _previewOf(String text) {
     final cached = _preview;
@@ -177,14 +182,7 @@ class MarkdownTextController extends TextEditingController {
     ),
     PreviewImage(:final imageId) => WidgetSpan(
       alignment: .bottom,
-      child: ClipRRect(
-        borderRadius: const .all(.circular(HiwiskiMetrics.radiusChip)),
-        child: SizedBox(
-          width: HiwiskiMetrics.editorImageWidth,
-          height: HiwiskiMetrics.editorImageHeight,
-          child: RichImage(imageId: imageId, fit: .cover, preview: true),
-        ),
-      ),
+      child: _EditorImage(imageId: imageId, aspects: _imageAspects),
     ),
     PreviewReference(:final part) => WidgetSpan(
       alignment: .middle,
@@ -252,6 +250,54 @@ class _Bullet extends StatelessWidget {
           ),
           _ => BoxDecoration(color: ink),
         },
+      ),
+    );
+  }
+}
+
+/// An image in the text being written: as high as [HiwiskiMetrics.editorImageHeight]
+/// and as wide as its shape makes that — whole, without empty space around it. Square
+/// until the image is decoded; the line it stands on alone only gets wider then, so
+/// nothing below it moves.
+class _EditorImage extends StatefulWidget {
+  const _EditorImage({required this.imageId, required this.aspects});
+
+  final String imageId;
+
+  /// The shapes known so far, kept by the controller ([MarkdownTextController]).
+  final Map<String, double> aspects;
+
+  @override
+  State<_EditorImage> createState() => _EditorImageState();
+}
+
+class _EditorImageState extends State<_EditorImage> {
+  void _shaped(double aspect) {
+    if (widget.aspects[widget.imageId] == aspect || !mounted) return;
+    setState(() => widget.aspects[widget.imageId] = aspect);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const height = HiwiskiMetrics.editorImageHeight;
+    final aspect = widget.aspects[widget.imageId];
+    final width = aspect == null
+        ? height
+        : (height * aspect).clamp(
+            HiwiskiMetrics.editorImageMinWidth,
+            HiwiskiMetrics.editorImageMaxWidth,
+          );
+    return SizedBox(
+      width: width,
+      height: height,
+      child: RichImage(
+        imageId: widget.imageId,
+        // Fills exactly once the width follows the shape; cuts only a panorama or a
+        // tall screenshot beyond the bounds.
+        fit: .cover,
+        preview: true,
+        radius: const .circular(HiwiskiMetrics.radiusChip),
+        onAspect: _shaped,
       ),
     );
   }

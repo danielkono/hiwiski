@@ -308,6 +308,13 @@ Inline markers show, faded, while the cursor touches what they format. A line's 
 (`## `, `- `, `- [ ] `, `> `) and a chip or an image are one piece: the controller keeps
 the cursor out of them (`MarkdownPreview.snap`), and Backspace takes them whole
 (`FormattedBackspace`, a formatter because a phone's keyboard sends no key for it).
+
+An image is drawn as a thumbnail of a fixed height whose width follows the image's
+shape, within bounds; the controller keeps each image's shape, so a thumbnail made
+anew does not start square again. Formatted, the field has no strut: a `TextField`
+otherwise forces every line to the height of its text style, and a heading or an image
+would be drawn over the lines above it.
+
 Which mode a field starts in is a preference of the device (Account → Customize);
 switching in the bar applies to that field.
 

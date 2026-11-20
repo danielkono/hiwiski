@@ -67,6 +67,12 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
   was when the week was shown — on the wall tablet, on a board tile, or in the
   calendar left open or brought back from the background. Now it moves every
   minute, and at midnight today's column moves to the next day.
+- **Images in a formatted text no longer cover the lines above them.** While a page,
+  a description or a note was written formatted, an added image was drawn over the
+  text before it — several over each other, up to the bar above the field — and
+  headings were squeezed to the height of a normal line. Now each image takes the
+  room it needs, and its thumbnail shows the whole picture: as wide as its shape
+  makes it instead of a landscape crop, which cut most of a portrait photo away.
 
 ### Upgrade notes
 
