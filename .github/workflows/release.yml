@@ -532,7 +532,7 @@ jobs:
 
       # fastlane and every gem under it as app/Gemfile.lock names them, checksums
       # included; `frozen` fails the run rather than resolve anything anew.
-      - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
+      - uses: ruby/setup-ruby@4e97ecde5048e1e0816923020652678063ffbf65 # v1.339.0
         with:
           ruby-version: ${{ env.RUBY_VERSION }}
           working-directory: app
@@ -636,7 +636,7 @@ jobs:
             "GIT_SSH_COMMAND=ssh -i $RUNNER_TEMP/match_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$RUNNER_TEMP/known_hosts" \
             >> "$GITHUB_ENV"
 
-      - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
+      - uses: ruby/setup-ruby@4e97ecde5048e1e0816923020652678063ffbf65 # v1.339.0
         with:
           ruby-version: ${{ env.RUBY_VERSION }}
           working-directory: app
@@ -761,7 +761,7 @@ jobs:
           printf '%s' "$PLAY_SERVICE_ACCOUNT" > "$RUNNER_TEMP/play.json"
           printf '%s\n' "HIWISKI_PLAY_KEY=$RUNNER_TEMP/play.json" >> "$GITHUB_ENV"
 
-      - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
+      - uses: ruby/setup-ruby@4e97ecde5048e1e0816923020652678063ffbf65 # v1.339.0
         with:
           ruby-version: ${{ env.RUBY_VERSION }}
           working-directory: app
@@ -813,7 +813,7 @@ jobs:
             > "$RUNNER_TEMP/app-store-connect.json"
           printf '%s\n' "HIWISKI_APP_STORE_KEY=$RUNNER_TEMP/app-store-connect.json" >> "$GITHUB_ENV"
 
-      - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
+      - uses: ruby/setup-ruby@4e97ecde5048e1e0816923020652678063ffbf65 # v1.339.0
         with:
           ruby-version: ${{ env.RUBY_VERSION }}
           working-directory: app
