@@ -172,6 +172,25 @@ class HiwiskiDatabase extends _$HiwiskiDatabase {
     });
   }
 
+  /// How much has not reached the server yet — what [wipeForNextMember] would lose:
+  /// the changes waiting in the outbox, and the images kept on the device until they
+  /// are uploaded after them. An image added to a text counts like the text: signing
+  /// out names both.
+  Stream<int> watchUnsyncedCount() {
+    final changes = subqueryExpression<int>(
+      selectOnly(outboxEntries)
+        ..addColumns([countAll()])
+        ..where(outboxEntries.state.equals(OutboxStates.pending)),
+    );
+    final images = subqueryExpression<int>(
+      selectOnly(localImages)..addColumns([countAll()]),
+    );
+    final total = changes + images;
+    return selectExpressions([total])
+        .map((row) => row.read(total) ?? 0)
+        .watchSingle();
+  }
+
   /// Throws away everything that comes from the server — and **nothing** that has not
   /// been synced yet.
   ///

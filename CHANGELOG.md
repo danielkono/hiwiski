@@ -23,6 +23,15 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
 - **A wrong setup code is said at once.** Where the wizard asks for one, it checks
   the code before its steps — it used to come back only after the last one, with
   everything filled in.
+- **Images go into a text at once, offline too, and are uploaded with the sync.**
+  Added to a page, a task's or a list's description or an event's note, an image is in
+  the text as soon as it is picked and is kept on the device until the sync has taken
+  the text to the server — like the text itself. Saving while the pictures were still
+  uploading used to lose them from the text, and a task or page created offline could
+  not get any until it had been synced. Until an image is up, it counts among the
+  changes still waiting, which signing out names; a device that shows the text before
+  the upload shows the image once the item is opened again. A recipe's picture is
+  still uploaded right away.
 
 ### Fixed
 

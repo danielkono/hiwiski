@@ -21,9 +21,7 @@ import '../../../../core/ui/info_delete_section.dart';
 import '../../../../core/ui/keyboard_bar.dart';
 import '../../../../core/ui/loading_strip.dart';
 import '../../../../core/ui/notice_bar.dart';
-import '../../../../core/ui/failure_text.dart';
 import '../../../../core/ui/text_insertion.dart';
-import '../../../../core/api/hiwiski_failure.dart';
 import '../../../../domain/wiki/page_images.dart';
 import '../../../../domain/common/item_ref.dart';
 import '../../../../domain/wiki/wiki_page.dart';
@@ -200,37 +198,26 @@ class _PageScreenState extends ConsumerState<PageScreen> {
   ///
   /// It inserts the address, never the number: otherwise an item just created offline
   /// could not be linked, and that is exactly the common case.
-  /// Pictures into the text: picked, uploaded, and put at the cursor on lines of their
-  /// own — several at once are one group, shown as a stack.
+  /// Pictures into the text: picked, kept on the device for the page, and put at the
+  /// cursor on lines of their own — several at once are one group, shown as a stack.
+  /// They go up with the sync; nothing here waits for the server.
   Future<void> _images() async {
     final l = L.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final page = widget.page;
     try {
-      final ids = await uploadContentImagesMutation.run(ref, (tsx) async {
+      final ids = await addContentImagesMutation.run(ref, (tsx) async {
         final viewModel = tsx.get(pageViewModelProvider(page.id).notifier);
         final files = await pickImageFiles();
         return files.isEmpty
             ? const <String>[]
-            : viewModel.uploadContentImages(page, files);
+            : viewModel.addContentImages(page, files);
       });
       if (ids.isEmpty || !mounted) return;
       final at = _content.selection.isValid
           ? _content.selection.start
           : _content.text.length;
       insertAtCursor(_content, imagesInsertion(_content.text, at, ids));
-    } on HiwiskiFailure catch (failure) {
-      if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            // The page is not on the server yet: an image needs its carrier there.
-            failure.status == 404
-                ? l.recipeImageNotYetSynced
-                : failureText(context, failure),
-          ),
-        ),
-      );
     } on Object catch (error) {
       // Not the server's answer: a picture that could not be read. It used to end
       // the attempt without a word.
@@ -327,7 +314,7 @@ class _PageScreenState extends ConsumerState<PageScreen> {
           // With a keyboard on the screen the insert bar docks on top of it — above the text
           // it would scroll away with the first lines.
           final dockToolbar = typesOnScreen();
-          final imagesBusy = ref.watch(uploadContentImagesMutation).isPending;
+          final imagesBusy = ref.watch(addContentImagesMutation).isPending;
           // An archived page is read-only.
           final archived = page.archivedAt != null;
           // On *read* there is nothing to edit — not even the tags.

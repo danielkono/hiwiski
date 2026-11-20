@@ -98,7 +98,7 @@ handling and the change log twice — and would drift.
 | What | Mirrored |
 | --- | --- |
 | every item the member may see | **completely** — the basis of working offline |
-| images | only those that were viewed, kept afterwards |
+| images | those that were viewed, kept afterwards; those added here, until they are uploaded |
 | wiki revisions, history | no: they never change, can be long, are rarely needed |
 
 Revisions and history are therefore not available offline, and the screens say so in
@@ -509,6 +509,15 @@ sees its images. An upload always names its item; an image attached to nothing i
 removed by the weekly cleanup. Two sizes — the original, with its metadata (EXIF, GPS,
 …) stripped on upload, and a preview (longest edge 640). Limits: 100 megapixels, a quota
 per member, a cap on parallel uploads.
+
+An image added to a text in the editor is **kept on the device first**, under the id
+the text points to, and uploaded under that id after the sync, once its item has no
+change waiting in the outbox (`MediaRepository.carryOver`). Like the text, it can be
+added offline, and saving before an upload would have finished loses nothing; until it
+is up, it counts among the changes waiting, which signing out names. Another device that
+shows the text before the upload shows the image as missing until the item is opened
+again. A recipe's picture is uploaded at once instead: the server checks that a field's
+image exists when the field arrives, while it reads nothing from the images in a text.
 
 **Colors are tokens** (`BLUE`, `RUST`, `VIOLET`, `GREEN`, `PINK`, `OCHRE`, `TEAL`,
 `SLATE`), never color values: the client maps each to a color for the light and the dark

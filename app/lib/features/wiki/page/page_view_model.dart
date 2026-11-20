@@ -22,10 +22,10 @@ import '../../../domain/wiki/wiki_page.dart';
 part 'page_view_model.g.dart';
 
 /// `archive`, run by a view: it shows the command running and reacts to how it ended.
-/// `uploadContentImages`, run by the editor: it inserts the images when it is done
-/// and shows that it runs.
-final uploadContentImagesMutation = Mutation<List<String>>(
-  label: 'pageViewModel.uploadContentImages',
+/// `addContentImages`, run by the editor: it inserts the images when it is done and
+/// shows that it runs.
+final addContentImagesMutation = Mutation<List<String>>(
+  label: 'pageViewModel.addContentImages',
 );
 
 final archivePageMutation = Mutation<List<WikiPage>>(
@@ -230,18 +230,21 @@ class PageViewModel extends _$PageViewModel {
     await wiki.updatePage(page, properties: recipeChanges(imageId: Change(id)));
   }
 
-  /// Uploads images for the page's text, in order, and returns their ids — the
-  /// editor puts them into the text at the cursor. Like the recipe picture, only for
-  /// a page the server knows already.
+  /// Keeps images for the page's text on the device, in order, and returns their ids
+  /// — the editor puts them into the text at the cursor at once. They go up with the
+  /// sync, after the page: offline too, and for a page not on the server yet.
+  ///
+  /// Not so the recipe picture ([uploadImage]): the server only takes an `imageId` it
+  /// already has, while it reads nothing from the images in a text.
   @command
-  Future<List<String>> uploadContentImages(
+  Future<List<String>> addContentImages(
     WikiPage page,
     List<({Uint8List bytes, String filename})> files,
   ) async {
     final media = ref.read(mediaRepositoryProvider);
     return [
       for (final file in files)
-        await media.upload(
+        await media.keep(
           ownerType: ImageOwnerTypes.wikiPage,
           ownerItemId: page.id,
           bytes: file.bytes,

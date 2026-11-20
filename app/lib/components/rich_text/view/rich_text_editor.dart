@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/api/hiwiski_failure.dart';
 import '../../../core/l10n/generated/app_localizations.dart';
 import '../../../core/theme/hiwiski_metrics.dart';
-import '../../../core/ui/failure_text.dart';
 import '../../../core/ui/text_insertion.dart';
 import '../../../domain/common/item_ref.dart';
 import '../../../domain/wiki/page_images.dart';
@@ -66,16 +64,17 @@ class _RichTextEditorState extends ConsumerState<RichTextEditor> {
     if (mounted) _focus.requestFocus();
   }
 
-  /// Pictures into the text: picked, uploaded onto the carrier, and put at the
-  /// cursor on lines of their own — several at once are one group, shown as a stack.
+  /// Pictures into the text: picked, kept on the device for the carrier, and put at
+  /// the cursor on lines of their own — several at once are one group, shown as a
+  /// stack. They go up with the sync; nothing here waits for the server.
   Future<void> _images(ItemRef carrier) async {
     final l = L.of(context);
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final ids = await uploadRichImagesMutation.run(ref, (tsx) async {
+      final ids = await addRichImagesMutation.run(ref, (tsx) async {
         final viewModel = tsx.get(richTextViewModelProvider(carrier).notifier);
         final files = await pickImageFiles();
-        return files.isEmpty ? const <String>[] : viewModel.uploadImages(files);
+        return files.isEmpty ? const <String>[] : viewModel.addImages(files);
       });
       if (ids.isEmpty || !mounted) return;
       final controller = widget.controller;
@@ -83,18 +82,6 @@ class _RichTextEditorState extends ConsumerState<RichTextEditor> {
           ? controller.selection.start
           : controller.text.length;
       insertAtCursor(controller, imagesInsertion(controller.text, at, ids));
-    } on HiwiskiFailure catch (failure) {
-      if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            // The item is not on the server yet: an image needs its carrier there.
-            failure.status == 404
-                ? l.recipeImageNotYetSynced
-                : failureText(context, failure),
-          ),
-        ),
-      );
     } on Object catch (error) {
       // Not the server's answer: a picture that could not be read. It used to end
       // the attempt without a word.
@@ -119,7 +106,7 @@ class _RichTextEditorState extends ConsumerState<RichTextEditor> {
           focusNode: _focus,
           onLink: _link,
           onImages: carrier == null ? null : () => _images(carrier),
-          imagesBusy: ref.watch(uploadRichImagesMutation).isPending,
+          imagesBusy: ref.watch(addRichImagesMutation).isPending,
         ),
         const SizedBox(height: HiwiskiMetrics.space4),
         MarkdownField(

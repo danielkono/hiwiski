@@ -36,8 +36,11 @@ class SyncRepository {
   /// Hooks into the real-time stream and pulls on every signal.
   Future<void> listenForSignals() => _engine.listenForSignals();
 
-  /// The number of changes waiting in the outbox — it survives a restart.
-  Stream<int> watchPendingCount() => _outbox.watchPendingCount();
+  /// What waits to reach the server — it survives a restart: the changes in the
+  /// outbox and the images kept on the device ([HiwiskiDatabase.watchUnsyncedCount]).
+  /// Not the sync engine's count: that one decides when to push, and the images go
+  /// up after every sync anyway.
+  Stream<int> watchPendingCount() => _db.watchUnsyncedCount();
 
   /// The conflicts nobody has seen yet, oldest first.
   Stream<List<SyncConflict>> watchConflicts() =>
