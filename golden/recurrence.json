@@ -266,6 +266,34 @@
         "2026-10-12T20:00",
         "2026-10-19T20:00"
       ]
+    },
+    {
+      "name": "a start the rule does not hold",
+      "why": "RFC 5545 leaves such a series undefined, and libraries part ways on it: one counts the start as an occurrence, another does not. Files from Outlook carry such starts, and so did series moved in the week view before the start followed the rule. Both sides leave the start out.",
+      "rrule": "FREQ=WEEKLY;BYDAY=MO",
+      "start": "2026-10-06T09:00",
+      "timeZone": "Europe/Berlin",
+      "from": "2026-10-01T00:00",
+      "to": "2026-11-01T00:00",
+      "expected": [
+        "2026-10-12T09:00",
+        "2026-10-19T09:00",
+        "2026-10-26T09:00"
+      ]
+    },
+    {
+      "name": "COUNT from a start the rule does not hold",
+      "why": "The start the series leaves out is not one of its COUNT: three Mondays are three Mondays, wherever the start lies.",
+      "rrule": "FREQ=WEEKLY;BYDAY=MO;COUNT=3",
+      "start": "2026-10-06T09:00",
+      "timeZone": "Europe/Berlin",
+      "from": "2026-10-01T00:00",
+      "to": "2026-12-01T00:00",
+      "expected": [
+        "2026-10-12T09:00",
+        "2026-10-19T09:00",
+        "2026-10-26T09:00"
+      ]
     }
   ]
 }

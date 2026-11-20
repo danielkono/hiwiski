@@ -29,6 +29,19 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
   became 72 days long.
 - **The demo's weekly events repeat.** Events with a time showed only once, and
   dragging one moved the whole series without asking which occurrences.
+- **Imported and subscribed calendars read more files as they are meant.**
+  - A cancelled event (`STATUS:CANCELLED`) no longer shows as if it took place. A
+    cancelled occurrence of a series, as Google writes it, is cancelled.
+  - A series with a time that ends on a date (`UNTIL=20261010`) keeps its repeats and
+    its last day. It used to come in as a single event.
+  - A day excluded from such a series by its date alone is excluded.
+- **The calendar feed follows the iCalendar standard more closely.**
+  - A series of whole days ends on a date, as RFC 5545 asks, and no longer on an
+    instant.
+  - A series whose start its rule does not hold now starts in the feed at its first
+    occurrence. Other calendar programs showed one occurrence more than Hiwiski.
+  - An event with a fixed time that carries a repeat rule goes out once, as Hiwiski
+    shows it.
 
 ## 2026.1.14 — 2026-11-19 {#2026.1.14}
 

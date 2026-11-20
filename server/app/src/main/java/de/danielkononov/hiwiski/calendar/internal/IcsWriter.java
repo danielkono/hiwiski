@@ -1,5 +1,6 @@
 package de.danielkononov.hiwiski.calendar.internal;
 
+import de.danielkononov.hiwiski.recurrence.Recurrence;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -29,6 +30,12 @@ import org.springframework.stereotype.Component;
 class IcsWriter {
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(IcsWriter.class);
+
+    private final Recurrence recurrence;
+
+    IcsWriter(Recurrence recurrence) {
+        this.recurrence = recurrence;
+    }
 
     private static final DateTimeFormatter UTC_STAMP =
             DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'");
@@ -97,28 +104,39 @@ class IcsWriter {
         return ics.toString();
     }
 
-    private static void entry(StringBuilder ics, Entry entry) {
+    private void entry(StringBuilder ics, Entry entry) {
         line(ics, "BEGIN:VEVENT");
         line(ics, "UID:" + entry.uid());
         line(ics, "DTSTAMP:" + UTC_STAMP.format(
                 (entry.lastModified() == null ? OffsetDateTime.now(ZoneOffset.UTC) : entry.lastModified())
                         .withOffsetSameInstant(ZoneOffset.UTC)));
 
+        String rrule = rule(entry);
         switch (entry.timeForm()) {
             case "ALL_DAY" -> {
+                LocalDate start = entry.startDate();
+                LocalDate end = entry.endDate() == null ? start : entry.endDate();
+                LocalDate first = rrule == null
+                        ? start
+                        : firstOccurrence(rrule, start.atStartOfDay(), seriesZone(entry)).toLocalDate();
                 // All-day is a date, not a point in time: January 1st is not at 23:00
                 // the day before in Portugal.
-                line(ics, "DTSTART;VALUE=DATE:" + DATE.format(entry.startDate()));
+                line(ics, "DTSTART;VALUE=DATE:" + DATE.format(first));
                 // DTEND is exclusive in the standard.
                 line(ics, "DTEND;VALUE=DATE:" + DATE.format(
-                        (entry.endDate() == null ? entry.startDate() : entry.endDate()).plusDays(1)));
+                        first.plusDays(java.time.temporal.ChronoUnit.DAYS.between(start, end) + 1)));
             }
             case "RECURRING" -> {
+                LocalDateTime start = LocalDateTime.parse(localStamp(entry.localStart()), LOCAL_STAMP);
+                LocalDateTime first = rrule == null ? start : firstOccurrence(rrule, start, entry.timeZone());
                 // With zone and local time: in UTC the series would shift when the
                 // clocks change.
-                line(ics, "DTSTART;TZID=" + entry.timeZone() + ":" + localStamp(entry.localStart()));
-                if (localStampOrNull(entry.localEnd()) != null) {
-                    line(ics, "DTEND;TZID=" + entry.timeZone() + ":" + localStamp(entry.localEnd()));
+                line(ics, "DTSTART;TZID=" + entry.timeZone() + ":" + LOCAL_STAMP.format(first));
+                String end = localStampOrNull(entry.localEnd());
+                if (end != null) {
+                    LocalDateTime moved = first.plus(
+                            java.time.Duration.between(start, LocalDateTime.parse(end, LOCAL_STAMP)));
+                    line(ics, "DTEND;TZID=" + entry.timeZone() + ":" + LOCAL_STAMP.format(moved));
                 }
             }
             default -> {
@@ -129,13 +147,12 @@ class IcsWriter {
             }
         }
 
-        String rrule = rule(entry);
         if (rrule != null) {
             // Without the stripping, the file said `RRULE:RRULE:FREQ=WEEKLY` — the
             // client stores the rule with the prefix, the server without, and a
             // foreign program then does not read the series at all. Found when
             // importing an export into another calendar program.
-            line(ics, "RRULE:" + rrule);
+            line(ics, "RRULE:" + ("ALL_DAY".equals(entry.timeForm()) ? untilAsDate(rrule, seriesZone(entry)) : rrule));
             // Cancelled single occurrences go out as EXDATE. Without them the foreign
             // program would show an event that no longer exists here -- and that is
             // exactly how you notice an export that is only almost right.
@@ -198,12 +215,78 @@ class IcsWriter {
         if (entry.rrule() == null || entry.rrule().isBlank()) {
             return null;
         }
+        if (!"RECURRING".equals(entry.timeForm()) && !"ALL_DAY".equals(entry.timeForm())) {
+            // A moment with a rule is shown once, in the app and by the server, which
+            // expand only series on the wall clock and of whole days. Written with its
+            // rule, it repeated in every subscriber's calendar and nowhere here.
+            return null;
+        }
         String rule = stripPrefix(entry.rrule().trim());
         return RULE_CHARACTERS.matcher(rule).matches() ? rule : null;
     }
 
     private static final java.util.regex.Pattern RULE_CHARACTERS =
             java.util.regex.Pattern.compile("[A-Za-z0-9=;,+\\-]+");
+
+    /** How far ahead the first occurrence of a series is looked for -- step by step. */
+    private static final List<java.time.Period> FIRST_OCCURRENCE_WITHIN =
+            List.of(java.time.Period.ofMonths(2), java.time.Period.ofYears(2), java.time.Period.ofYears(12));
+
+    /**
+     * Where a series begins in the file: its first occurrence.
+     *
+     * <p>A start the rule does not hold -- a file from Outlook, a series moved in the week
+     * view before its start followed the rule -- is left out here, on both sides
+     * ({@code golden/recurrence.json}). RFC 5545 calls such a series undefined and its
+     * DTSTART the first instance (3.8.5.3): written as it is stored, other programs may
+     * show one occurrence more than the app. The first one the rule yields is the same
+     * series in every reading; {@code COUNT} does not count the start that is left out.
+     * A rule without any occurrence in sight keeps its start.
+     */
+    private LocalDateTime firstOccurrence(String rrule, LocalDateTime start, String zone) {
+        try {
+            if (!recurrence.accepts(rrule)) {
+                return start;
+            }
+            for (java.time.Period within : FIRST_OCCURRENCE_WITHIN) {
+                List<LocalDateTime> found = recurrence.expand(rrule, start, zone, start, start.plus(within));
+                if (!found.isEmpty()) {
+                    return found.getFirst();
+                }
+            }
+        } catch (RuntimeException e) {
+            // A rule or zone the library will not take: the event goes out as it is.
+            log.debug("first occurrence of a series not found: {}", e.toString());
+        }
+        return start;
+    }
+
+    /** The zone a series is expanded in -- one of whole days may have none. */
+    private static String seriesZone(Entry entry) {
+        return validZone(entry.timeZone()) ? entry.timeZone() : "UTC";
+    }
+
+    /**
+     * A series of whole days ends on a date: RFC 5545 wants {@code UNTIL} in the value
+     * type of DTSTART (3.3.10). The app writes the end of the chosen day as a UTC
+     * instant; in the series' zone its date is that day. A strict reader refused the
+     * rule, or the whole feed.
+     */
+    static String untilAsDate(String rrule, String zone) {
+        var until = UNTIL_DATE_TIME.matcher(rrule);
+        if (!until.find()) {
+            return rrule;
+        }
+        LocalDateTime stamp = LocalDateTime.parse(until.group(1).toUpperCase(java.util.Locale.ROOT), LOCAL_STAMP);
+        LocalDate day = until.group(2).isEmpty()
+                ? stamp.toLocalDate()
+                : stamp.atOffset(ZoneOffset.UTC).atZoneSameInstant(ZoneId.of(zone)).toLocalDate();
+        return rrule.substring(0, until.start()) + "UNTIL=" + DATE.format(day) + rrule.substring(until.end());
+    }
+
+    /** An {@code UNTIL} with a time: UTC with {@code Z}, local without. */
+    private static final java.util.regex.Pattern UNTIL_DATE_TIME =
+            java.util.regex.Pattern.compile("(?i)UNTIL=(\\d{8}T\\d{6})(Z?)");
 
     /** What the event says -- or, free/busy only, that there is something. */
     private static void body(StringBuilder ics, Entry entry) {
