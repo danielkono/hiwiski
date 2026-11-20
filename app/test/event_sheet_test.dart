@@ -262,4 +262,99 @@ void main() {
       await unmount(tester);
     },
   );
+
+  /// **A new date takes the series' weekday along** — the form shows it before the
+  /// save. The rule stayed on Thursday with the date on a Friday, and the saved
+  /// occurrence was gone.
+  testWidgets('a new date moves the weekday of the repeat rule', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final container = ProviderContainer(
+      overrides: [
+        databaseProvider.overrideWithValue(db),
+        localSettingsProvider.overrideWithValue(settings),
+        deviceTimeZoneProvider.overrideWithValue('Europe/Berlin'),
+      ],
+    );
+    addTearDown(container.dispose);
+    final event = (await tester.runAsync(() async {
+      final calendar = container.read(calendarRepositoryProvider);
+      final calendarId = await calendar.createCalendar(
+        name: 'Family',
+        colorToken: ColorTokens.blue,
+      );
+      final id = await calendar.createEvent(
+        calendarId: calendarId,
+        draft: EventDraft(
+          title: 'Football',
+          rrule: 'FREQ=WEEKLY;BYDAY=TH',
+          time: RecurringEvent(
+            DateTime(2026, 11, 5, 14),
+            DateTime(2026, 11, 5, 15),
+          ),
+        ),
+      );
+      return await calendar.watchEvent(id).first;
+    }))!;
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          theme: HiwiskiTheme.light(),
+          localizationsDelegates: const [
+            L.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: L.supportedLocales,
+          locale: const Locale('en'),
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => showEventSheet(
+                  context,
+                  event: event,
+                  occurrence: occurrenceNear(
+                    event,
+                    at: DateTime(2026, 11, 19, 14),
+                  ),
+                ),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await settle(tester);
+    expect(find.text('Weekly, Thu'), findsOneWidget);
+
+    await tester.tap(find.text('Thu, 11/19/2026'));
+    await settle(tester);
+    await tester.tap(find.text('20'));
+    await tester.tap(find.text('OK'));
+    await settle(tester);
+    expect(find.text('Weekly, Fri'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await settle(tester);
+    await tester.tap(find.text('The whole series'));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 200)),
+    );
+    await settle(tester);
+
+    final row = (await tester.runAsync(
+      () => db.select(db.events).getSingle(),
+    ))!;
+    expect(row.rrule, equals('FREQ=WEEKLY;BYDAY=FR'));
+    expect(row.localStart, startsWith('2026-11-06T14:00'));
+    await unmount(tester);
+  });
 }

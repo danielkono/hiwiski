@@ -5,15 +5,22 @@ import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hiwiski/app/data_providers.dart';
+import 'package:hiwiski/app/repositories.dart';
 import 'package:hiwiski/app/stores.dart';
 import 'package:hiwiski/core/api/hiwiski_api.dart';
+import 'package:hiwiski/core/common/wire.dart';
 import 'package:hiwiski/core/db/hiwiski_database.dart';
 import 'package:hiwiski/core/storage/local_settings.dart';
+import 'package:hiwiski/domain/calendar/occurrence.dart';
+import 'package:hiwiski/domain/common/calendar_days.dart';
 import 'package:hiwiski/domain/session/session_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 
 import 'support/fakes.dart';
+
+/// Long enough for a yearly series to come round a second time.
+const _yearAndAMonth = 400;
 
 /// The public demo's sample data: both languages say the same, and
 /// they go into the app through its repositories, as a member's input would.
@@ -160,6 +167,32 @@ void main() {
             start.isAfter(DateTime(today.year + 1, today.month, today.day + 1)),
         isFalse,
         reason: '${event.title} starts on $start',
+      );
+    }
+    // A series with a time is one on the wall clock, as the editor writes it: stored
+    // as a moment with a rule, it showed once and moved without asking.
+    for (final event
+        in await container
+            .read(calendarRepositoryProvider)
+            .watchEvents()
+            .first) {
+      if ((event.rrule ?? '').isEmpty) continue;
+      if (event.timeForm != TimeForms.allDay) {
+        expect(
+          event.timeForm,
+          equals(TimeForms.recurring),
+          reason: event.title,
+        );
+      }
+      final start = event.startDate ?? DateTime.parse(event.localStart!);
+      expect(
+        const EventExpander().expand(
+          event,
+          start,
+          addDays(start, _yearAndAMonth),
+        ),
+        hasLength(greaterThan(1)),
+        reason: '${event.title} (${event.timeForm})',
       );
     }
     final widgets = await db.select(db.widgets).get();

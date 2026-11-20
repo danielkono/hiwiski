@@ -119,6 +119,14 @@ class EventFormState extends ConsumerState<EventForm> {
   late DateTime _end;
   String? _calendarId;
   String? _rrule;
+
+  /// The repeat rule as loaded or last chosen, and the day it was meant for. A new
+  /// start date moves the rule along from there, as a drop on that day in the week
+  /// view does ([ruleAfterMove]), so the form shows the rule that will be saved.
+  /// Counted from there and not from the date picked before: Monday and Wednesday,
+  /// moved from Monday to Wednesday, are Wednesday alone — moved on to Thursday they
+  /// are Wednesday and Thursday again.
+  ({String rule, DateTime day})? _chosenRule;
   int? _reminderMinutes;
   final _attendees = <String>{};
   Set<String> _tags = {};
@@ -186,6 +194,10 @@ class EventFormState extends ConsumerState<EventForm> {
           event.endDate ??
           DateTime.tryParse(event.localEnd ?? '') ??
           _start.add(const Duration(hours: 1));
+    }
+    if (_rrule case final rule? when rule.isNotEmpty) {
+      // The day the rule gave the occurrence, even where it was moved off it.
+      _chosenRule = (rule: rule, day: occurrence?.originalStart ?? _start);
     }
   }
 
@@ -364,6 +376,9 @@ class EventFormState extends ConsumerState<EventForm> {
         // The end moves along. Whoever moves the start means the event, not its
         // duration.
         _end = _end.add(shift);
+        if (_chosenRule case (:final rule, :final day)?) {
+          _rrule = ruleAfterMove(rule, original: day, target: moved);
+        }
       } else {
         _end = moved.isBefore(_start) ? _start : moved;
       }
@@ -581,7 +596,12 @@ class EventFormState extends ConsumerState<EventForm> {
                   start: _start,
                 );
                 if (result != null && mounted) {
-                  setState(() => _rrule = result.isEmpty ? null : result);
+                  setState(() {
+                    _rrule = result.isEmpty ? null : result;
+                    _chosenRule = result.isEmpty
+                        ? null
+                        : (rule: result, day: _start);
+                  });
                 }
               },
             ),

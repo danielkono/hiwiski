@@ -44,6 +44,18 @@ DateTime startOfDay(DateTime value) => .new(value.year, value.month, value.day);
 DateTime addDays(DateTime value, int days) =>
     .new(value.year, value.month, value.day + days);
 
+/// How many calendar days [to] lies after [from] — negative before it; the time of
+/// day does not count.
+///
+/// Counted on UTC dates, which no clock change cuts short. The difference of two
+/// day numbers like `20261031` is no count of days: from 31 October to 1 November
+/// it is 70.
+int daysFrom(DateTime from, DateTime to) => DateTime.utc(
+  to.year,
+  to.month,
+  to.day,
+).difference(DateTime.utc(from.year, from.month, from.day)).inDays;
+
 /// All days from [from] (inclusive) to [to] (exclusive).
 Iterable<DateTime> daysBetween(DateTime from, DateTime to) sync* {
   for (
