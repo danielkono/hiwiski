@@ -513,11 +513,15 @@ per member, a cap on parallel uploads.
 An image added to a text in the editor is **kept on the device first**, under the id
 the text points to, and uploaded under that id after the sync, once its item has no
 change waiting in the outbox (`MediaRepository.carryOver`). Like the text, it can be
-added offline, and saving before an upload would have finished loses nothing; until it
-is up, it counts among the changes waiting, which signing out names. Another device that
-shows the text before the upload shows the image as missing until the item is opened
-again. A recipe's picture is uploaded at once instead: the server checks that a field's
-image exists when the field arrives, while it reads nothing from the images in a text.
+added offline, and saving before an upload would have finished loses nothing. Picked
+photos still take a moment to be read in (on an iPhone they are converted first):
+meanwhile "Save" is greyed out (`MarkdownTextController.addingImagesAnywhere`), and
+every save of a text waits for `MarkdownTextController.imagesAdded` as well. Until an
+image is up, it counts among the changes waiting, which signing out names. Another
+device that shows the text before the upload shows the image as missing until the item
+is opened again. A recipe's picture is uploaded at once instead: the server checks that
+a field's image exists when the field arrives, while it reads nothing from the images in
+a text.
 
 **Colors are tokens** (`BLUE`, `RUST`, `VIOLET`, `GREEN`, `PINK`, `OCHRE`, `TEAL`,
 `SLATE`), never color values: the client maps each to a color for the light and the dark

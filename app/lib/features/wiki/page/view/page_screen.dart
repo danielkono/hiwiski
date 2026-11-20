@@ -151,7 +151,11 @@ class _PageScreenState extends ConsumerState<PageScreen> {
     _load();
   });
 
-  void _done() {
+  Future<void> _done() async {
+    // Images still being added go into the text first, or they would be left out.
+    await _content.imagesAdded;
+    // Done or cancelled meanwhile — a second tap while waiting, for one.
+    if (!mounted || !_editing) return;
     _save();
     setState(() => _editing = false);
   }
@@ -201,6 +205,9 @@ class _PageScreenState extends ConsumerState<PageScreen> {
   /// Pictures into the text: picked, kept on the device for the page, and put at the
   /// cursor on lines of their own — several at once are one group, shown as a stack.
   /// They go up with the sync; nothing here waits for the server.
+  /// Through the text's controller: "Done" waits until they are in the text.
+  Future<void> _addImages() => _content.addImages(_images);
+
   Future<void> _images() async {
     final l = L.of(context);
     final messenger = ScaffoldMessenger.of(context);
@@ -414,7 +421,7 @@ class _PageScreenState extends ConsumerState<PageScreen> {
                                               controller: _content,
                                               focusNode: _contentFocus,
                                               onLink: _link,
-                                              onImages: _images,
+                                              onImages: _addImages,
                                               imagesBusy: imagesBusy,
                                             ),
                                             const SizedBox(
@@ -498,7 +505,7 @@ class _PageScreenState extends ConsumerState<PageScreen> {
                                       controller: _content,
                                       focusNode: _contentFocus,
                                       onLink: _link,
-                                      onImages: _images,
+                                      onImages: _addImages,
                                       imagesBusy: imagesBusy,
                                     ),
                                   )

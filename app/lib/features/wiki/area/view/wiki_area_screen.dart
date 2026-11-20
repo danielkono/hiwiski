@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../components/rich_text/view/markdown_text_controller.dart';
 import '../../../../components/import/view/import_button.dart';
 import '../../../../core/ui/panel_reopen.dart';
 import '../../../../core/ui/panel_reopen_corner.dart';
@@ -562,6 +563,8 @@ class _PageButtons extends StatelessWidget {
             onEdit: onEdit,
             onSave: onDone,
             onCancel: onCancel,
+            // Greyed out while images are still being added to the text.
+            saveBlocked: MarkdownTextController.addingImagesAnywhere,
           ),
       ],
     );

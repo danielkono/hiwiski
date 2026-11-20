@@ -105,7 +105,10 @@ class _RichTextEditorState extends ConsumerState<RichTextEditor> {
           controller: widget.controller,
           focusNode: _focus,
           onLink: _link,
-          onImages: carrier == null ? null : () => _images(carrier),
+          onImages: carrier == null
+              ? null
+              // Through the controller: saving waits until they are in the text.
+              : () => widget.controller.addImages(() => _images(carrier)),
           imagesBusy: ref.watch(addRichImagesMutation).isPending,
         ),
         const SizedBox(height: HiwiskiMetrics.space4),

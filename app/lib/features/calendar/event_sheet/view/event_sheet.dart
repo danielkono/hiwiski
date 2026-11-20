@@ -284,6 +284,9 @@ class EventFormState extends ConsumerState<EventForm> {
     if (_saving) return;
     setState(() => _saving = true);
     try {
+      // Images still being added go into the note first, or they would be left out.
+      await _note.imagesAdded;
+      if (!mounted) return;
       await _saveOnce();
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -715,11 +718,15 @@ class EventFormState extends ConsumerState<EventForm> {
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(l.actionCancel),
               ),
-              FilledButton(
-                onPressed: _saving ? null : save,
-                // "Create" for something new, "Save" for a change.
-                child: Text(
-                  widget.event == null ? l.actionCreate : l.actionSave,
+              // Greyed out while images are still being added to the note.
+              ValueListenableBuilder<bool>(
+                valueListenable: MarkdownTextController.addingImagesAnywhere,
+                builder: (context, addingImages, _) => FilledButton(
+                  onPressed: _saving || addingImages ? null : save,
+                  // "Create" for something new, "Save" for a change.
+                  child: Text(
+                    widget.event == null ? l.actionCreate : l.actionSave,
+                  ),
                 ),
               ),
             ],

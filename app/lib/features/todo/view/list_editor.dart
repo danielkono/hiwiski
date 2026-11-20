@@ -59,8 +59,20 @@ class ListEditorState extends State<ListEditor> {
     super.dispose();
   }
 
-  /// Hands what was typed to the screen — the header's "Save".
-  void save() {
+  bool _saving = false;
+
+  /// Hands what was typed to the screen — the header's "Save". Images still being
+  /// added go into the description first, or they would be left out.
+  Future<void> save() async {
+    // A second tap while the images are still on their way saves nothing twice.
+    if (_saving) return;
+    _saving = true;
+    try {
+      await _description.imagesAdded;
+    } finally {
+      _saving = false;
+    }
+    if (!mounted) return;
     final description = _description.text.trim();
     widget.onSave(
       name: _name.text.trim(),
