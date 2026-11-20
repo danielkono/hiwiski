@@ -1,5 +1,5 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:meta/meta.dart';
 import 'package:riverpod/experimental/mutation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -174,13 +174,22 @@ class AccountViewModel extends _$AccountViewModel {
     ref.invalidate(_storageProvider);
   }
 
-  /// One last sync before the sign-out is confirmed. Returns how many changes still
-  /// wait afterwards — those the confirmation has to name.
+  /// One last sync before the sign-out is confirmed, and the images added on this
+  /// device after it. Returns how many changes still wait afterwards — those the
+  /// confirmation has to name.
   @command
   Future<int> syncBeforeSignOut() async {
     final session = ref.read(sessionStoreProvider);
     final sync = ref.read(syncRepositoryProvider);
     await session.syncBeforeSignOut();
+    try {
+      // Awaited here, unlike after an ordinary sync: an image still on its way would
+      // be counted as lost.
+      await ref.read(mediaRepositoryProvider).carryOver();
+    } on Object catch (error) {
+      // Offline or refused: the confirmation names what still waits.
+      debugPrint('hiwiski: images before sign-out not uploaded: $error');
+    }
     return sync.watchPendingCount().first;
   }
 

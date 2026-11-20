@@ -203,7 +203,7 @@ void main() {
 
       final upload = Completer<List<String>>();
       unawaited(
-        uploadContentImagesMutation
+        addContentImagesMutation
             .run(container, (_) => upload.future)
             .then<void>((_) {}, onError: (_) {}),
       );

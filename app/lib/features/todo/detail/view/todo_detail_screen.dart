@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../components/rich_text/view/markdown_text_controller.dart';
 import '../../../../components/comments/view/comment_list.dart';
 import '../../../../components/item_info/view/item_info.dart';
 import '../../../../core/common/date_patterns.dart';
@@ -112,9 +113,13 @@ class _TodoDetailPageState extends ConsumerState<_TodoDetailPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) => draft?.dispose());
   }
 
-  void _save() {
+  Future<void> _save() async {
     final draft = _draft;
     if (draft == null) return;
+    // Images still being added go in first, or they would be left out.
+    await draft.description.imagesAdded;
+    // Saved or cancelled meanwhile — a second tap while waiting, for one.
+    if (!mounted || !identical(_draft, draft)) return;
     final row = widget.state.todo;
     final title = draft.title.text.trim();
     final description = draft.description.text.trim();
@@ -353,6 +358,8 @@ class _TodoDetailPageState extends ConsumerState<_TodoDetailPage> {
               onEdit: _startEditing,
               onSave: _save,
               onCancel: _stopEditing,
+              // Greyed out while images are still being added to the description.
+              saveBlocked: MarkdownTextController.addingImagesAnywhere,
             ),
         ],
       ),

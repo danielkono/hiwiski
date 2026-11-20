@@ -11,31 +11,32 @@ import '../../domain/common/item_ref.dart';
 
 part 'rich_text_view_model.g.dart';
 
-/// `uploadImages`, run by the editor: it inserts the images when it is done and shows
-/// that it runs.
-final uploadRichImagesMutation = Mutation<List<String>>(
-  label: 'richTextViewModel.uploadImages',
+/// `addImages`, run by the editor: it inserts the images when it is done and shows
+/// that it runs — the iPhone converts its photos first, which takes a moment.
+final addRichImagesMutation = Mutation<List<String>>(
+  label: 'richTextViewModel.addImages',
 );
 
 /// A text that holds Markdown, links and images — a wiki page's, a task's
 /// description, an event's note. Its state is the item that carries its images
-/// (there is no upload without a carrier).
+/// (there is no image without a carrier).
 @riverpod
 class RichTextViewModel extends _$RichTextViewModel {
   @override
   ItemRef build(ItemRef carrier) => carrier;
 
-  /// Uploads [files] onto the carrier and returns their ids, in order — the editor
-  /// puts them into the text. Needs the carrier on the server: an item still only on
-  /// the device answers 404.
+  /// Keeps [files] on the device for the carrier and returns their ids, in order —
+  /// the editor puts them into the text at once. They go up with the sync, like the
+  /// text that names them (`MediaRepository.keep`): offline too, for an item not on
+  /// the server yet too, and saving while they are still on their way loses nothing.
   @command
-  Future<List<String>> uploadImages(
+  Future<List<String>> addImages(
     List<({Uint8List bytes, String filename})> files,
   ) async {
     final media = ref.read(mediaRepositoryProvider);
     return [
       for (final file in files)
-        await media.upload(
+        await media.keep(
           ownerType: carrier.type,
           ownerItemId: carrier.id,
           bytes: file.bytes,

@@ -52,6 +52,41 @@ class MarkdownTextController extends TextEditingController {
     notifyListeners();
   }
 
+  Future<void>? _addingImages;
+
+  /// Done once the images being added are in the text — at once when none are.
+  ///
+  /// Whoever saves the text waits for it first. Picked on an iPhone, photos are
+  /// converted and read before they can go into the text — a few seconds for several
+  /// — and a save in between went out without them.
+  Future<void> get imagesAdded => _addingImages ?? Future<void>.value();
+
+  /// Whether images are being added to a text anywhere right now — for "Save", which
+  /// is greyed out meanwhile so that the wait shows ([imagesAdded] covers what it
+  /// cannot: a swipe back, a second window).
+  ///
+  /// Not per field: a list's header is built before its editor and never sees the
+  /// field's controller. Only one text is edited at a time.
+  static ValueListenable<bool> get addingImagesAnywhere => _addingAnywhere;
+  static final _addingAnywhere = ValueNotifier<bool>(false);
+  static int _adding = 0;
+
+  /// Runs [work], which puts images into this text, and lets [imagesAdded] wait for
+  /// it. [work] handles its own failures.
+  Future<void> addImages(AsyncCallback work) async {
+    _adding++;
+    _addingAnywhere.value = true;
+    final running = work();
+    _addingImages = running;
+    try {
+      await running;
+    } finally {
+      if (identical(_addingImages, running)) _addingImages = null;
+      _adding--;
+      _addingAnywhere.value = _adding > 0;
+    }
+  }
+
   MarkdownPreview? _preview;
 
   /// The shape of each image of the text once it was decoded, by id. The thumbnails

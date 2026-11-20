@@ -16,9 +16,12 @@ export '../../core/api/image_client.dart' show ImageOwnerTypes;
 /// The ID never changes when the image changes — a new image is a new ID —, so the
 /// cache never has to ask whether it is still current.
 ///
-/// **Without a server** an image is kept on the device itself
-/// ([LocalImageStore]) under the id its carrier points to; when the device connects,
-/// [carryOver] uploads it under that same id.
+/// **An image in a text is kept on the device first** ([LocalImageStore]) under the
+/// id the text points to — like the text, it does not wait for the server: offline,
+/// for an item not on the server yet, and when the editor is saved before an upload
+/// would have finished. [carryOver] uploads it under that same id after the sync,
+/// once its carrier is on the server. **Without a server** every image goes this way
+/// and waits until the device connects.
 class MediaRepository {
   MediaRepository(
     this._api, {
@@ -97,11 +100,15 @@ class MediaRepository {
           ),
         );
 
-  /// Keeps an image on the device for an item the server may not know yet, and
-  /// returns the id the item can point to at once — an import creates its pages and
-  /// their images in one go, offline too. [carryOver] uploads it under that id once
-  /// the item has arrived; an upload now would be refused for a page still waiting in
-  /// the outbox.
+  /// Keeps an image on the device and returns the id its item can point to at once —
+  /// an image added to a text in the editor, and an import's, which creates its pages
+  /// and their images in one go. [carryOver] uploads it under that id once the item
+  /// has arrived; an upload now would be refused for an item still waiting in the
+  /// outbox, and fail offline.
+  ///
+  /// Only for an image a text names: the server reads nothing from those. A field
+  /// that holds an image (a recipe's picture) is checked when it arrives, so its image
+  /// has to be there first ([upload]).
   Future<String> keep({
     required String ownerType,
     required String ownerItemId,
@@ -124,14 +131,23 @@ class MediaRepository {
   /// Throws the cached images away — they come back from the server when viewed.
   Future<void> clearCache() => ImageDiskCache.clear();
 
-  /// Uploads what was added without a server, each image under the id its carrier
-  /// already points to — once the carrier itself is on the server: nothing of it
-  /// waits in the outbox any more. Returns the images uploaded now.
+  /// Uploads what was kept on the device ([keep]), each image under the id its
+  /// carrier already points to — once the carrier itself is on the server: nothing of
+  /// it waits in the outbox any more. Returns the images uploaded now.
   ///
   /// An image whose carrier the server does not know (deleted meanwhile, refused)
   /// is given up; one past the member's quota or under an id already taken stays on
   /// the device; one that fails otherwise stays for the next try.
-  Future<List<({String id, String ownerType})>> carryOver() async {
+  ///
+  /// One run at a time: a call while one runs gets that run. Run twice side by side —
+  /// after a sync and before signing out — every image would go up twice: the server
+  /// takes it as one, but the phone's connection carries it twice.
+  Future<List<({String id, String ownerType})>> carryOver() =>
+      _carrying ??= _carryOver().whenComplete(() => _carrying = null);
+
+  Future<List<({String id, String ownerType})>>? _carrying;
+
+  Future<List<({String id, String ownerType})>> _carryOver() async {
     if (_serverless) return const [];
     final uploaded = <({String id, String ownerType})>[];
     for (final image in await _localImages.all()) {

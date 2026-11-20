@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n/generated/app_localizations.dart';
@@ -19,6 +20,7 @@ class EditActions extends StatelessWidget {
     required this.onEdit,
     required this.onSave,
     required this.onCancel,
+    this.saveBlocked,
   });
 
   final bool editing;
@@ -27,6 +29,10 @@ class EditActions extends StatelessWidget {
   /// `null` while a save runs: a second tap wrote everything twice.
   final VoidCallback? onSave;
   final VoidCallback onCancel;
+
+  /// While `true`, "Save" is greyed out — something the text needs is still on its
+  /// way, such as images being added to it.
+  final ValueListenable<bool>? saveBlocked;
 
   @override
   Widget build(BuildContext context) {
@@ -41,12 +47,18 @@ class EditActions extends StatelessWidget {
           onPressed: onCancel,
           child: Text(l.actionCancel),
         ),
-        FilledButton(
-          key: CoreKeys.editSave,
-          onPressed: onSave,
-          child: Text(l.actionSave),
+        ValueListenableBuilder<bool>(
+          valueListenable: saveBlocked ?? _never,
+          builder: (context, blocked, _) => FilledButton(
+            key: CoreKeys.editSave,
+            onPressed: blocked ? null : onSave,
+            child: Text(l.actionSave),
+          ),
         ),
       ],
     );
   }
 }
+
+/// Where nothing can block "Save".
+final ValueListenable<bool> _never = ValueNotifier<bool>(false);

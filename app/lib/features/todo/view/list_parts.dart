@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../components/rich_text/view/markdown_text_controller.dart';
 import '../../../core/l10n/generated/app_localizations.dart';
 import '../../../core/routing/item_navigation.dart';
 import '../../../core/routing/routes.dart';
@@ -44,6 +45,8 @@ class ListHeader extends PageHeader {
                onEdit: onEdit,
                onSave: onSave,
                onCancel: onCancel ?? () {},
+               // Greyed out while images are still being added to the description.
+               saveBlocked: MarkdownTextController.addingImagesAnywhere,
              ),
          ],
        );

@@ -2,6 +2,7 @@ import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../components/rich_text/view/markdown_text_controller.dart';
 import '../../../../components/comments/view/comment_list.dart';
 import '../../../../components/item_info/view/item_info.dart';
 import '../../../../core/common/wire.dart';
@@ -206,6 +207,8 @@ class _EventPageState extends ConsumerState<_EventPage> {
               editing: _editing,
               onEdit: edit,
               onSave: () => _form.currentState?.save(),
+              // Greyed out while images are still being added to the note.
+              saveBlocked: MarkdownTextController.addingImagesAnywhere,
               onCancel: () => setState(() => _editing = false),
             ),
         ],
