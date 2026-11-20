@@ -41,7 +41,7 @@ qr:
 
 ## Erst einmal ohne Server
 
-Jede App startet mit **Ohne Server nutzen**: Alles bleibt auf dem Gerät, nichts wird irgendwohin gesendet. Das reicht, um Kalender, Listen und Wiki auszuprobieren. Um mit der Familie zu teilen, verbindest du die App später unter **Konto → Mit einem Server verbinden** mit eurem Server – was auf dem Gerät ist, wird übernommen. Wie ein Server eingerichtet wird, steht unter [Einrichtung]({{< relref "/setup" >}}), wie die Apps ihn finden, unter [Apps verbinden]({{< relref "/setup/apps" >}}).
+Die App kann auch ohne Server genutzt werden: Alles bleibt auf dem Gerät, nichts wird irgendwohin gesendet. Das reicht, um Kalender, Listen und Wiki auszuprobieren. Um mit der Familie zu teilen, verbindest du die App später unter **Konto → Mit einem Server verbinden** mit eurem Server – was auf dem Gerät ist, wird übernommen. Wie ein Server eingerichtet wird, steht unter [Einrichtung]({{< relref "/setup" >}}), wie die Apps ihn finden, unter [Apps verbinden]({{< relref "/setup/apps" >}}).
 
 ## Testversionen
 

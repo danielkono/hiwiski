@@ -23,8 +23,8 @@ version:
 | iPhone and iPad, iOS 15 or later | [TestFlight](https://testflight.apple.com/join/MhTFxGNk) — Apple's TestFlight app installs it |
 | Browser | Your server's address — or the [demo](https://demo.hiwiski.app/), which needs no server |
 
-Every app starts without a server ("Use without a server"); it connects to the family's
-server later and keeps what is on the device. The steps one by one, with a QR code for
+The app can also be used without a server; it connects to the family's server
+later and keeps what is on the device. The steps one by one, with a QR code for
 the phone, and where to send feedback: <https://hiwiski.app/en/apps/>.
 
 ## What everything hangs on

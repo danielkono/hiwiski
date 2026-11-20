@@ -41,7 +41,7 @@ qr:
 
 ## Without a server first
 
-Every app starts with **Use without a server**: everything stays on the device, and nothing is sent anywhere. That is enough to try the calendar, the lists and the wiki. To share with the family, connect the app to your family's server later under **Account → Connect to a server** — what is on the device comes along. How a server is set up is under [Setup]({{< relref "/setup" >}}), how the apps find it under [Connecting the apps]({{< relref "/setup/apps" >}}).
+The app can also be used without a server: everything stays on the device, and nothing is sent anywhere. That is enough to try the calendar, the lists and the wiki. To share with the family, connect the app to your family's server later under **Account → Connect to a server** — what is on the device comes along. How a server is set up is under [Setup]({{< relref "/setup" >}}), how the apps find it under [Connecting the apps]({{< relref "/setup/apps" >}}).
 
 ## Test versions
 
