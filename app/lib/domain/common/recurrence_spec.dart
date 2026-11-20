@@ -91,6 +91,9 @@ class RecurrenceSpec {
     DateTime.sunday: 'SU',
   };
 
+  /// The code of [weekday] (`DateTime.monday` … `DateTime.sunday`) in a rule: `MO`.
+  static String dayCode(int weekday) => _dayCodes[weekday] ?? _monday;
+
   /// `BYDAY` with an ordinal: `2FR`, `-1MO`.
   static final _ordinal = RegExp(r'^(-?\d)([A-Z]{2})$');
   static final _leadingOrdinal = RegExp(r'^-?\d');

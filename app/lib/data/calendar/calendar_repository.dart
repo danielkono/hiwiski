@@ -14,7 +14,6 @@ import '../../core/api/generated/export.dart'
         SubscriptionPreviewRequest;
 import '../../core/api/hiwiski_api.dart';
 import '../../core/db/hiwiski_database.dart';
-import '../../domain/common/recurrence.dart';
 import '../../domain/common/recurrence_spec.dart';
 import '../../domain/common/rrule_parts.dart';
 import '../../core/common/ids.dart';
@@ -27,8 +26,8 @@ import 'event_rows.dart';
 import '../../domain/calendar/event_draft.dart';
 import '../../domain/calendar/import_target.dart';
 import '../../domain/calendar/occurrence.dart';
+import '../../domain/calendar/reschedule.dart';
 import '../../domain/common/change.dart';
-import '../../domain/common/match_groups.dart';
 import '../../domain/tags/tag.dart';
 
 /// Calendars, events, subscriptions and ICS links — **always against the local database**.
@@ -385,11 +384,18 @@ class CalendarRepository {
   /// [from] on (moved by as much as the edit moved the start). Before, a `COUNT=10`
   /// series split at the 6th ran 15 times, and a cancelled day after the split came
   /// back.
+  ///
+  /// [carry] places such an exception, by its original start, in the new part, or
+  /// leaves it behind with `null` — for a move that shifts some weekdays of the series
+  /// and not others. [cancelled] are occurrences of the new part that the old one
+  /// keeps, so they would show twice.
   Future<String> splitSeries({
     required CalendarEvent event,
     required DateTime from,
     required String calendarId,
     required EventDraft draft,
+    DateTime? Function(DateTime original)? carry,
+    Iterable<DateTime> cancelled = const [],
   }) async {
     final start = switch (draft.time) {
       RecurringEvent(:final start) => start,
@@ -397,18 +403,21 @@ class CalendarRepository {
       TimedEvent(:final start) => start,
     };
     final shift = _wallClock(start).difference(_wallClock(from));
-    final carried = {
+    final place =
+        carry ?? (original) => _fromWallClock(_wallClock(original).add(shift));
+    final carried = <String, dynamic>{
       for (final MapEntry(:key, :value) in EventExpander.decodeExceptions(
         event.exceptions,
       ).entries)
         if (DateTime.tryParse(key) case final original?
             when !original.isBefore(from))
-          EventExpander.formatKey(
-            _fromWallClock(_wallClock(original).add(shift)),
-          ): value,
+          if (place(original) case final placed?)
+            EventExpander.formatKey(placed): value,
+      for (final day in cancelled)
+        EventExpander.formatKey(day): {EventExceptionFields.cancelled: true},
     };
     final rrule = draft.rrule == event.rrule
-        ? _remainingCount(event, from)
+        ? remainingRule(event, from)
         : draft.rrule;
 
     await truncateSeries(event, from);
@@ -419,36 +428,38 @@ class CalendarRepository {
     });
   }
 
-  /// The rule of [event] for what is left of it from [from] on: a `COUNT` counts
-  /// only the occurrences not yet had.
-  static String? _remainingCount(CalendarEvent event, DateTime from) {
-    final rrule = event.rrule;
-    if (rrule == null) return null;
-    final count = _count.firstMatch(rrule);
-    final seed = event.timeForm == TimeForms.allDay
-        ? event.startDate
-        : DateTime.tryParse(event.localStart ?? '');
-    if (count == null || seed == null) return rrule;
-    final had = const Recurrence()
-        .expand(
-          rrule: rrule,
-          start: seed,
-          timeZone: event.timeZone ?? utcTimeZone,
-          from: seed,
-          to: from,
-        )
-        .length;
-    final left = int.parse(count.groupOf(1)) - had;
-    return rrule.replaceFirst(
-      count.groupOf(0),
-      '${RruleParts.count}=${left < 1 ? 1 : left}',
-    );
+  /// A series after its [occurrence] moved to [moved] to another day or time: the
+  /// whole series, or with [from] what is left of it from there on. Its time and rule
+  /// are what [seriesAfterMove] makes of them, the rest is [draft].
+  ///
+  /// A drop in the week view and a new date in the editor both come here, so a series
+  /// moves the same way from either.
+  Future<void> moveSeries({
+    required CalendarEvent event,
+    required Occurrence occurrence,
+    required ({DateTime start, DateTime end, bool allDay}) moved,
+    required EventDraft draft,
+    String? calendarId,
+    DateTime? from,
+  }) async {
+    final series = seriesAfterMove(event, occurrence, moved, from: from);
+    final written = draft.withTime(series.time).withRule(series.rrule);
+    if (from != null) {
+      await splitSeries(
+        event: event,
+        from: from,
+        calendarId: calendarId ?? event.calendarId,
+        draft: written,
+        carry: series.carry,
+        cancelled: series.cancelled,
+      );
+      return;
+    }
+    await updateEvent(event, written, calendarId: calendarId);
+    for (final day in series.cancelled) {
+      await cancelOccurrence(event, day);
+    }
   }
-
-  static final _count = RegExp(
-    '${RruleParts.count}=(\\d+)',
-    caseSensitive: false,
-  );
 
   static DateTime _wallClock(DateTime time) => .utc(
     time.year,

@@ -107,6 +107,18 @@ class EventDraft {
     reminderMinutes: reminderMinutes,
   );
 
+  /// The same draft with another repeat rule.
+  EventDraft withRule(String? rrule) => .new(
+    title: title,
+    time: time,
+    description: description,
+    location: location,
+    rrule: rrule,
+    attendees: attendees,
+    tags: tags,
+    reminderMinutes: reminderMinutes,
+  );
+
   /// The same event once, detached from its series: no repeat rule, and a series'
   /// wall-clock time becomes a time of its own.
   EventDraft single() => .new(

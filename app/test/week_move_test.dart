@@ -176,4 +176,229 @@ void main() {
       expect(later.start, equals(DateTime(2026, 10, 20, 19)));
     });
   });
+
+  /// A weekly rule with named weekdays — what the editor writes for every weekly
+  /// series. Only the dragged weekday moves; the start used to move without the
+  /// rule, and the dropped event vanished from its week.
+  group('a series on named weekdays', () {
+    Future<List<DateTime>> startsIn(DateTime from, DateTime to) async {
+      final events = await container
+          .read(calendarRepositoryProvider)
+          .watchEvents()
+          .first;
+      return [
+        for (final event in events)
+          for (final occurrence in const EventExpander().expand(
+            event,
+            from,
+            to,
+          ))
+            occurrence.start,
+      ]..sort();
+    }
+
+    Future<Occurrence> seriesOn(
+      String rrule,
+      DateTime first,
+      DateTime occurrence,
+    ) async {
+      await create(
+        EventDraft(
+          title: 'Football',
+          rrule: rrule,
+          time: RecurringEvent(first, first.add(const Duration(hours: 1))),
+        ),
+      );
+      return (await occurrencesOn(occurrence))
+          .singleWhere((item) => item.start == occurrence);
+    }
+
+    Future<void> drop(
+      Occurrence occurrence,
+      DateTime at, {
+      SeriesScope scope = .wholeSeries,
+    }) => viewModel().moveOccurrence(
+      occurrence,
+      WeekSlot(at, at.hour * 60 + at.minute),
+      scope: scope,
+    );
+
+    test(
+      'every second Thursday, moved to a Friday, is on that Friday',
+      () async {
+        final occurrence = await seriesOn(
+          'FREQ=WEEKLY;INTERVAL=2;BYDAY=TH',
+          DateTime(2026, 11, 5, 14),
+          DateTime(2026, 11, 19, 14),
+        );
+
+        await drop(occurrence, DateTime(2026, 11, 20, 14));
+
+        expect(
+          await startsIn(DateTime(2026, 11, 2), DateTime(2026, 12, 7)),
+          equals([
+            DateTime(2026, 11, 6, 14),
+            DateTime(2026, 11, 20, 14),
+            DateTime(2026, 12, 4, 14),
+          ]),
+        );
+      },
+    );
+
+    test('the whole series: Monday and Wednesday become Tuesday and '
+        'Wednesday', () async {
+      final occurrence = await seriesOn(
+        'FREQ=WEEKLY;BYDAY=MO,WE',
+        DateTime(2026, 10, 5, 9),
+        DateTime(2026, 10, 12, 9),
+      );
+
+      await drop(occurrence, DateTime(2026, 10, 13, 10));
+
+      expect(
+        await startsIn(DateTime(2026, 10, 5), DateTime(2026, 10, 19)),
+        equals([
+          DateTime(2026, 10, 6, 10),
+          DateTime(2026, 10, 7, 10),
+          DateTime(2026, 10, 13, 10),
+          DateTime(2026, 10, 14, 10),
+        ]),
+      );
+    });
+
+    test(
+      'this and all following: the weeks before stay as they were',
+      () async {
+        final occurrence = await seriesOn(
+          'FREQ=WEEKLY;BYDAY=MO,WE',
+          DateTime(2026, 10, 5, 9),
+          DateTime(2026, 10, 12, 9),
+        );
+
+        await drop(
+          occurrence,
+          DateTime(2026, 10, 13, 10),
+          scope: .thisAndFollowing,
+        );
+
+        expect(
+          await startsIn(DateTime(2026, 10, 5), DateTime(2026, 10, 26)),
+          equals([
+            DateTime(2026, 10, 5, 9),
+            DateTime(2026, 10, 7, 9),
+            DateTime(2026, 10, 13, 10),
+            DateTime(2026, 10, 14, 10),
+            DateTime(2026, 10, 20, 10),
+            DateTime(2026, 10, 21, 10),
+          ]),
+        );
+      },
+    );
+
+    test('this and all following, moved before a weekday it kept: that day '
+        'shows once', () async {
+      final occurrence = await seriesOn(
+        'FREQ=WEEKLY;BYDAY=MO,WE,FR',
+        DateTime(2026, 10, 5, 9),
+        DateTime(2026, 10, 16, 9),
+      );
+
+      // Friday 16 to Tuesday 13 — Wednesday 14 still belongs to the old part.
+      await drop(
+        occurrence,
+        DateTime(2026, 10, 13, 10),
+        scope: .thisAndFollowing,
+      );
+
+      expect(
+        await startsIn(DateTime(2026, 10, 12), DateTime(2026, 10, 26)),
+        equals([
+          DateTime(2026, 10, 12, 9),
+          DateTime(2026, 10, 13, 10),
+          DateTime(2026, 10, 14, 9),
+          DateTime(2026, 10, 19, 10),
+          DateTime(2026, 10, 20, 10),
+          DateTime(2026, 10, 21, 10),
+        ]),
+      );
+    });
+
+    test('the whole series, moved before its first day, gains no day it never '
+        'had', () async {
+      // From Thursday 5 November: Thursday 5 and Friday 6 in the first week.
+      final occurrence = await seriesOn(
+        'FREQ=WEEKLY;BYDAY=TU,TH,FR',
+        DateTime(2026, 11, 5, 9),
+        DateTime(2026, 11, 13, 9),
+      );
+
+      await drop(occurrence, DateTime(2026, 11, 9, 9));
+
+      expect(
+        await startsIn(DateTime(2026, 11, 2), DateTime(2026, 11, 16)),
+        equals([
+          DateTime(2026, 11, 2, 9),
+          DateTime(2026, 11, 5, 9),
+          DateTime(2026, 11, 9, 9),
+          DateTime(2026, 11, 10, 9),
+          DateTime(2026, 11, 12, 9),
+        ]),
+      );
+    });
+
+    test('a cancelled day stays cancelled on its own weekday', () async {
+      await seriesOn(
+        'FREQ=WEEKLY;BYDAY=MO,WE',
+        DateTime(2026, 10, 5, 9),
+        DateTime(2026, 10, 12, 9),
+      );
+      final calendars = container.read(calendarRepositoryProvider);
+      Future<CalendarEvent> series() async =>
+          (await calendars.watchEvents().first).single;
+      await calendars.cancelOccurrence(
+        await series(),
+        DateTime(2026, 10, 21, 9),
+      );
+      await calendars.cancelOccurrence(
+        await series(),
+        DateTime(2026, 10, 26, 9),
+      );
+      // The occurrence as it is now, with the cancelled days on its series.
+      final current = (await occurrencesOn(DateTime(2026, 10, 12))).single;
+
+      await drop(current, DateTime(2026, 10, 13, 10), scope: .thisAndFollowing);
+
+      // Wednesday 21 stays off; Monday 26 is off as Tuesday 27.
+      expect(
+        await startsIn(DateTime(2026, 10, 19), DateTime(2026, 11, 2)),
+        equals([DateTime(2026, 10, 20, 10), DateTime(2026, 10, 28, 10)]),
+      );
+    });
+
+    test('this and all following keeps the count a series has left', () async {
+      final occurrence = await seriesOn(
+        'FREQ=WEEKLY;BYDAY=MO,WE;COUNT=6',
+        DateTime(2026, 10, 5, 9),
+        DateTime(2026, 10, 12, 9),
+      );
+
+      await drop(
+        occurrence,
+        DateTime(2026, 10, 13, 10),
+        scope: .thisAndFollowing,
+      );
+
+      expect(
+        await startsIn(DateTime(2026, 10, 1), DateTime(2026, 12, 1)),
+        equals([
+          DateTime(2026, 10, 5, 9),
+          DateTime(2026, 10, 7, 9),
+          DateTime(2026, 10, 13, 10),
+          DateTime(2026, 10, 14, 10),
+          DateTime(2026, 10, 20, 10),
+          DateTime(2026, 10, 21, 10),
+        ]),
+      );
+    });
+  });
 }

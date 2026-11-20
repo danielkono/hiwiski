@@ -12,6 +12,24 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
 
 ## Unreleased
 
+### Fixed
+
+- **A series moved to another day lands there** — dragged in the week view, or given
+  a new date in the editor. A weekly series on named weekdays — every weekly series
+  the app creates — kept its weekdays when moved: an event moved from Thursday to
+  Friday vanished from its week, or jumped back to Thursday. Now the moved weekday
+  moves and the others stay: on Monday and Wednesday, a Monday moved to Tuesday makes
+  it Tuesday and Wednesday. A monthly series on, say, the second Tuesday becomes one
+  on the weekday it was moved to. The editor's repeat field shows the new rule as
+  soon as the date changes. The weeks before stay as they were with *This and all
+  following*, and cancelled days stay cancelled.
+- **A move in the week view counts days across the end of a month.** A whole series
+  or an event over several days dragged from 31 October to 1 November moved by
+  70 days, and an all-day event from 30 October to 2 November dragged elsewhere
+  became 72 days long.
+- **The demo's weekly events repeat.** Events with a time showed only once, and
+  dragging one moved the whole series without asking which occurrences.
+
 ## 2026.1.14 — 2026-11-19 {#2026.1.14}
 
 ### Fixed

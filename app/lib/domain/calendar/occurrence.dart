@@ -2,7 +2,9 @@ import 'package:clock/clock.dart';
 
 import 'dart:convert';
 
+import '../common/match_groups.dart';
 import '../common/recurrence.dart';
+import '../common/rrule_parts.dart';
 import '../../core/common/wire.dart';
 import '../common/calendar_days.dart';
 import 'calendar_items.dart';
@@ -428,6 +430,36 @@ bool nothingBefore(CalendarEvent event, DateTime originalStart) {
         (item) => !(item.originalStart ?? item.start).isBefore(originalStart),
       );
 }
+
+/// The rule of [event] for what is left of it from [from] on: a `COUNT` counts
+/// only the occurrences not yet had.
+String? remainingRule(CalendarEvent event, DateTime from) {
+  final rrule = event.rrule;
+  if (rrule == null) return null;
+  final count = _count.firstMatch(rrule);
+  final seed = event.timeForm == TimeForms.allDay
+      ? event.startDate
+      : DateTime.tryParse(event.localStart ?? '');
+  if (count == null || seed == null) return rrule;
+  final had = const Recurrence()
+      .expand(
+        rrule: rrule,
+        start: seed,
+        timeZone: event.timeZone ?? utcTimeZone,
+        from: seed,
+        to: from,
+      )
+      .length;
+  return withCount(rrule, int.parse(count.groupOf(1)) - had);
+}
+
+/// [rrule] with its `COUNT` set to [count] — at least 1, since a series of none is
+/// not one. A rule without a `COUNT` stays as it is.
+String withCount(String rrule, int count) =>
+    rrule.replaceFirst(_count, '${RruleParts.count}=${count < 1 ? 1 : count}');
+
+/// The `COUNT` of a rule.
+final _count = RegExp('${RruleParts.count}=(\\d+)', caseSensitive: false);
 
 /// The occurrence one means when speaking of [event] — the one at [at] if given, else
 /// the one around now; without one nearby the next, searched up to a year ahead, or

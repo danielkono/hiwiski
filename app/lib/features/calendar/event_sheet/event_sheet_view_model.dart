@@ -11,6 +11,8 @@ import '../../../domain/calendar/calendar_items.dart';
 import '../../../domain/calendar/calendar_kinds.dart';
 import '../../../domain/calendar/event_draft.dart';
 import '../../../domain/calendar/occurrence.dart';
+import '../../../domain/calendar/reschedule.dart';
+import '../../../domain/common/calendar_days.dart';
 
 part 'event_sheet_view_model.g.dart';
 
@@ -137,6 +139,7 @@ class EventSheetViewModel extends _$EventSheetViewModel {
         SeriesScope.wholeSeries,
       _ => scope,
     };
+    final moved = spanOf(draft.time);
     // `from` is there whenever the reach is not the whole series.
     switch ((reach, from)) {
       case (SeriesScope.onlyThis, final from?):
@@ -145,6 +148,28 @@ class EventSheetViewModel extends _$EventSheetViewModel {
         // the world does it this way.
         await calendars.cancelOccurrence(event, from);
         await calendars.createEvent(calendarId: target, draft: draft.single());
+      // A new date moves the series as a drop in the week view does — with a rule on
+      // named days only the day that was moved. The form has already shown that rule;
+      // one the member wrote by hand is theirs and is written as it is. Moved by the
+      // date alone, the series kept `BYDAY=TH` with its start on a Friday, and the
+      // occurrence was gone.
+      case (_, final from?)
+          when occurrence != null &&
+              daysFrom(occurrence.start, moved.start) != 0 &&
+              draft.rrule ==
+                  ruleAfterMove(
+                    event.rrule,
+                    original: from,
+                    target: moved.start,
+                  ):
+        await calendars.moveSeries(
+          event: event,
+          occurrence: occurrence,
+          moved: moved,
+          draft: draft,
+          calendarId: target,
+          from: reach == .thisAndFollowing ? from : null,
+        );
       case (SeriesScope.thisAndFollowing, final from?):
         await calendars.splitSeries(
           event: event,

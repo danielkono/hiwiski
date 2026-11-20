@@ -334,17 +334,14 @@ class CalendarOverviewViewModel extends _$CalendarOverviewViewModel {
           calendarId: event.calendarId,
           draft: draftOf(event, timeOf(moved, series: false)).single(),
         );
-      case (SeriesScope.thisAndFollowing, final from?):
-        await calendars.splitSeries(
-          event: event,
-          from: from,
-          calendarId: event.calendarId,
-          draft: draftOf(event, timeOf(moved, series: true)),
-        );
       case _ when occurrence.isSeries:
-        await calendars.updateEvent(
-          event,
-          draftOf(event, seriesTimeAfterMove(event, occurrence, moved)),
+        await calendars.moveSeries(
+          event: event,
+          occurrence: occurrence,
+          moved: moved,
+          // Its time and rule are replaced by the move's.
+          draft: draftOf(event, timeOf(moved, series: true)),
+          from: reach == .thisAndFollowing ? from : null,
         );
       case _:
         await calendars.updateEvent(

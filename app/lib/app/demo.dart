@@ -230,25 +230,30 @@ class Demo {
       );
       for (final event in _list(entry[_events])) {
         final day = _dayOf(event, today);
+        final rrule = event[_rrule] as String?;
+        DateTime start() => _at(day, _text(event, _startTime));
+        DateTime end() => _at(day, _text(event, _endTime));
         await calendar.createEvent(
           calendarId: calendarId,
           draft: EventDraft(
             title: _text(event, _title),
-            time: event[_allDay] == true
-                ? AllDayEvent(
-                    day,
-                    DateTime(
-                      day.year,
-                      day.month,
-                      day.day + (event[_days] as int? ?? 1) - 1,
-                    ),
-                  )
-                : TimedEvent(
-                    _at(day, _text(event, _startTime)),
-                    _at(day, _text(event, _endTime)),
-                  ),
+            // A series with a time is stored on the wall clock, as the editor stores
+            // it. As a moment with a rule it showed only once, on its first day, and
+            // a drag moved the whole series without asking.
+            time: switch ((event[_allDay] == true, rrule != null)) {
+              (true, _) => AllDayEvent(
+                day,
+                DateTime(
+                  day.year,
+                  day.month,
+                  day.day + (event[_days] as int? ?? 1) - 1,
+                ),
+              ),
+              (false, true) => RecurringEvent(start(), end()),
+              (false, false) => TimedEvent(start(), end()),
+            },
             location: event[_location] as String?,
-            rrule: event[_rrule] as String?,
+            rrule: rrule,
             attendees: members(event[_attendees]),
             tags: tags(event[_tags]),
           ),
