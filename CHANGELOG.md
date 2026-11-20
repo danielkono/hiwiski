@@ -59,6 +59,14 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
   tasks and the calendar, which are simply there. In the wiki the button also no
   longer shrinks away and turns back in when a page opens and closes in place on
   the phone.
+- **A reminder says "today" and "tomorrow" as of the moment it rings.** It counted
+  from when the app had set it up, often the day before: a reminder at 8:00 for an
+  event at 8:00 could say "Tomorrow, 08:00". Reminders already set up keep their
+  old text until the app next opens or syncs.
+- **The week view's red line for the current time moves on.** It stayed where it
+  was when the week was shown — on the wall tablet, on a board tile, or in the
+  calendar left open or brought back from the background. Now it moves every
+  minute, and at midnight today's column moves to the next day.
 
 ### Upgrade notes
 

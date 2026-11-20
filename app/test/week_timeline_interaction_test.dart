@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -216,5 +217,61 @@ void main() {
     // As tall as what it shows: a short card stood half empty at the maximum height.
     expect(end.height, lessThan(HiwiskiMetrics.weekPreviewMaxHeight / 2));
     debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets('the now line moves on with the clock, and at once when the app '
+      'comes back', (tester) async {
+    // Wednesday of the week shown, running with the test's fake time; [away] is time
+    // that passes while the app is in the background and its timers are held.
+    final fake = clock;
+    final started = fake.now();
+    Duration away = .zero;
+    final wednesday = Clock(
+      () => DateTime(
+        2026,
+        10,
+        14,
+        10,
+        0,
+        30,
+      ).add(fake.now().difference(started) + away),
+    );
+
+    await withClock(wednesday, () async {
+      await pump(tester);
+      final nowLine = find.byWidgetPredicate(
+        (widget) => '${widget.runtimeType}' == '_NowLine',
+      );
+      final hour = lineOf(tester, '12:00') - lineOf(tester, '11:00');
+      final atTen = tester.getTopLeft(nowLine).dy;
+
+      // Left open, nothing else rebuilds the week.
+      await tester.pump(const Duration(minutes: 30));
+      expect(
+        tester.getTopLeft(nowLine).dy,
+        moreOrLessEquals(atTen + hour / 2, epsilon: 1),
+      );
+
+      for (final state in [
+        AppLifecycleState.inactive,
+        AppLifecycleState.hidden,
+        AppLifecycleState.paused,
+      ]) {
+        tester.binding.handleAppLifecycleStateChanged(state);
+      }
+      away = const Duration(hours: 2);
+      for (final state in [
+        AppLifecycleState.hidden,
+        AppLifecycleState.inactive,
+        AppLifecycleState.resumed,
+      ]) {
+        tester.binding.handleAppLifecycleStateChanged(state);
+      }
+      await tester.pump();
+      expect(
+        tester.getTopLeft(nowLine).dy,
+        moreOrLessEquals(atTen + 2.5 * hour, epsilon: 1),
+      );
+    });
   });
 }

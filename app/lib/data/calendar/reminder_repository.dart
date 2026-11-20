@@ -139,7 +139,7 @@ class ReminderRepository {
                   end: occurrence.end,
                   allDay: occurrence.allDay,
                 ),
-                now: now,
+                shownAt: when,
                 words: words,
               ),
               event.location,

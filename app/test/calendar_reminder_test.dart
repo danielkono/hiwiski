@@ -32,12 +32,12 @@ void main() {
   });
 
   group('the text says when', () {
-    final now = DateTime(2026, 10, 25, 9);
+    final shownAt = DateTime(2026, 10, 25, 9);
 
     String when(DateTime start, DateTime end, {bool allDay = false}) =>
         reminderWhen(
           (start: start, end: end, allDay: allDay),
-          now: now,
+          shownAt: shownAt,
           words: _words,
         );
 
@@ -149,7 +149,8 @@ void main() {
         await reminders.rescheduleAll();
 
         expect(scheduler.scheduled.map((r) => r.title), equals(['Dentist']));
-        expect(scheduler.scheduled.single.body, equals('day, 10:00–11:00'));
+        // Two days off now, but the reminder rings on the day itself.
+        expect(scheduler.scheduled.single.body, equals('today, 10:00–11:00'));
 
         // Tapped, it leads to its event at this occurrence.
         final dentist = (await container
@@ -175,6 +176,46 @@ void main() {
         );
       },
     );
+
+    test('the day is told from when the reminder rings, not from when it '
+        'is scheduled', () async {
+      final calendars = container.read(calendarRepositoryProvider);
+      final calendarId = await calendars.createCalendar(
+        name: 'Family',
+        colorToken: ColorTokens.blue,
+      );
+      final soon = addDays(DateTime.now(), 2);
+      final start = DateTime(soon.year, soon.month, soon.day, 10);
+      for (final (title, minutes) in [
+        ('Shortly before', 30),
+        ('A day ahead', 24 * 60),
+      ]) {
+        await calendars.createEvent(
+          calendarId: calendarId,
+          draft: EventDraft(
+            title: title,
+            time: TimedEvent(start, start.add(const Duration(hours: 1))),
+            reminderMinutes: minutes,
+          ),
+        );
+      }
+      final reminders = ReminderRepository(
+        db: db,
+        scheduler: scheduler,
+        timeZone: 'Europe/Berlin',
+        words: () => _words,
+      );
+
+      await reminders.rescheduleAll();
+
+      expect(
+        {for (final r in scheduler.scheduled) r.title: r.body},
+        equals({
+          'A day ahead': 'tomorrow, 10:00–11:00',
+          'Shortly before': 'today, 10:00–11:00',
+        }),
+      );
+    });
 
     test('a run without the app schedules from the database and asks '
         'nobody', () async {

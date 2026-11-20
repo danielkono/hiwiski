@@ -28,13 +28,18 @@ class const ReminderWords({
 ///
 /// A bare "10:00" left open which day, and a reminder set a day ahead read as if the
 /// event were today; an all-day event said "00:00".
+///
+/// "Today" and "tomorrow" are told from [shownAt], the moment the notification
+/// appears, not from when it is scheduled: the text is fixed when the reminder is
+/// handed to the system, often days before. Counted from then, a reminder scheduled
+/// the evening before said "Tomorrow, 08:00" when it rang at 07:30 on the day itself.
 String reminderWhen(
   ({DateTime start, DateTime end, bool allDay}) occurrence, {
-  required DateTime now,
+  required DateTime shownAt,
   required ReminderWords words,
 }) {
   final (:start, :end, :allDay) = occurrence;
-  final today = startOfDay(now);
+  final today = startOfDay(shownAt);
   final day = switch (startOfDay(start)) {
     final day when day == today => words.today,
     final day when day == addDays(today, 1) => words.tomorrow,
