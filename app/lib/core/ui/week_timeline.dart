@@ -136,8 +136,47 @@ class _WeekTimelineState extends State<WeekTimeline> {
 
   bool get _interactive => !widget.kiosk && widget.onMove != null;
 
+  /// Where the now line and today's column stand. Kept here and moved on every full
+  /// minute by [_minuteTimer]: nothing else rebuilds the week while it is only looked
+  /// at — on the wall tablet, or the calendar left open —, and read from the clock
+  /// while building they stood where they were when it was last built.
+  DateTime _now = clock.now();
+  Timer? _minuteTimer;
+
+  /// Back in the foreground the week is rebuilt at once: while the app is in the
+  /// background the platform may hold its timers, and the line would wait for the
+  /// next minute that is still pending.
+  late final AppLifecycleListener _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onResume: _onMinute);
+    _scheduleMinute();
+  }
+
+  void _scheduleMinute() {
+    _minuteTimer?.cancel();
+    // What is left of this minute, not the next minute built as a date: on the night
+    // the clocks go back, 02:59 is followed by 02:00, and "03:00" is an hour away.
+    final intoMinute = Duration(
+      seconds: _now.second,
+      milliseconds: _now.millisecond,
+      microseconds: _now.microsecond,
+    );
+    _minuteTimer = Timer(const Duration(minutes: 1) - intoMinute, _onMinute);
+  }
+
+  void _onMinute() {
+    if (!mounted) return;
+    setState(() => _now = clock.now());
+    _scheduleMinute();
+  }
+
   @override
   void dispose() {
+    _minuteTimer?.cancel();
+    _lifecycle.dispose();
     _hoverTimer?.cancel();
     _hideTimer?.cancel();
     _card
@@ -336,7 +375,7 @@ class _WeekTimelineState extends State<WeekTimeline> {
       widget.occurrences,
       always: _interactive ? widget.alwaysShown : null,
     );
-    final today = startOfDay(clock.now());
+    final today = startOfDay(_now);
     final first = startOfDay(days.first);
     final last = startOfDay(days.last);
 
@@ -387,6 +426,7 @@ class _WeekTimelineState extends State<WeekTimeline> {
           scale: scale,
           column: column,
           today: days.indexWhere((day) => startOfDay(day) == today),
+          now: _now,
           calendars: widget.calendars,
           kiosk: widget.kiosk,
           locale: locale,
@@ -1046,6 +1086,7 @@ class _Hours extends StatelessWidget {
     required this.scale,
     required this.column,
     required this.today,
+    required this.now,
     required this.calendars,
     required this.kiosk,
     required this.locale,
@@ -1065,6 +1106,9 @@ class _Hours extends StatelessWidget {
 
   /// The column of today, or -1.
   final int today;
+
+  /// Where the now line stands in today's column.
+  final DateTime now;
   final Map<String, Calendar> calendars;
   final bool kiosk;
   final String locale;
@@ -1105,7 +1149,6 @@ class _Hours extends StatelessWidget {
     // Every hour where they have room, every second one where they would crowd.
     final labelEvery = scale * 60 < 22 ? 120 : 60;
 
-    final now = clock.now();
     final nowY = today < 0 ? null : _y(now.hour * 60 + now.minute);
 
     double offset = 0.0;
