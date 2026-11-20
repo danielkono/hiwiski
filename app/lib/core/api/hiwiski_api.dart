@@ -102,6 +102,19 @@ class HiwiskiApi {
 
   AuthClient get auth => .new(_dio);
 
+  /// The auth calls in the name of [token] instead of the stored one — for a
+  /// sign-out, which drops the token on the device first and tells the server
+  /// afterwards. By then the store is empty, or already holds the token of whoever
+  /// signed in next: without the interceptor, that one cannot slip in and be revoked.
+  AuthClient authAs(String token) => .new(
+    _dio.clone(
+      options: _dio.options.copyWith(
+        headers: {..._dio.options.headers, _authorization: '$_bearer $token'},
+      ),
+      interceptors: Interceptors(),
+    ),
+  );
+
   DevicesClient get devices => .new(_dio);
 
   MembersClient get members => .new(_dio);

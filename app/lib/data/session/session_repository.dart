@@ -86,6 +86,9 @@ class SessionRepository {
 
   Future<void> clearToken() => _tokens.clear();
 
+  /// The device's token, for a logout sent after it was dropped — see [logoutAs].
+  Future<String?> token() => _tokens.read();
+
   Future<Session> session() => HiwiskiApi.run(() => _api.auth.getSession());
 
   /// How this device introduces itself to the server.
@@ -194,6 +197,11 @@ class SessionRepository {
   /// Signs this device out on the server. The token stays — dropping it is the
   /// caller's decision, and it drops it even when the server is unreachable.
   Future<void> logout() => HiwiskiApi.run(() => _api.auth.logout());
+
+  /// Signs [token] out on the server — a token the device has dropped already, so
+  /// that signing out does not wait for a server that may not answer.
+  Future<void> logoutAs(String token) =>
+      HiwiskiApi.run(() => _api.authAs(token).logout());
 
   // --- The member ----------------------------------------------------------------
 

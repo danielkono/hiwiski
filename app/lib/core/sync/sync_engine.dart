@@ -206,8 +206,16 @@ class SyncEngine implements SyncTrigger {
   /// The last run before signing out: after a background run that is pushing the same
   /// outbox right now — a run here would only step aside for it, and the count of what
   /// is still waiting afterwards would name changes as lost that are on their way.
+  ///
+  /// **No run when nothing waits to go out.** All a run could do then is fetch what
+  /// the sign-out clears right after — and with the server out of reach it held the
+  /// confirmation and then the sign-out itself up for a connection timeout each,
+  /// while the device stayed signed in.
   Future<void> syncLast() async {
     await _awaitElsewhere();
+    if (!await _outbox.holdsOutgoing() && !await _pendingShares.waiting()) {
+      return;
+    }
     await syncNow();
   }
 

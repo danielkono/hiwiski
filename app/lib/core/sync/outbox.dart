@@ -107,6 +107,22 @@ class Outbox {
       ),
   ];
 
+  /// Whether a run could still get anything out: an entry waiting, or one parked
+  /// until the next pull brings its board.
+  Future<bool> holdsOutgoing() async {
+    final entry =
+        await (_db.select(_db.outboxEntries)
+              ..where(
+                (entry) => entry.state.isIn(const [
+                  OutboxStates.pending,
+                  OutboxStates.parked,
+                ]),
+              )
+              ..limit(1))
+            .getSingleOrNull();
+    return entry != null;
+  }
+
   Stream<int> watchPendingCount() {
     final query = _db.selectOnly(_db.outboxEntries)
       ..addColumns([_db.outboxEntries.mutationId.count()])

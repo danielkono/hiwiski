@@ -1583,6 +1583,7 @@
   },
   "unitMinutesSuffix": "min",
   "accountSignOutSyncing": "Syncing your changes first …",
+  "accountSignOutRetrying": "Trying to sync once more, one moment …",
   "accountSignOutSynced": "Everything is on the server.",
   "accountSignOutLost": "{count, plural, =1{1 change could not be synced. If you sign out now, it is lost for good.} other{{count} changes could not be synced. If you sign out now, they are lost for good.}}",
   "@accountSignOutLost": {"placeholders": {"count": {"type": "int"}}},
