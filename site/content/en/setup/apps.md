@@ -4,6 +4,8 @@ description: Connecting the Hiwiski apps for Android, iOS and the web to your fa
 weight: 20
 ---
 
+Where the apps for Android, iPhone and iPad come from is under [Apps]({{< relref "/apps" >}}); in the browser the server's address is enough.
+
 ## The address
 
 The server address in the app is `http://<address>:<HIWISKI_HTTP_PORT>`. If the port is 80 it can be left out.

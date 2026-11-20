@@ -12,6 +12,21 @@ telemetry.
 - **Try it without installing anything:** the demo, linked from the website
 - **What changed:** [`CHANGELOG.md`](CHANGELOG.md)
 
+## Apps
+
+Until the apps are in the App Store and on Google Play, anyone can install them as a test
+version:
+
+| Platform | Get it |
+| --- | --- |
+| Android 8.0 or later | The test on Google Play: join the [testers group](https://groups.google.com/g/hiwiski-testers), then [become a tester](https://play.google.com/apps/testing/de.danielkononov.hiwiski) and install Hiwiski from Google Play |
+| iPhone and iPad, iOS 15 or later | [TestFlight](https://testflight.apple.com/join/MhTFxGNk) — Apple's TestFlight app installs it |
+| Browser | Your server's address — or the [demo](https://demo.hiwiski.app/), which needs no server |
+
+The app can also be used without a server; it connects to the family's server
+later and keeps what is on the device. The steps one by one, with a QR code for
+the phone, and where to send feedback: <https://hiwiski.app/en/apps/>.
+
 ## What everything hangs on
 
 1. **Usable offline.** A home server cannot be reached from on the road. Every input

@@ -4,6 +4,8 @@ url: /de/einrichtung/apps/
 weight: 20
 ---
 
+Woher die Apps für Android, iPhone und iPad kommen, steht unter [Apps]({{< relref "/apps" >}}); im Browser genügt die Adresse des Servers.
+
 ## Die Adresse
 
 Die Serveradresse in der App lautet `http://<Adresse>:<HIWISKI_HTTP_PORT>`. Ist der Port 80, kann er weggelassen werden.

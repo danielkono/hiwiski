@@ -12,6 +12,10 @@ Die meisten Fragen beantwortet die [Einrichtung]({{< relref "setup" >}}), besond
 
 Alles zur Entwicklung läuft über die [Issues auf GitHub]({{< param "github" >}}/issues). Bei einem Fehler hilft: die Version (in der App unter *Konto → Über Hiwiski*), die Plattform, was du getan hast, was du erwartet hast und was stattdessen passiert ist.
 
+## Die Testversionen
+
+Wie du Feedback zu den Testversionen der Apps gibst – aus TestFlight, per E-Mail oder als Issue –, steht unter [Apps]({{< relref "/apps#feedback" >}}).
+
 ## Sicherheitslücken
 
 Bitte nicht in einem öffentlichen Issue melden, sondern über **Report a vulnerability** im Reiter *Security* auf [GitHub]({{< param "github" >}}/security).
