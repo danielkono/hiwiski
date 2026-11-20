@@ -12,6 +12,18 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
 
 ## Unreleased
 
+### Changed
+
+- **The setup wizard no longer asks for a setup code.** Open the server's address and
+  set up the family right away — no looking through `docker compose logs` first. On a
+  home network nobody else can reach the wizard before you. A server reachable from
+  the internet switches the code back on with `HIWISKI_SETUP_CODE_REQUIRED=true` in
+  `.env`; then the wizard asks for the code from the log as before. A fixed
+  `HIWISKI_SETUP_CODE` keeps it switched on.
+- **A wrong setup code is said at once.** Where the wizard asks for one, it checks
+  the code before its steps — it used to come back only after the last one, with
+  everything filled in.
+
 ### Fixed
 
 - **A series moved to another day lands there** — dragged in the week view, or given
@@ -47,6 +59,15 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
   tasks and the calendar, which are simply there. In the wiki the button also no
   longer shrinks away and turns back in when a page opens and closes in place on
   the phone.
+
+### Upgrade notes
+
+- **A server reachable from the internet that is not set up yet:** add
+  `HIWISKI_SETUP_CODE_REQUIRED=true` to `.env` and fetch the new `docker-compose.yml`,
+  which passes the variable through — otherwise whoever opens the wizard first becomes
+  the administrator. A server that is set up already is not affected.
+- An app older than this version still shows the code field on a server that asks for
+  none: any text will do there.
 
 ## 2026.1.14 — 2026-11-19 {#2026.1.14}
 

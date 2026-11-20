@@ -7,7 +7,9 @@ hiwiski:
   backup-path: ${java.io.tmpdir}/hiwiski-test/backup
   min-client-version: 2026.1.0
   # Fixed, so the tests can run the wizard (Family.setUp); a real server prints a new one
-  # at every start until it is set up.
+  # at every start until it is set up. Fixed, it is also asked for -- the tests check the
+  # barrier that a server reachable from the internet switches on (SetupWithoutCodeIT:
+  # the default without one).
   setup-code: TEST-CODE
   # No scheduled backup in the middle of a test: a fresh family is due at once, and the
   # archive it wrote would show up in every test that counts them.

@@ -47,16 +47,37 @@ class BackupFileClient {
   }) =>
       _dio.download('$_backups/$id$_file', path, onReceiveProgress: onProgress);
 
-  /// `POST /api/v1/admin/backups/uploads`, or — with [setupCode], on a fresh server —
-  /// `POST /api/v1/setup/uploads`. The body is the file, streamed.
+  /// `POST /api/v1/admin/backups/uploads`. The body is the file, streamed.
   Future<UploadedBackup> upload(
+    Stream<List<int>> bytes,
+    int length, {
+    ProgressCallback? onProgress,
+  }) => _upload(_uploads, bytes, length, onProgress: onProgress);
+
+  /// `POST /api/v1/setup/uploads`, on a fresh server — with [setupCode] where the
+  /// server asks for one. The body is the file, streamed.
+  Future<UploadedBackup> uploadForSetup(
+    Stream<List<int>> bytes,
+    int length, {
+    String? setupCode,
+    ProgressCallback? onProgress,
+  }) => _upload(
+    _setupUploads,
+    bytes,
+    length,
+    setupCode: setupCode,
+    onProgress: onProgress,
+  );
+
+  Future<UploadedBackup> _upload(
+    String path,
     Stream<List<int>> bytes,
     int length, {
     String? setupCode,
     ProgressCallback? onProgress,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      setupCode == null ? _uploads : _setupUploads,
+      path,
       data: bytes,
       options: Options(
         contentType: _octetStream,

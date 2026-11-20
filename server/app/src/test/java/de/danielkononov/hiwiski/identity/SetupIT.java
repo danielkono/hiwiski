@@ -96,6 +96,43 @@ class SetupIT {
                 .isEqualTo("setup.already_completed");
     }
 
+    /**
+     * The wizard checks the code before its steps: a wrong one is said at once, not
+     * after everything is filled in.
+     */
+    @Test
+    void theCodeIsCheckedBeforeTheSteps() {
+        assertThat(checkCode("WRON-GCOD")).as("a wrong code").isEqualTo(403);
+        assertThat(checkCode("test-code")).as("the code, typed in lower case").isEqualTo(204);
+        rest.get()
+                .uri("/api/v1/handshake")
+                .exchange()
+                .expectBody()
+                .jsonPath("$.setupCompleted")
+                .isEqualTo(false);
+    }
+
+    /** Set up already: said only to whoever holds the code. */
+    @Test
+    void aCheckAfterTheSetupIsAConflictOnlyWithTheCode() {
+        Family.setUp(rest);
+        assertThat(checkCode(Family.SETUP_CODE)).as("with the code").isEqualTo(409);
+        assertThat(checkCode("WRON-GCOD")).as("without it").isEqualTo(403);
+    }
+
+    private int checkCode(String code) {
+        return rest.post()
+                .uri("/api/v1/setup/code")
+                // An address of its own: the wrong codes here spend no other test's budget.
+                .header("X-Forwarded-For", "203.0.113.21")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("setupCode", code))
+                .exchange()
+                .returnResult(Map.class)
+                .getStatus()
+                .value();
+    }
+
     @Test
     void anInvalidTimezoneAbortsAndLeavesNothingHalfDone() {
         rest.post()

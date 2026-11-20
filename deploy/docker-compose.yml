@@ -2,8 +2,9 @@
 #
 #   1. Fetch this file and .env.example, fill in .env
 #   2. docker compose up -d
-#   3. Open the address in the browser -- the setup wizard is running. It asks for the
-#      setup code from `docker compose logs app | grep "Setup code"`.
+#   3. Open the address in the browser -- the setup wizard is running. A server
+#      reachable from the internet sets HIWISKI_SETUP_CODE_REQUIRED=true first; the
+#      wizard then asks for the code from `docker compose logs app | grep "Setup code"`.
 #
 # Version tags, no `latest`: otherwise a rollback is not possible, and
 # that is exactly what you need on the evening the update goes wrong.
@@ -113,6 +114,11 @@ services:
       # it has below. Nothing else on the network -- and on a server run without Caddy
       # nothing but loopback -- can name another client address.
       HIWISKI_TRUSTED_PROXIES: ${HIWISKI_NETWORK_PREFIX:-10.217.84}.2
+      # Whether the setup wizard asks for the code from the server's log. Off: on a
+      # home network the family sets up without reading a log first. On (.env) for a
+      # server reachable from the internet, where whoever opens the wizard first would
+      # become its administrator.
+      HIWISKI_SETUP_CODE_REQUIRED: ${HIWISKI_SETUP_CODE_REQUIRED:-false}
       # Optional, both empty unless .env sets them (.env.example): a fixed setup code
       # for an automated install, and a regular expression that replaces the trusted
       # proxy above. Listed here because only what is listed reaches the server.

@@ -7,9 +7,11 @@ Setup:
       Reachable without login, but only **once**: if `setup.completed` is set, the
       server answers with `409`.
 
-      Only with the **setup code** from the server's log (`setupCode`): a wrong or
-      missing one answers `403 setup.code_invalid`, checked before anything else; ten
-      wrong ones per client address are free, then one every thirty seconds (`429`).
+      Where the operator switched the **setup code** on (`Handshake.setupCodeRequired`),
+      only with the code from the server's log (`setupCode`): a wrong or missing one
+      answers `403 setup.code_invalid`, checked before anything else; ten wrong ones per
+      client address are free, then one every thirty seconds (`429`). Without it the
+      code is ignored.
 
       Creates the family name, time zone, the administrator account and the first
       groups and logs the device in right away -- otherwise the first user would have
@@ -37,8 +39,43 @@ Setup:
       '429':
         $ref: '../components/errors.yaml#/responses/TooManyRequests'
 
+SetupCodeCheck:
+  post:
+    tags: [setup]
+    operationId: checkSetupCode
+    summary: Check the setup code before the wizard's steps
+    description: |
+      The wizard asks for the code first and checks it here at once -- otherwise a wrong
+      one came back only after every step was filled in. Checked exactly like
+      `runSetup` and from the same budget: a wrong or missing code is
+      `403 setup.code_invalid`, ten wrong ones per client address are free, then one
+      every thirty seconds (`429`); each check counts as a try, so it makes guessing no
+      easier. Where no code is asked for, every code is right.
+
+      Then, like the wizard: an instance set up already is `409
+      setup.already_completed` -- only to whoever holds the code. Changes nothing.
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/identity.yaml#/SetupCodeCheck'
+    responses:
+      '204':
+        description: The code is right, and the instance is not set up yet
+      '400':
+        $ref: '../components/errors.yaml#/responses/BadRequest'
+      '403':
+        $ref: '../components/errors.yaml#/responses/Forbidden'
+      '409':
+        $ref: '../components/errors.yaml#/responses/Conflict'
+      '429':
+        $ref: '../components/errors.yaml#/responses/TooManyRequests'
+
 # Restoring on a fresh server, from the setup wizard. Every call names
-# the setup code in a header: the upload's body is the file itself.
+# the setup code in a header, where one is asked for: the upload's body is the file
+# itself.
 
 SetupUploads:
   post:
@@ -47,7 +84,8 @@ SetupUploads:
     summary: Upload an archive to restore on a fresh server
     description: |
       As `uploadBackup`, without a sign-in -- there is no one yet -- but with the setup
-      code. Once the instance is set up it is `409 setup.already_completed`.
+      code where one is asked for. Once the instance is set up it is
+      `409 setup.already_completed`.
     security: []
     parameters:
       - $ref: '#/SetupCodeHeader'
@@ -156,7 +194,10 @@ SetupUploadRestore:
 SetupCodeHeader:
   name: X-Hiwiski-Setup-Code
   in: header
-  required: true
-  description: The setup code from the server's log, as in `SetupRequest.setupCode`.
+  required: false
+  description: |
+    The setup code from the server's log, as in `SetupRequest.setupCode`.
+    Left out where the server asks for none (`Handshake.setupCodeRequired`); missing
+    where it does, it is `403 setup.code_invalid`.
   schema:
     type: string

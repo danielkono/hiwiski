@@ -102,6 +102,8 @@ paths:
 
   /api/v1/setup:
     $ref: './paths/setup.yaml#/Setup'
+  /api/v1/setup/code:
+    $ref: './paths/setup.yaml#/SetupCodeCheck'
   /api/v1/setup/uploads:
     $ref: './paths/setup.yaml#/SetupUploads'
   /api/v1/setup/uploads/{id}/inspect:

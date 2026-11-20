@@ -42,11 +42,12 @@ mkdir hiwiski && cd hiwiski
 # docker-compose.yml, Caddyfile and env.example from the latest GitHub release
 cp env.example .env        # fill in: passwords, host name, backup directory
 docker compose up -d
-docker compose logs app | grep "Setup code"
 ```
 
 Then open the address in a browser: the setup wizard creates the family and its
-administrator. The full guide — TLS on a home network, backups, updates, moving to
+administrator. A server reachable from the internet sets
+`HIWISKI_SETUP_CODE_REQUIRED=true` first, and the wizard then asks for the code from
+`docker compose logs app`. The full guide — TLS on a home network, backups, updates, moving to
 another machine — is on the website (`site/content/en/setup/`).
 
 ## Repository
