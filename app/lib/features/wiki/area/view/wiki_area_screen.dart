@@ -436,19 +436,23 @@ class _WikiAreaScreenState extends ConsumerState<WikiAreaScreen> {
       // a text button at the end of its tree instead, below everything else. An empty
       // wiki offers it in the middle of the screen; a page open on the phone or being
       // edited has the room to itself.
-      floatingActionButton: state.empty || pageOpen
-          ? null
-          : ListenableBuilder(
-              listenable: _pageActions,
-              builder: (context, _) => _pageActions.editing
-                  ? const SizedBox.shrink()
-                  : FloatingActionButton.extended(
-                      key: WikiKeys.newPage,
-                      onPressed: () => _create(null, PageKinds.page),
-                      icon: const Icon(HiwiskiSymbols.add),
-                      label: Text(l.wikiNewPage),
-                    ),
-            ),
+      //
+      // The Scaffold's slot always holds a widget, and the button appears and
+      // disappears inside it, with no transition, like the tree and the page next to
+      // it. If the slot itself were filled or emptied, the Scaffold would scale the
+      // button in or out, and also rotate it, because it cannot tell that the widget
+      // in the slot is a labelled button.
+      floatingActionButton: ListenableBuilder(
+        listenable: _pageActions,
+        builder: (context, _) => state.empty || pageOpen || _pageActions.editing
+            ? const SizedBox.shrink()
+            : FloatingActionButton.extended(
+                key: WikiKeys.newPage,
+                onPressed: () => _create(null, PageKinds.page),
+                icon: const Icon(HiwiskiSymbols.add),
+                label: Text(l.wikiNewPage),
+              ),
+      ),
     );
   }
 }

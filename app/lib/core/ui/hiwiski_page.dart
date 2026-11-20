@@ -29,7 +29,7 @@ class HiwiskiPage extends StatelessWidget {
     this.loading = false,
     this.filter,
     this.floatingActionButton,
-  });
+  }) : _withContent = true;
 
   /// The screen while its state is still coming: header and strip, no content — never
   /// a spinner in its place (`LoadingStrip`).
@@ -37,7 +37,8 @@ class HiwiskiPage extends StatelessWidget {
     : body = const SizedBox.shrink(),
       loading = true,
       filter = null,
-      floatingActionButton = null;
+      floatingActionButton = null,
+      _withContent = false;
 
   /// The screen whose state failed: header and the error line, with "Retry" when
   /// [onRetry] is given.
@@ -49,7 +50,8 @@ class HiwiskiPage extends StatelessWidget {
   }) : body = _Failed(error: error, onRetry: onRetry),
        loading = false,
        filter = null,
-       floatingActionButton = null;
+       floatingActionButton = null,
+       _withContent = false;
 
   final PageHeader header;
   final Widget body;
@@ -62,6 +64,11 @@ class HiwiskiPage extends StatelessWidget {
   final PageFilter? filter;
 
   final Widget? floatingActionButton;
+
+  /// False for [HiwiskiPage.loading] and [HiwiskiPage.error].
+  final bool _withContent;
+
+  static const _frameWithoutContent = ValueKey('hiwiski-page-without-content');
 
   @override
   Widget build(BuildContext context) {
@@ -114,6 +121,13 @@ class HiwiskiPage extends StatelessWidget {
 
     final embedded = EmbeddedPage.of(context);
     return Scaffold(
+      // Loading and failed screens get a Scaffold of their own, so the one with the
+      // content is new when the content arrives and its floating button is there
+      // from the first frame. A Scaffold that stays sees the button added later and
+      // grows it in. That happened on every screen that builds its content in the
+      // place where its loading frame stood, and not on screens that use a widget of
+      // their own for the content.
+      key: _withContent ? null : _frameWithoutContent,
       body: Column(
         crossAxisAlignment: .stretch,
         children: [
