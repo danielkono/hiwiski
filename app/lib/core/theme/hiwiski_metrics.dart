@@ -367,10 +367,17 @@ class HiwiskiMetrics {
   static const double editorBulletWidth = 18;
 
   /// An image in the text while it is edited: a thumbnail on its line, not the stack.
+  /// Its width follows the image, so that it is neither cut nor framed by empty space.
   static const double editorImageHeight = 96;
 
-  /// Its width — a landscape thumbnail, cut to fit.
-  static const double editorImageWidth = 128;
+  /// The widest a thumbnail gets — a panorama is cut to this. Narrower than the field
+  /// on the smallest phone: an image wider than its line would push the rest of its
+  /// Markdown onto a line of its own.
+  static const double editorImageMaxWidth = 240;
+
+  /// The narrowest a thumbnail gets — a tall screenshot is cut to this, rather than
+  /// shrinking to a sliver.
+  static const double editorImageMinWidth = 48;
 
   /// How far each image behind the front one in a stack peeks out.
   static const double imageStackStep = 8;

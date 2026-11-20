@@ -69,6 +69,10 @@ class MarkdownField extends ConsumerWidget {
             ],
             maxLines: null,
             minLines: minLines,
+            // Without a strut of its own, a field forces every line to the height of
+            // its text style. Formatted, a line holds a heading or an image: it has to
+            // grow with them, or they are drawn over the lines above.
+            strutStyle: controller.formatted ? StrutStyle.disabled : null,
             // Formatted, the text is set like the read page; as source, in mono —
             // Markdown's columns line up, and it says: this is the source.
             style: controller.formatted
