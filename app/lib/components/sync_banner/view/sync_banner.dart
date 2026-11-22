@@ -25,9 +25,12 @@ import 'stuck_sheet.dart';
 /// was a banner in the lists, and on two of four screens not even that — a conflict
 /// nobody sees is data loss.
 class SyncBanner extends ConsumerWidget {
-  const SyncBanner({super.key, this.padding});
+  const SyncBanner({super.key, this.padding, this.onMindmap});
 
   final EdgeInsets? padding;
+
+  /// Over a mind map: its own conflicts are shown on it, not on a second copy.
+  final MindmapConflictHandler? onMindmap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => ref
@@ -39,15 +42,21 @@ class SyncBanner extends ConsumerWidget {
           padding: padding ?? .zero,
           child: NoticeBar.failure(context, error: error),
         ),
-        data: (state) => _Banner(padding: padding, state: state),
+        data: (state) =>
+            _Banner(padding: padding, state: state, onMindmap: onMindmap),
       );
 }
 
 class _Banner extends ConsumerWidget {
-  const _Banner({required this.padding, required this.state});
+  const _Banner({
+    required this.padding,
+    required this.state,
+    required this.onMindmap,
+  });
 
   final EdgeInsets? padding;
   final SyncBannerState state;
+  final MindmapConflictHandler? onMindmap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -101,7 +110,7 @@ class _Banner extends ConsumerWidget {
       // One conflict is one bar. From the second on, a bar each pushed the content
       // off the screen — then one bar counts them and the list opens on demand.
       if (conflicts.length == 1)
-        _ConflictNotice(conflict: conflicts.single)
+        _ConflictNotice(conflict: conflicts.single, onMindmap: onMindmap)
       else if (conflicts.length > 1)
         NoticeBar(
           icon: HiwiskiSymbols.merge,
@@ -109,7 +118,7 @@ class _Banner extends ConsumerWidget {
           background: Theme.of(context).colorScheme.tertiaryContainer,
           foreground: Theme.of(context).colorScheme.onTertiaryContainer,
           actionLabel: l.stateConflictShow,
-          onAction: () => _showConflictList(context),
+          onAction: () => _showConflictList(context, onMindmap),
         ),
     ];
 
@@ -142,9 +151,10 @@ class _Banner extends ConsumerWidget {
 /// anyway" without looking would mean blindly overwriting half an hour of the other
 /// person's work.
 class _ConflictNotice extends ConsumerWidget {
-  const _ConflictNotice({required this.conflict});
+  const _ConflictNotice({required this.conflict, required this.onMindmap});
 
   final SyncConflict conflict;
+  final MindmapConflictHandler? onMindmap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -157,7 +167,8 @@ class _ConflictNotice extends ConsumerWidget {
       background: Theme.of(context).colorScheme.tertiaryContainer,
       foreground: Theme.of(context).colorScheme.onTertiaryContainer,
       actionLabel: l.stateConflictShow,
-      onAction: () => showConflictSheet(context, conflict),
+      onAction: () =>
+          showConflictSheet(context, conflict, onMindmap: onMindmap),
     );
   }
 }
@@ -174,16 +185,21 @@ String _conflictText(BuildContext context, SyncConflict conflict) {
       : l.stateConflictField(historyFieldLabel(l, conflict.field));
 }
 
-Future<void> _showConflictList(BuildContext context) => showHiwiskiSheet<void>(
+Future<void> _showConflictList(
+  BuildContext context,
+  MindmapConflictHandler? onMindmap,
+) => showHiwiskiSheet<void>(
   context: context,
   title: L.of(context).conflictListTitle,
-  builder: (context) => const _ConflictList(),
+  builder: (context) => _ConflictList(onMindmap: onMindmap),
 );
 
 /// All open conflicts, each one opening its own sheet. A resolved one drops out; when
 /// none is left, the list closes itself.
 class _ConflictList extends ConsumerWidget {
-  const _ConflictList();
+  const _ConflictList({required this.onMindmap});
+
+  final MindmapConflictHandler? onMindmap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -191,8 +207,16 @@ class _ConflictList extends ConsumerWidget {
       previous,
       next,
     ) {
-      if ((next?.isEmpty ?? false) && Navigator.of(context).canPop()) {
+      if (!(next?.isEmpty ?? false)) return;
+      // The list itself goes, wherever it is: the last one is decided in its own
+      // sheet on top, and popping the navigator closed that sheet and left the empty
+      // list standing.
+      final route = ModalRoute.of(context);
+      if (route == null || !route.isActive) return;
+      if (route.isCurrent) {
         Navigator.of(context).pop();
+      } else {
+        Navigator.of(context).removeRoute(route);
       }
     });
     final state = ref.watch(syncBannerViewModelProvider).value;
@@ -223,7 +247,8 @@ class _ConflictList extends ConsumerWidget {
             ),
             subtitle: Text(_conflictText(context, conflict)),
             trailing: const Icon(HiwiskiSymbols.chevronRight),
-            onTap: () => showConflictSheet(context, conflict),
+            onTap: () =>
+                showConflictSheet(context, conflict, onMindmap: onMindmap),
           ),
       ],
     );

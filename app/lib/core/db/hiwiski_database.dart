@@ -36,10 +36,15 @@ part 'hiwiski_database.drift.dart';
     ListOrders,
     LocalImages,
     LeftBehindItems,
+    MindmapNodes,
+    MindmapEdges,
   ],
 )
 class HiwiskiDatabase extends _$HiwiskiDatabase {
   static const _foreignKeysOn = 'PRAGMA foreign_keys = ON';
+  static const _tableInfo = 'PRAGMA table_info(';
+  static const _tableInfoEnd = ')';
+  static const _columnName = 'name';
 
   /// A file on the device, only memory in the browser — see `connection_web.dart`.
   HiwiskiDatabase([QueryExecutor? executor])
@@ -49,11 +54,34 @@ class HiwiskiDatabase extends _$HiwiskiDatabase {
   /// to the device's own and never mixed with it.
   HiwiskiDatabase.memory() : super(openMemoryConnection());
 
-  /// The baseline: the tables as the app has them since 2026.1.10, created fresh on
-  /// every device. The steps that led here are gone with the devices that needed them;
-  /// the next change to a table is 20, with its step in [migration].
+  /// The baseline is 19: the tables as the app has them since 2026.1.10, created fresh
+  /// on every device. The steps that led there are gone with the devices that needed
+  /// them; each change since has its step in [migration].
+  ///
+  /// 20: a mind map's elements and connections. 21: what a link element shows. 22: the
+  /// colour of an element's text. 23: strokes drawn by hand. 24: how thick a connection
+  /// is.
   @override
-  int get schemaVersion => 19;
+  int get schemaVersion => 26;
+
+  /// Adds [column] to [table] unless it is there already. A step can be half done:
+  /// the column added but the new version not yet written — the background sync
+  /// opens the file through a connection of its own and may be stopped by the system
+  /// mid-upgrade, or upgrade at the same moment as the app. Every start after that
+  /// failed on "duplicate column name", and the app showed nothing.
+  Future<void> _addColumnOnce(
+    Migrator m,
+    TableInfo<Table, Object?> table,
+    GeneratedColumn<Object> column,
+  ) async {
+    final columns = await customSelect(
+      '$_tableInfo${table.actualTableName}$_tableInfoEnd',
+    ).get();
+    if (columns.any((row) => row.read<String>(_columnName) == column.name)) {
+      return;
+    }
+    await m.addColumn(table, column);
+  }
 
   @override
   MigrationStrategy get migration => .new(
@@ -67,6 +95,36 @@ class HiwiskiDatabase extends _$HiwiskiDatabase {
       // fetch what the server already holds for it — pulled by the old app, the
       // unknown field was dropped and never came again. Asked here once, no step can
       // forget it; it is idempotent and costs one snapshot per schema bump.
+      if (from < 20) {
+        // A mind map's elements and connections: the snapshot below fetches what an
+        // older app skipped as a type it did not know.
+        await m.createTable(mindmapNodes);
+        await m.createTable(mindmapEdges);
+      } else {
+        // Created above with every column already. A device on 20 keeps its unused
+        // `image_id`: pictures stand in the text now, and a column dropped in SQLite
+        // means a copy of the table for nothing.
+        if (from < 21) {
+          await _addColumnOnce(m, mindmapNodes, mindmapNodes.linkView);
+        }
+        if (from < 22) {
+          await _addColumnOnce(m, mindmapNodes, mindmapNodes.textColor);
+        }
+        if (from < 23) {
+          await _addColumnOnce(m, mindmapNodes, mindmapNodes.points);
+          await _addColumnOnce(m, mindmapNodes, mindmapNodes.strokeWidth);
+        }
+        if (from < 24) {
+          await _addColumnOnce(m, mindmapEdges, mindmapEdges.strokeWidth);
+        }
+        if (from < 25) {
+          await _addColumnOnce(m, mindmapEdges, mindmapEdges.line);
+          await _addColumnOnce(m, mindmapEdges, mindmapEdges.arrows);
+        }
+        if (from < 26) {
+          await _addColumnOnce(m, mindmapNodes, mindmapNodes.rotation);
+        }
+      }
       await requestSnapshot();
     },
     beforeOpen: (details) async {
@@ -205,6 +263,8 @@ class HiwiskiDatabase extends _$HiwiskiDatabase {
       await delete(calendarSubscriptions).go();
       await delete(calendarFeeds).go();
       await delete(calendars).go();
+      await delete(mindmapEdges).go();
+      await delete(mindmapNodes).go();
       await delete(wikiPages).go();
       await delete(comments).go();
       await delete(widgets).go();

@@ -140,6 +140,7 @@ class ServerWriteService implements ServerWrites {
             moveInto(type, entityId, targetContainerId, actor, fields);
         }
 
+        var deletedAt = entities.deletedAt(type, entityId).orElse(null);
         entities.restore(type, entityId, targetContainerId, seq, actor);
         changeLog.append(
                 seq,
@@ -161,6 +162,21 @@ class ServerWriteService implements ServerWrites {
         // Search and references dropped the item on its delete; they take it back the
         // same way they would take any other change.
         events.publishEvent(new EntityWritten(entityType, entityId, actor, false, false, seq));
+
+        // What went with it and has no way back of its own -- each a change in the log
+        // with all its fields, like the item.
+        if (deletedAt != null) {
+            for (SyncType.Ref along : type.alsoRestored(entityId, deletedAt)) {
+                var alongType = registry.find(along.entityType()).orElse(null);
+                boolean stillDeleted = alongType != null
+                        && entities.load(alongType, along.entityId())
+                                .filter(EntityRepository.Snapshot::deleted)
+                                .isPresent();
+                if (stillDeleted) {
+                    restore(along.entityType(), along.entityId(), null, actor);
+                }
+            }
+        }
         return seq;
     }
 

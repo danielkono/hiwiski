@@ -8,8 +8,12 @@ import '../../../core/ui/pick_files.dart';
 /// Run inside the upload's mutation, so its spinner covers the whole wait: after the
 /// choice the iPhone first converts its photos to JPEG, and a large picture takes a
 /// while to read. Until the upload had started nothing showed that anything happened.
-Future<List<({Uint8List bytes, String filename})>> pickImageFiles() async {
-  final picked = await pickFiles(type: .image);
+///
+/// [single]: one picture only, where the dialog can be told so.
+Future<List<({Uint8List bytes, String filename})>> pickImageFiles({
+  bool single = false,
+}) async {
+  final picked = await pickFiles(type: .image, single: single);
   return [
     for (final file in picked)
       (bytes: await file.xFile.readAsBytes(), filename: file.name),

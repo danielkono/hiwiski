@@ -1,6 +1,6 @@
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -154,7 +154,10 @@ class _DecodedState extends State<_Decoded> {
 
   void _error(Object error, StackTrace? _) {
     if (!mounted) return;
-    if (error is ImageTooLargeError && widget.onTooLarge != null) {
+    // In the browser no header is read before decoding ([checkDecodable]): an
+    // original too large for it fails in the decoder itself — the preview stands in
+    // there for any original that could not be decoded.
+    if ((error is ImageTooLargeError || kIsWeb) && widget.onTooLarge != null) {
       widget.onTooLarge?.call();
       return;
     }

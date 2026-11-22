@@ -1125,6 +1125,13 @@ class WikiPageCodec extends EntityCodec {
                 row.itemId.equals(id),
           ))
           .go();
+      // Its mind map, which lives in it and goes with its share.
+      await (db.delete(
+        db.mindmapEdges,
+      )..where((row) => row.pageId.equals(id))).go();
+      await (db.delete(
+        db.mindmapNodes,
+      )..where((row) => row.pageId.equals(id))).go();
       await (db.delete(db.wikiPages)..where((row) => row.id.equals(id))).go();
     });
   }
@@ -1606,6 +1613,310 @@ class ListOrderCodec extends EntityCodec {
   }
 }
 
+// --- Mind maps --------------------------------------------------------------
+
+/// An element on a mind map. Its page is the container: it comes as `containerId`,
+/// never as a field.
+class MindmapNodeCodec extends EntityCodec {
+  const MindmapNodeCodec();
+
+  @override
+  String get entityType => EntityTypes.mindmapNode;
+
+  @override
+  TableInfo<Table, Object?> table(HiwiskiDatabase db) => db.mindmapNodes;
+
+  @override
+  Future<void> upsert(
+    HiwiskiDatabase db, {
+    required String id,
+    required String ownerId,
+    required int version,
+    required String? containerId,
+    required String? entityKey,
+    required Map<String, dynamic> fields,
+  }) async {
+    int whole(Object? value, int empty) => (value as num?)?.toInt() ?? empty;
+    final row = MindmapNodesCompanion(
+      id: Value(id),
+      ownerId: Value(ownerId),
+      version: Value(version),
+      pageId: containerId == null ? const Value.absent() : Value(containerId),
+      // An unknown kind is kept as it is: the canvas shows a placeholder for it.
+      kind: EntityCodec.required(
+        fields,
+        WireFields.kind,
+        (value) => value as String? ?? MindmapKinds.plain,
+      ),
+      x: EntityCodec.required(fields, WireFields.x, (value) => whole(value, 0)),
+      y: EntityCodec.required(fields, WireFields.y, (value) => whole(value, 0)),
+      width: EntityCodec.required(
+        fields,
+        WireFields.width,
+        (value) => whole(value, _defaultWidth),
+      ),
+      height: EntityCodec.required(
+        fields,
+        WireFields.height,
+        (value) => whole(value, _defaultHeight),
+      ),
+      layer: EntityCodec.required(
+        fields,
+        WireFields.layer,
+        (value) => (value as num?)?.toDouble() ?? 0,
+      ),
+      body: EntityCodec.required(
+        fields,
+        WireFields.text,
+        (value) => value as String? ?? '',
+      ),
+      target: EntityCodec.optional(
+        fields,
+        WireFields.target,
+        (value) => value as String?,
+      ),
+      linkView: EntityCodec.optional(
+        fields,
+        WireFields.linkView,
+        (value) => value as String?,
+      ),
+      color: EntityCodec.optional(
+        fields,
+        WireFields.color,
+        (value) => value as String?,
+      ),
+      shape: EntityCodec.optional(
+        fields,
+        WireFields.shape,
+        (value) => value as String?,
+      ),
+      textSize: EntityCodec.optional(
+        fields,
+        WireFields.textSize,
+        (value) => value as String?,
+      ),
+      textColor: EntityCodec.optional(
+        fields,
+        WireFields.textColor,
+        (value) => value as String?,
+      ),
+      points: EntityCodec.optional(
+        fields,
+        WireFields.points,
+        (value) => value as String?,
+      ),
+      strokeWidth: EntityCodec.optional(
+        fields,
+        WireFields.strokeWidth,
+        (value) => (value as num?)?.round(),
+      ),
+      rotation: EntityCodec.optional(
+        fields,
+        WireFields.rotation,
+        (value) => (value as num?)?.round(),
+      ),
+      deletedAt: const Value(null),
+    );
+    // Update first, then insert: a change carries only what changed, and Drift does
+    // not accept a row without its required columns as an insert.
+    final updated = await (db.update(
+      db.mindmapNodes,
+    )..where((row) => row.id.equals(id))).write(row);
+    if (updated == 0) {
+      await db
+          .into(db.mindmapNodes)
+          .insert(row.copyWith(pageId: Value(containerId ?? '')));
+    }
+  }
+
+  static const _defaultWidth = 160;
+  static const _defaultHeight = 80;
+
+  @override
+  Future<String?> containerOf(HiwiskiDatabase db, String id) async =>
+      (await (db.select(
+        db.mindmapNodes,
+      )..where((row) => row.id.equals(id))).getSingleOrNull())?.pageId;
+
+  @override
+  Future<void> markDeleted(HiwiskiDatabase db, String id, int version) =>
+      (db.update(db.mindmapNodes)..where((row) => row.id.equals(id))).write(
+        MindmapNodesCompanion(
+          deletedAt: Value(clock.now()),
+          version: Value(version),
+        ),
+      );
+
+  /// With an element go its connections — the server does the same.
+  @override
+  Future<void> purge(HiwiskiDatabase db, String id) async {
+    await db.transaction(() async {
+      await (db.delete(
+        db.mindmapEdges,
+      )..where((row) => row.fromId.equals(id) | row.toId.equals(id))).go();
+      await (db.delete(
+        db.mindmapNodes,
+      )..where((row) => row.id.equals(id))).go();
+    });
+  }
+
+  @override
+  Future<StoredItem?> stored(HiwiskiDatabase db, String id) async {
+    final row = await (db.select(
+      db.mindmapNodes,
+    )..where((r) => r.id.equals(id))).getSingleOrNull();
+    if (row == null) return null;
+    return StoredItem(
+      ownerId: row.ownerId,
+      version: row.version,
+      deleted: row.deletedAt != null,
+      containerId: row.pageId,
+      label: row.body,
+      fields: {
+        WireFields.kind: row.kind,
+        WireFields.x: row.x,
+        WireFields.y: row.y,
+        WireFields.width: row.width,
+        WireFields.height: row.height,
+        WireFields.layer: row.layer,
+        WireFields.text: row.body,
+        WireFields.target: row.target,
+        WireFields.linkView: row.linkView,
+        WireFields.color: row.color,
+        WireFields.shape: row.shape,
+        WireFields.textSize: row.textSize,
+        WireFields.textColor: row.textColor,
+        WireFields.points: row.points,
+        WireFields.strokeWidth: row.strokeWidth,
+        WireFields.rotation: row.rotation,
+      },
+    );
+  }
+}
+
+/// A connection between two elements of a mind map. Its ends never change; its page
+/// is the container.
+class MindmapEdgeCodec extends EntityCodec {
+  const MindmapEdgeCodec();
+
+  @override
+  String get entityType => EntityTypes.mindmapEdge;
+
+  @override
+  TableInfo<Table, Object?> table(HiwiskiDatabase db) => db.mindmapEdges;
+
+  @override
+  Future<void> upsert(
+    HiwiskiDatabase db, {
+    required String id,
+    required String ownerId,
+    required int version,
+    required String? containerId,
+    required String? entityKey,
+    required Map<String, dynamic> fields,
+  }) async {
+    final row = MindmapEdgesCompanion(
+      id: Value(id),
+      ownerId: Value(ownerId),
+      version: Value(version),
+      pageId: containerId == null ? const Value.absent() : Value(containerId),
+      fromId: EntityCodec.required(
+        fields,
+        WireFields.fromId,
+        (value) => value as String? ?? '',
+      ),
+      toId: EntityCodec.required(
+        fields,
+        WireFields.toId,
+        (value) => value as String? ?? '',
+      ),
+      body: EntityCodec.required(
+        fields,
+        WireFields.text,
+        (value) => value as String? ?? '',
+      ),
+      color: EntityCodec.optional(
+        fields,
+        WireFields.color,
+        (value) => value as String?,
+      ),
+      strokeWidth: EntityCodec.optional(
+        fields,
+        WireFields.strokeWidth,
+        (value) => (value as num?)?.round(),
+      ),
+      line: EntityCodec.optional(
+        fields,
+        WireFields.line,
+        (value) => value as String?,
+      ),
+      arrows: EntityCodec.optional(
+        fields,
+        WireFields.arrows,
+        (value) => value as String?,
+      ),
+      deletedAt: const Value(null),
+    );
+    final updated = await (db.update(
+      db.mindmapEdges,
+    )..where((row) => row.id.equals(id))).write(row);
+    if (updated == 0) {
+      await db
+          .into(db.mindmapEdges)
+          .insert(
+            row.copyWith(
+              pageId: Value(containerId ?? ''),
+              fromId: Value(fields[WireFields.fromId] as String? ?? ''),
+              toId: Value(fields[WireFields.toId] as String? ?? ''),
+            ),
+          );
+    }
+  }
+
+  @override
+  Future<String?> containerOf(HiwiskiDatabase db, String id) async =>
+      (await (db.select(
+        db.mindmapEdges,
+      )..where((row) => row.id.equals(id))).getSingleOrNull())?.pageId;
+
+  @override
+  Future<void> markDeleted(HiwiskiDatabase db, String id, int version) =>
+      (db.update(db.mindmapEdges)..where((row) => row.id.equals(id))).write(
+        MindmapEdgesCompanion(
+          deletedAt: Value(clock.now()),
+          version: Value(version),
+        ),
+      );
+
+  @override
+  Future<void> purge(HiwiskiDatabase db, String id) =>
+      (db.delete(db.mindmapEdges)..where((row) => row.id.equals(id))).go();
+
+  @override
+  Future<StoredItem?> stored(HiwiskiDatabase db, String id) async {
+    final row = await (db.select(
+      db.mindmapEdges,
+    )..where((r) => r.id.equals(id))).getSingleOrNull();
+    if (row == null) return null;
+    return StoredItem(
+      ownerId: row.ownerId,
+      version: row.version,
+      deleted: row.deletedAt != null,
+      containerId: row.pageId,
+      label: row.body,
+      fields: {
+        WireFields.fromId: row.fromId,
+        WireFields.toId: row.toId,
+        WireFields.text: row.body,
+        WireFields.color: row.color,
+        WireFields.strokeWidth: row.strokeWidth,
+        WireFields.line: row.line,
+        WireFields.arrows: row.arrows,
+      },
+    );
+  }
+}
+
 /// All known types.
 ///
 /// **Whatever is missing here, the client skips** — and does a full resync once after
@@ -1624,4 +1935,7 @@ const entityCodecs = <EntityCodec>[
   WidgetCodec(),
   TagCodec(),
   ListOrderCodec(),
+  // After the pages: an element arrives into its page.
+  MindmapNodeCodec(),
+  MindmapEdgeCodec(),
 ];

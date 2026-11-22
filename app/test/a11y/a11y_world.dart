@@ -160,6 +160,33 @@ class A11yWorld {
         kind: PageKinds.recipe,
       );
 
+      ids['mindmap'] = await wiki.createPage(
+        title: 'Holiday',
+        kind: PageKinds.mindmap,
+      );
+      final maps = container.read(mindmapRepositoryProvider);
+      final sea = await maps.addNode(
+        pageId: ids['mindmap']!,
+        kind: MindmapKinds.note,
+        x: 0,
+        y: 0,
+        width: 220,
+        height: 120,
+        text: '## Sea\nSun cream, towels',
+        color: ColorTokens.teal,
+      );
+      final hills = await maps.addNode(
+        pageId: ids['mindmap']!,
+        kind: MindmapKinds.plain,
+        x: 360,
+        y: 40,
+        width: 160,
+        height: 40,
+        text: 'Hills',
+      );
+      final holiday = await maps.watchMap(ids['mindmap']!).first;
+      await maps.connect(holiday.node(sea)!, holiday.node(hills)!, text: 'or');
+
       final page = (await wiki.watchPage(ids['page']!).first)!;
       await wiki.updatePage(
         page,

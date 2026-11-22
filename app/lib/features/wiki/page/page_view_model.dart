@@ -6,6 +6,7 @@ import 'package:meta/meta.dart';
 import 'package:riverpod/experimental/mutation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../app/link_index.dart';
 import '../../../app/repositories.dart';
 import '../../../app/stores.dart';
 import '../../../core/api/generated/export.dart' hide Mutation;
@@ -15,7 +16,9 @@ import '../../../data/media/media_repository.dart' show ImageOwnerTypes;
 import '../../../domain/access/access_rules.dart';
 import '../../../domain/common/change.dart';
 import '../../../domain/common/item_ref.dart';
+import '../../../domain/links/link_index.dart';
 import '../../../domain/tags/tag.dart';
+import '../../../domain/wiki/mindmap.dart';
 import '../../../domain/wiki/wiki_models.dart';
 import '../../../domain/wiki/wiki_page.dart';
 
@@ -35,7 +38,7 @@ final archivePageMutation = Mutation<List<WikiPage>>(
 /// A wiki page as its screen, its body and a link's preview show it.
 @immutable
 class PageState {
-  const PageState({
+  PageState({
     required this.page,
     required this.pages,
     required this.level,
@@ -43,9 +46,17 @@ class PageState {
     required this.tags,
     required this.servings,
     this.me,
-  });
+    Mindmap? mindmap,
+    this.mindmapTargets = const {},
+  }) : mindmap = mindmap ?? .empty;
 
   final WikiPage page;
+
+  /// The page's mind map — empty on a page of another kind.
+  final Mindmap mindmap;
+
+  /// What the map's link elements point to, by their address — what they show.
+  final Map<String, LinkItem> mindmapTargets;
 
   /// Every page, archived ones included — the breadcrumb, the recipes below, where
   /// it may move.
@@ -151,6 +162,10 @@ Stream<List<WikiPage>> _pages(Ref ref) =>
     ref.watch(wikiRepositoryProvider).watchPages();
 
 @riverpod
+Stream<Mindmap> _mindmap(Ref ref, String pageId) =>
+    ref.watch(mindmapRepositoryProvider).watchMap(pageId);
+
+@riverpod
 Stream<ShareSheet> _shares(Ref ref, String pageId) => ref
     .watch(accessRepositoryProvider)
     .watchShareSheet(ItemRef.wikiPage(pageId));
@@ -179,11 +194,15 @@ class PageViewModel extends _$PageViewModel {
     final members = ref.watch(_membersProvider).value ?? const <Member>[];
     final pageList = ref.watch(_pagesProvider.future);
     final tags = ref.watch(_tagsProvider.future);
+    final map = ref.watch(_mindmapProvider(pageId).future);
     final pages = await pageList;
     final page = pages.where((page) => page.id == pageId).firstOrNull;
     if (page == null) return null;
+    final mindmap = await map;
     return PageState(
       page: page,
+      mindmap: mindmap,
+      mindmapTargets: mindmapTargetsOf(mindmap, ref.watch(linkIndexProvider)),
       pages: pages,
       level: level,
       members: {for (final member in members) member.id: member},

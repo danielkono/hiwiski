@@ -127,3 +127,145 @@ ParsedRecipe:
       type: array
       items:
         $ref: '#/ParsedIngredient'
+
+MindmapNodeFields:
+  type: object
+  description: |
+    Entity type `MINDMAP_NODE`. An element on the canvas of a page of the kind
+    `MINDMAP`; its container is the page (`containerType` `WIKI_PAGE`), whose share it
+    inherits.
+
+    An item of its own rather than a property of the page, so that two people changing
+    different elements never collide: each field of each element has its own conflict
+    check.
+  properties:
+    kind:
+      type: string
+      description: |
+        `PLAIN` (text without formatting), `NOTE` (Markdown), `IMAGE`, `LINK`, `MEMBER`
+        (a member of the family, shown by their picture), `DRAWING` (a stroke drawn by
+        hand). The list may grow; an app shows a kind it does not know as a placeholder.
+      example: NOTE
+    x:
+      type: integer
+      description: The left edge on the canvas, in logical pixels at a zoom of 1.
+    y:
+      type: integer
+      description: The top edge on the canvas.
+    width:
+      type: integer
+      minimum: 1
+    height:
+      type: integer
+      minimum: 1
+    layer:
+      type: number
+      description: |
+        The stacking order, higher above lower; on a tie the later created element is
+        above. A fraction, so that moving one step writes one element only.
+    text:
+      type: string
+      description: |
+        The text of a `PLAIN` element, the Markdown of a `NOTE`; the picture of an
+        `IMAGE` element as a Markdown image (`![](hiwiski-image:<id>)`), uploaded for
+        the page.
+    target:
+      type: string
+      description: |
+        The item a `LINK` element points to, as `hiwiski://<type>/<uuid>`; the member a
+        `MEMBER` element shows, as `hiwiski://member/<uuid>`. Only a `LINK` element's
+        target counts as a link of the page.
+      example: hiwiski://todo/0190c1d4-7a1b-7c3d-9e8f-123456789abc
+    linkView:
+      type: string
+      description: |
+        What a `LINK` element shows of its target: `TITLE` (its symbol and title) or
+        `CONTENT` (the target as its preview shows it). The list may grow; an unknown
+        one is shown as `TITLE`. Empty: `TITLE`.
+    color:
+      type: string
+      description: |
+        An accent token (`BLUE`, `RUST`, `VIOLET`, `GREEN`, `PINK`, `OCHRE`, `TEAL`,
+        `SLATE`; the list may grow) or a colour of the family's own as `#RRGGBB`, which
+        the app adapts to the light and the dark theme — `#RRGGBBAA` where the canvas
+        shows through it, `00` see-through to `FF` covering. Empty: the theme's own.
+      example: '#3B6939'
+    shape:
+      type: string
+      description: |
+        `RECTANGLE`, `ROUNDED`, `ELLIPSE`, `PILL`, `DIAMOND`. The list may grow; an
+        unknown shape is drawn rounded. On a `DRAWING` element: the shape its stroke was
+        drawn as — `RECTANGLE`, `ELLIPSE`, `TRIANGLE`, `DIAMOND`, `LINE`, `ARROW` —
+        which the app lets be resized; empty: drawn freehand.
+    textSize:
+      type: string
+      description: |
+        `S`, `M`, `L` or `XL` — or a size of its own in logical pixels, 4 to 400 (`18`).
+        A name an app does not know is shown as `M`.
+    textColor:
+      type: string
+      description: |
+        The colour of the element's text, given as `color` is. Empty: the theme's own,
+        or the one that reads best on the element's colour.
+      example: SLATE
+    points:
+      type: string
+      description: |
+        A `DRAWING` element's stroke, drawn by hand: its points in order, each as two
+        whole numbers from 0 to 10000 across the element's width and height, as
+        `x,y x,y …` — so it scales with the element. At most 100,000 characters. Each
+        stroke is an element of its own, drawn in the element's `color`.
+      example: 0,5000 2500,1200 5000,4000 10000,9000
+    strokeWidth:
+      type: integer
+      minimum: 1
+      maximum: 1000
+      description: How thick a `DRAWING` element's stroke is drawn, on the canvas.
+    rotation:
+      type: integer
+      minimum: 0
+      maximum: 359
+      description: |
+        How far the element is turned clockwise about its centre, in whole degrees.
+        Empty: not turned. Connections still meet its unturned outline.
+
+MindmapEdgeFields:
+  type: object
+  description: |
+    Entity type `MINDMAP_EDGE`. A connection between two elements of the same mind map,
+    drawn from centre to centre; its container is the page.
+
+    Both ends have to be living elements of the page, on every write: a connection whose
+    element is gone is refused with `wiki.mindmap_element_gone`. The ends never change.
+    A connection goes with either of its elements.
+  properties:
+    fromId:
+      type: string
+      format: uuid
+    toId:
+      type: string
+      format: uuid
+    text:
+      type: string
+      description: A label, drawn at the middle of the line.
+    color:
+      type: string
+      description: |
+        Like an element's `color`. Empty: the theme's line colour.
+    strokeWidth:
+      type: integer
+      minimum: 1
+      maximum: 1000
+      description: |
+        How thick the line is drawn, on the canvas. Empty: the app's own.
+    line:
+      type: string
+      description: |
+        `SOLID`, `DASHED` or `DOTTED`. Empty: solid. Other names in capitals are taken
+        and drawn as a solid line by an app that does not know them.
+    arrows:
+      type: string
+      description: |
+        Arrow heads: `END` at the element the connection goes to (`toId`), `START` at
+        the one it comes from, `BOTH` or `NONE`. Empty: none. Other names in capitals
+        are taken and drawn without heads by an app that does not know them.

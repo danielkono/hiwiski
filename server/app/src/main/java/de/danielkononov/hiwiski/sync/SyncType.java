@@ -164,6 +164,22 @@ public interface SyncType {
     }
 
     /**
+     * What comes back along with this item when it is restored -- read after the item
+     * itself is back.
+     *
+     * <p>For what went with it on its delete and has no place in the trash of its own: a
+     * mind map's elements went with their page, and the page came back empty without
+     * them. Only what was deleted at or after {@code deletedAt} is meant -- an element
+     * deleted on its own before the page stays deleted. Each element gets its own log
+     * entry, like the item.
+     *
+     * @param deletedAt when the item itself was deleted
+     */
+    default List<Ref> alsoRestored(UUID entityId, java.time.OffsetDateTime deletedAt) {
+        return List.of();
+    }
+
+    /**
      * Why this upsert is refused although the member may write the item — or empty.
      *
      * <p>For rules that belong to the state of the item rather than to the member: an

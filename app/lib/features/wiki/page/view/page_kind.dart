@@ -4,6 +4,7 @@ import '../../../../core/l10n/generated/app_localizations.dart';
 import '../../../../domain/wiki/wiki_models.dart';
 import '../../../../domain/wiki/wiki_page.dart';
 import '../page_view_model.dart';
+import 'mindmap/mindmap_kind.dart';
 import 'recipe/recipe_folder_kind.dart';
 import 'recipe/recipe_kind.dart';
 import 'text/text_kind.dart';
@@ -12,7 +13,8 @@ import 'text/text_kind.dart';
 ///
 /// The page screen is the same for every kind — header, editing the title and the
 /// text, comments, info bar, archive and delete. What differs comes from here: how
-/// it is offered in "New page" and shown in the tree, how the page reads, what its
+/// it is offered in "New page" and shown in the tree, how the page reads, what stands
+/// above and below its text, what its
 /// info bar shows first, which fields editing adds above the text and how they are
 /// saved, what sits docked below it. Its fields are properties of the page and travel
 /// without a column of their own. **A new kind of page is one subclass in a folder
@@ -23,6 +25,7 @@ abstract class PageKindView {
   /// Every kind this app knows, in the order "New page" offers them.
   static const all = <PageKindView>[
     TextKindView(),
+    MindmapKindView(),
     RecipeFolderKindView(),
     RecipeKindView(),
   ];
@@ -57,6 +60,14 @@ abstract class PageKindView {
 
   /// What stands above the text while it is read — a recipe collection's cards.
   List<Widget> head(
+    BuildContext context, {
+    required WikiPage page,
+    required PageState state,
+    required PageKindActions actions,
+  }) => const [];
+
+  /// What stands below the text while it is read — a mind map's preview.
+  List<Widget> tail(
     BuildContext context, {
     required WikiPage page,
     required PageState state,

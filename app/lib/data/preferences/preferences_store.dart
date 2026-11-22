@@ -16,6 +16,26 @@ class PreferencesStore extends Store<Preferences> {
   /// Enough history to tell often from rarely, little enough to forget old habits.
   static const _keepUses = 200;
 
+  /// Sizes remembered for this many mind maps and kinds — the newest.
+  static const _keepSizes = 100;
+
+  static Map<String, ({int width, int height})> _sizesOf(
+    List<String> entries,
+  ) => {
+    for (final entry in entries.reversed)
+      if (entry.split(' ') case [
+        final page,
+        final kind,
+        final width,
+        final height,
+      ])
+        if ((int.tryParse(width), int.tryParse(height)) case (
+          final w?,
+          final h?,
+        ))
+          Preferences.mindmapSizeKey(page, kind): (width: w, height: h),
+  };
+
   static Preferences _read(LocalSettings settings) => .new(
     themeMode: settings.themeMode,
     keepFilters: settings.keepFilters,
@@ -32,6 +52,9 @@ class PreferencesStore extends Store<Preferences> {
     pullHint: settings.pullHint,
     pullHintPulls: settings.pullHintPulls,
     formattedEditor: settings.formattedEditor,
+    mindmapSnap: settings.mindmapSnap,
+    mindmapGrid: settings.mindmapGrid,
+    mindmapSizes: _sizesOf(settings.mindmapSizes),
   );
 
   /// Reads what another engine — the background sync — may have written meanwhile.
@@ -68,6 +91,37 @@ class PreferencesStore extends Store<Preferences> {
     if (value.formattedEditor == formatted) return;
     value = value.copyWith(formattedEditor: formatted);
     await _settings.setFormattedEditor(formatted);
+  }
+
+  Future<void> setMindmapSnap(bool snap) async {
+    if (value.mindmapSnap == snap) return;
+    value = value.copyWith(mindmapSnap: snap);
+    await _settings.setMindmapSnap(snap);
+  }
+
+  Future<void> setMindmapGrid(bool grid) async {
+    if (value.mindmapGrid == grid) return;
+    value = value.copyWith(mindmapGrid: grid);
+    await _settings.setMindmapGrid(grid);
+  }
+
+  /// An element of [kind] on the map of [pageId] was placed or resized at
+  /// [width] × [height]: the next new one of the kind there takes it.
+  Future<void> recordMindmapSize(
+    String pageId,
+    String kind, {
+    required int width,
+    required int height,
+  }) async {
+    final key = Preferences.mindmapSizeKey(pageId, kind);
+    if (value.mindmapSizes[key] == (width: width, height: height)) return;
+    final entries = [
+      '$key $width $height',
+      for (final entry in _settings.mindmapSizes)
+        if (!entry.startsWith('$key ')) entry,
+    ].take(_keepSizes).toList();
+    value = value.copyWith(mindmapSizes: _sizesOf(entries));
+    await _settings.setMindmapSizes(entries);
   }
 
   Future<void> setKeepAreas(bool keep) async {

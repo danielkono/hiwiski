@@ -7,13 +7,20 @@ import 'dart:async';
 /// A new watcher gets the last answer at once. Without [keep] the answer goes when the
 /// last watcher does — the next one fetches afresh, as a screen that is opened again
 /// should; with it the answer stays for the next watcher, until [refresh].
+///
+/// A fetch that failed is tried again after the wait [retryAfter] names for the
+/// error and the number of tries so far, as long as anyone watches — meanwhile the
+/// watchers go on waiting; they hear of the error only once [retryAfter] gives up
+/// (`null`). Without it, a failure is told at once.
 class Query<K, V> {
-  Query(this._fetch, {this.keep = false});
+  Query(this._fetch, {this.keep = false, this.retryAfter});
 
   final Future<V> Function(K key) _fetch;
 
   /// Whether an answer outlives its watchers.
   final bool keep;
+
+  final Duration? Function(Object error, int tries)? retryAfter;
 
   final _entries = <K, _Entry<V>>{};
 
@@ -32,7 +39,12 @@ class Query<K, V> {
         final entry = _entries[key];
         if (entry == null) return;
         entry.watchers.remove(controller);
-        if (entry.watchers.isEmpty && !keep) _entries.remove(key);
+        if (entry.watchers.isEmpty) {
+          // Nobody waits for it any more.
+          entry.retry?.cancel();
+          entry.retry = null;
+          if (!keep) _entries.remove(key);
+        }
       },
     );
     return controller.stream;
@@ -68,17 +80,31 @@ class Query<K, V> {
       return;
     }
     entry.loading = true;
+    entry.retry?.cancel();
+    entry.retry = null;
     try {
       final value = await _fetch(key);
       entry.last = (value: value);
       entry.failed = false;
+      entry.tries = 0;
       for (final watcher in [...entry.watchers]) {
         watcher.add(value);
       }
     } on Object catch (error, stack) {
       entry.failed = true;
-      for (final watcher in [...entry.watchers]) {
-        watcher.addError(error, stack);
+      final wait = entry.watchers.isEmpty
+          ? null
+          : retryAfter?.call(error, ++entry.tries);
+      if (wait != null) {
+        entry.retry = Timer(wait, () {
+          entry.retry = null;
+          if (entry.watchers.isNotEmpty) unawaited(_load(key, entry));
+        });
+      } else {
+        entry.tries = 0;
+        for (final watcher in [...entry.watchers]) {
+          watcher.addError(error, stack);
+        }
       }
     } finally {
       entry.loading = false;
@@ -97,4 +123,8 @@ class _Entry<V> {
   bool again = false;
   bool stale = false;
   bool failed = false;
+
+  /// The failed fetches in a row, and the next try waiting.
+  int tries = 0;
+  Timer? retry;
 }

@@ -1,9 +1,13 @@
 import 'package:file_picker/file_picker.dart';
 
 /// The system's file dialog on the device.
+///
+/// One file at a time here: the dialog on the device offers no more anyway — [single]
+/// is for the browser's.
 Future<List<PlatformFile>> pickFiles({
   FileType type = .any,
   List<String>? allowedExtensions,
+  bool single = false,
 }) => FilePicker.pickFiles(
   type: type,
   allowedExtensions: allowedExtensions,

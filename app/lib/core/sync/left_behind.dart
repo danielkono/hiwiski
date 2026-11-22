@@ -205,7 +205,9 @@ class LeftBehind {
           EntityTypes.todo => EntityTypes.todoList,
           EntityTypes.event ||
           EntityTypes.calendarSubscription => EntityTypes.calendar,
-          EntityTypes.wikiPage => EntityTypes.wikiPage,
+          EntityTypes.wikiPage ||
+          EntityTypes.mindmapNode ||
+          EntityTypes.mindmapEdge => EntityTypes.wikiPage,
           EntityTypes.widget => EntityTypes.board,
           _ => null,
         };

@@ -258,6 +258,10 @@ components:
       $ref: './components/todo.yaml#/TodoOccurrenceFields'
     TagFields:
       $ref: './components/tag.yaml#/TagFields'
+    MindmapNodeFields:
+      $ref: './components/wiki.yaml#/MindmapNodeFields'
+    MindmapEdgeFields:
+      $ref: './components/wiki.yaml#/MindmapEdgeFields'
 
   securitySchemes:
     deviceToken:

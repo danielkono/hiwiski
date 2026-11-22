@@ -13,9 +13,11 @@ import org.springframework.stereotype.Component;
 class WikiLinkSource implements LinkSource {
 
     private final DSLContext db;
+    private final MindmapTexts mindmaps;
 
-    WikiLinkSource(DSLContext db) {
+    WikiLinkSource(DSLContext db, MindmapTexts mindmaps) {
         this.db = db;
+        this.mindmaps = mindmaps;
     }
 
     @Override
@@ -25,10 +27,13 @@ class WikiLinkSource implements LinkSource {
 
     @Override
     public String textOf(UUID itemId) {
-        return db.select(WIKI_PAGE.CONTENT)
+        String content = db.select(WIKI_PAGE.CONTENT)
                 .from(WIKI_PAGE)
                 .where(WIKI_PAGE.ID.eq(itemId))
                 .fetchOne(WIKI_PAGE.CONTENT);
+        // A link on the page's mind map is a link from the page.
+        String map = mindmaps.of(itemId);
+        return map.isEmpty() || content == null ? content : content + "\n" + map;
     }
 
     @Override

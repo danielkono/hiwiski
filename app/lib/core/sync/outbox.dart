@@ -32,8 +32,42 @@ class Outbox {
   static const _countAttempt =
       'UPDATE outbox_entries SET attempts = attempts + 1 WHERE mutation_id = ?';
 
-  /// A new id — see [ids.newId].
-  static String newId() => ids.newId();
+  /// A new id — see [ids.newId] — and always after every one handed out before.
+  ///
+  /// A UUIDv7 is ordered to the millisecond only; within one, its random rest
+  /// decided the order the entries went out in. An element "Undo" brought back
+  /// together with its connection could go out after the connection, and the server
+  /// refused the connection as pointing at nothing.
+  static String newId() {
+    final fresh = ids.newId();
+    final last = _last;
+    final id = last == null || fresh.compareTo(last) > 0 ? fresh : _after(last);
+    _last = id;
+    return id;
+  }
+
+  static String? _last;
+
+  /// The id just after [id]: its random rest — the 60 bits after the version and
+  /// the variant — one up. Version and variant stay what they are.
+  static String _after(String id) {
+    final groups = id.split(_dash);
+    final variant = groups[3].substring(0, 1);
+    final rest =
+        BigInt.parse('${groups[3].substring(1)}${groups[4]}', radix: 16) + .one;
+    // Beyond 60 bits only after 2^60 ids within one millisecond.
+    if (rest.bitLength > _restBits) return ids.newId();
+    final hex = rest.toRadixString(16).padLeft(_restDigits, '0');
+    return [
+      ...groups.take(3),
+      '$variant${hex.substring(0, 3)}',
+      hex.substring(3),
+    ].join(_dash);
+  }
+
+  static const _dash = '-';
+  static const _restBits = 60;
+  static const _restDigits = 15;
 
   /// Stores a mutation.
   ///

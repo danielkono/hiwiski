@@ -11,6 +11,7 @@ import '../../domain/links/link_index.dart';
 import '../../domain/sync/sync_items.dart';
 import '../../domain/todo/kanban.dart';
 import '../../domain/todo/todo_items.dart';
+import '../../domain/wiki/mindmap.dart';
 
 part 'sync_banner_view_model.g.dart';
 
@@ -31,6 +32,15 @@ class const SyncBannerState({
   /// For a card's conflict over its column: the board's columns by conflict id, so
   /// the sheet names the column instead of showing its id.
   required final Map<String, List<KanbanColumn>> boards,
+
+  /// For a conflict on a mind map's element or connection: its page by conflict id,
+  /// so the sheet can show it there — an element has no page of its own.
+  final Map<String, String> mindmaps = const {},
+
+  /// The conflicts decided together with one in [conflicts], by its id: an element's
+  /// x and y lost against the same move and are one conflict to the person, its width
+  /// and height too.
+  final Map<String, List<SyncConflict>> partners = const {},
 
   /// The public demo: every page says that nothing is kept.
   final bool demo = false,
@@ -65,7 +75,8 @@ class SyncBannerViewModel extends _$SyncBannerViewModel {
     final todos = ref.read(todoRepositoryProvider);
     // Decorates the banner: not waited for.
     final leftBehind = ref.watch(_leftBehindProvider).value?.length ?? 0;
-    final conflicts = await ref.watch(_conflictsProvider.future);
+    final groups = groupConflicts(await ref.watch(_conflictsProvider.future));
+    final conflicts = [for (final group in groups) group.first];
     final boards = <String, List<KanbanColumn>>{};
     for (final conflict in conflicts) {
       if (conflict.entityType != EntityTypes.todo ||
@@ -77,6 +88,16 @@ class SyncBannerViewModel extends _$SyncBannerViewModel {
       final list = await ref.watch(_listProvider(listId).future);
       boards[conflict.id] = parseColumns(list?.columns);
     }
+    final maps = ref.read(mindmapRepositoryProvider);
+    final mindmaps = <String, String>{};
+    for (final conflict in conflicts) {
+      if (conflict.entityType != EntityTypes.mindmapNode &&
+          conflict.entityType != EntityTypes.mindmapEdge) {
+        continue;
+      }
+      final pageId = await maps.pageOf(conflict.entityType, conflict.entityId);
+      if (pageId != null) mindmaps[conflict.id] = pageId;
+    }
     return SyncBannerState(
       demo: BuildFlavor.demo,
       status: status,
@@ -84,19 +105,38 @@ class SyncBannerViewModel extends _$SyncBannerViewModel {
       webUpdate: webUpdate,
       index: index,
       boards: boards,
+      mindmaps: mindmaps,
+      partners: {
+        for (final group in groups)
+          if (group.length > 1) group.first.id: group.sublist(1),
+      },
       leftBehind: leftBehind,
     );
   }
 
   void reload() => ref.read(webUpdateStoreProvider).reload();
 
-  /// "Apply anyway": the device's own discarded version goes out once more.
-  Future<void> takeMine(SyncConflict conflict) =>
-      ref.read(syncRepositoryProvider).takeMine(conflict);
+  /// "Apply anyway": the device's own discarded version goes out once more — with
+  /// what is decided together with it.
+  Future<void> takeMine(SyncConflict conflict) async {
+    final sync = ref.read(syncRepositoryProvider);
+    for (final each in _together(conflict)) {
+      await sync.takeMine(each);
+    }
+  }
 
   /// Seen, and the server state accepted.
-  Future<void> dismissConflict(SyncConflict conflict) =>
-      ref.read(syncRepositoryProvider).dismissConflict(conflict);
+  Future<void> dismissConflict(SyncConflict conflict) async {
+    final sync = ref.read(syncRepositoryProvider);
+    for (final each in _together(conflict)) {
+      await sync.dismissConflict(each);
+    }
+  }
+
+  List<SyncConflict> _together(SyncConflict conflict) => [
+    conflict,
+    ...?state.value?.partners[conflict.id],
+  ];
 }
 
 /// The stuck changes, as a list that closes as soon as nothing is stuck any more.

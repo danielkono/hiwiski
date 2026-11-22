@@ -384,6 +384,19 @@ class WikiRepository {
             where: (row) => row.id.equals(id),
           );
         }
+        // A mind map goes with its page — and comes back with it from the trash.
+        await write.cascade(
+          deleted,
+          _db.mindmapEdges,
+          MindmapEdgesCompanion(deletedAt: Value(now)),
+          where: (row) => row.pageId.equals(id) & row.deletedAt.isNull(),
+        );
+        await write.cascade(
+          deleted,
+          _db.mindmapNodes,
+          MindmapNodesCompanion(deletedAt: Value(now)),
+          where: (row) => row.pageId.equals(id) & row.deletedAt.isNull(),
+        );
         final children = await (_db.select(
           _db.wikiPages,
         )..where((row) => row.parentId.equals(id))).get();

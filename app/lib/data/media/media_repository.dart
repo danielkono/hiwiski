@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 
 import '../../core/api/hiwiski_api.dart';
@@ -43,6 +45,7 @@ class MediaRepository {
 
   late final _images = Query<(String, bool), Uint8List>(
     (key) => image(key.$1, preview: key.$2),
+    retryAfter: imageRetryAfter,
   );
 
   /// An image while it is shown — in memory only then: kept, every image ever loaded
@@ -192,3 +195,31 @@ class MediaRepository {
     return uploaded;
   }
 }
+
+/// How long to wait before an image that could not be fetched is asked for again —
+/// `null`: it failed for good.
+///
+/// Not there yet is the usual case: a picture is put on a map or a page at once and
+/// uploaded only once its carrier has reached the server — a large one some seconds
+/// later. Another device showing the carrier meanwhile asked too early, and nothing
+/// told it when the upload was done: it showed the failure until it was reloaded. So
+/// such an image, or one the network or the server failed to bring, is asked for
+/// again, ever less often, for some minutes.
+Duration? imageRetryAfter(Object error, int tries) {
+  final failure = HiwiskiFailure.from(error);
+  final worth =
+      failure.isNetwork ||
+      failure.isTransient ||
+      failure.code == FailureCodes.mediaImageNotFound;
+  if (!worth || tries > _imageRetries) return null;
+  return Duration(
+    seconds: math.min(_imageRetryLongest, 1 << math.min(tries - 1, _doublings)),
+  );
+}
+
+/// Tries after the first, and the longest wait between two, in seconds: a minute
+/// and a half in all before the tries reach the longest wait, about five minutes
+/// with them.
+const _imageRetries = 12;
+const _imageRetryLongest = 30;
+const _doublings = 5;

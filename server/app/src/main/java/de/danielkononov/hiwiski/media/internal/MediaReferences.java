@@ -2,6 +2,7 @@ package de.danielkononov.hiwiski.media.internal;
 
 import static de.danielkononov.hiwiski.db.generated.Tables.EVENT;
 import static de.danielkononov.hiwiski.db.generated.Tables.MEMBER;
+import static de.danielkononov.hiwiski.db.generated.Tables.MINDMAP_NODE;
 import static de.danielkononov.hiwiski.db.generated.Tables.TODO;
 import static de.danielkononov.hiwiski.db.generated.Tables.TODO_LIST;
 import static de.danielkononov.hiwiski.db.generated.Tables.WIKI_PAGE;
@@ -17,7 +18,8 @@ import org.springframework.stereotype.Component;
 /**
  * The items that name an image -- the same places the cleanup looks
  * ({@link OrphanedImagesJob}): a page's properties and its text, current or in a
- * revision, a list's or a task's description, an event's note, a member's picture.
+ * revision, the elements of its mind map, a list's or a task's description, an event's
+ * note, a member's picture.
  */
 @Component
 class MediaReferences {
@@ -43,6 +45,10 @@ class MediaReferences {
                 .union(db.selectDistinct(WIKI_REVISION.PAGE_ID)
                         .from(WIKI_REVISION)
                         .where(WIKI_REVISION.CONTENT.like(inText)))
+                // An element of the page's mind map: the image is uploaded for the page.
+                .union(db.selectDistinct(MINDMAP_NODE.PAGE_ID)
+                        .from(MINDMAP_NODE)
+                        .where(MINDMAP_NODE.TEXT.like(inText)))
                 .fetch(0, UUID.class)
                 .forEach(id -> carriers.add(new Carrier("WIKI_PAGE", id)));
         db.select(TODO_LIST.ID).from(TODO_LIST).where(TODO_LIST.DESCRIPTION.like(inText))

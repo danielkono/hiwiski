@@ -438,6 +438,42 @@ void main() {
     });
   });
 
+  test('a mind map goes along as its picture, and comes back as a page', () {
+    final file = packExport(
+      pageExportFiles(
+        branch: [
+          page('map', 'Urlaub [Ideen]', kind: 'MINDMAP', content: 'Notizen'),
+        ],
+        tagNames: const {},
+        images: const {},
+        mindmaps: {'map': png},
+      ),
+      name: 'Urlaub',
+    );
+    final names = ZipDecoder()
+        .decodeBytes(file.bytes)
+        .files
+        .map((entry) => entry.name)
+        .toSet();
+    expect(names, equals({'Urlaub [Ideen].md', 'media/map.png'}));
+
+    final plan = readImport([
+      TransferFile(file.name, file.bytes),
+    ], place: .wiki);
+    final imported = plan.pages.single;
+    // Not a mind map again — its elements are not in the file — but a page that
+    // shows it.
+    expect(imported.kind, equals('PAGE'));
+    expect(plan.images.keys, equals(['0/media/map.png']));
+    final text = importContent(
+      imported.content,
+      path: imported.path,
+      imageId: (path) => path == '0/media/map.png' ? 'picture' : null,
+      pageId: (_) => null,
+    );
+    expect(text, equals('![Urlaub Ideen](hiwiski-image:picture)\n\nNotizen'));
+  });
+
   group('an import', () {
     Uint8List zip(Map<String, List<int>> files) {
       final archive = Archive();

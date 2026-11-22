@@ -42,15 +42,24 @@ TransferPage parsePage(String markdown, {required String path}) {
     title: title is String && title.trim().isNotEmpty
         ? title.trim()
         : p.posix.basenameWithoutExtension(path),
-    kind: kind is String && kind.trim().isNotEmpty
-        ? kind.trim()
-        : PageKinds.page,
+    kind: switch (kind) {
+      // A mind map's elements are not in its file — at most its picture, which
+      // the page keeps as an image: it comes in as an ordinary page.
+      String() when kind.trim() == PageKinds.mindmap => PageKinds.page,
+      String() when kind.trim().isNotEmpty => kind.trim(),
+      _ => PageKinds.page,
+    },
     content: body.trim(),
     tags: stringList(fields[TransferFields.tags]),
     properties: properties is Map<String, Object?> ? properties : const {},
     position: position is int ? position : 0,
   );
 }
+
+/// The image [imageId] as the app writes it into a page, [label] its text — without
+/// brackets, which would end it early.
+String imageMarkdown(String label, String imageId) =>
+    '![${label.replaceAll(_brackets, '')}]($_imageAddress$imageId)';
 
 /// The ids of the images in [content], in order, each once. Images inside a code
 /// block are text and not counted.
@@ -233,6 +242,8 @@ const _parent = '..';
 
 const _labelGroup = 1;
 const _targetGroup = 2;
+
+final _brackets = RegExp(r'[\[\]]');
 
 /// `![label](target)`.
 final _image = RegExp(r'!\[([^\]]*)\]\(([^)\s]+)\)');

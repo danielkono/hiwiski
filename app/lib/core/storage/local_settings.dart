@@ -45,6 +45,9 @@ class LocalSettings {
   static const _localMemberKey = 'hiwiski.local.member';
   static const _catalogCarryoverKey = 'hiwiski.local.catalog_carryover';
   static const _homeWidgetsKey = 'hiwiski.home_widgets';
+  static const _mindmapSnapKey = 'hiwiski.mindmap.snap';
+  static const _mindmapGridKey = 'hiwiski.mindmap.grid';
+  static const _mindmapSizesKey = 'hiwiski.mindmap.sizes';
 
   static Future<LocalSettings> open() async =>
       LocalSettings(await SharedPreferences.getInstance());
@@ -232,6 +235,28 @@ class LocalSettings {
 
   /// The tags used last, newest first — filtering by one or putting one on an item.
   /// Repeated: a tag used often appears often. The filter bar ranks by it.
+  /// Whether a mind map's elements snap to one another while they are moved or
+  /// resized. On by default.
+  bool get mindmapSnap => _preferences.getBool(_mindmapSnapKey) ?? true;
+
+  Future<void> setMindmapSnap(bool value) =>
+      _preferences.setBool(_mindmapSnapKey, value);
+
+  /// Whether a mind map shows its grid, and what is moved snaps to it. Off by
+  /// default.
+  bool get mindmapGrid => _preferences.getBool(_mindmapGridKey) ?? false;
+
+  Future<void> setMindmapGrid(bool value) =>
+      _preferences.setBool(_mindmapGridKey, value);
+
+  /// The size an element of each kind was placed or resized at last, by mind map,
+  /// newest first: `<page> <kind> <width> <height>`.
+  List<String> get mindmapSizes =>
+      _preferences.getStringList(_mindmapSizesKey) ?? const [];
+
+  Future<void> setMindmapSizes(List<String> value) =>
+      _preferences.setStringList(_mindmapSizesKey, value);
+
   List<String> get tagUses =>
       _preferences.getStringList(_tagUsesKey) ?? const [];
 
@@ -302,6 +327,8 @@ class LocalSettings {
     await _preferences.remove(_pendingSharesKey);
     await _preferences.remove(_shareSheetsKey);
     await _preferences.remove(_tagUsesKey);
+    // Named by the pages they were used on.
+    await _preferences.remove(_mindmapSizesKey);
   }
 }
 
