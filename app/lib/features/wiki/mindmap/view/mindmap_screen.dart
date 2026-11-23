@@ -24,6 +24,7 @@ import '../../../../core/theme/mindmap_colors.dart';
 import '../../../../core/ui/archive_files.dart';
 import '../../../../core/ui/hiwiski_page.dart';
 import '../../../../core/ui/page_header.dart';
+import '../../../../core/ui/states.dart';
 import '../../../../domain/sync/sync_items.dart';
 import '../../../../domain/transfer/transfer_bundle.dart';
 import '../../../../domain/wiki/mindmap.dart';
@@ -1799,10 +1800,14 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
                   ref.invalidate(mindmapViewModelProvider(widget.pageId)),
             ),
             data: (state) {
+              // The page itself is gone — deleted, or no longer shared.
               if (state == null) {
                 return HiwiskiPage(
                   header: header,
-                  body: Center(child: Text(l.mindmapGone)),
+                  body: EmptyState(
+                    icon: HiwiskiSymbols.hub,
+                    message: l.stateGone,
+                  ),
                 );
               }
               final editing = _editable;

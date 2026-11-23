@@ -1355,7 +1355,6 @@
   "mindmapFieldTarget": "Linkziel",
   "mindmapFieldEnds": "Verbundene Elemente",
   "mindmapFieldRotation": "Drehung",
-  "mindmapGone": "Dieses Element ist nicht mehr auf der Mindmap.",
   "mindmapCanvas": "Mindmap-Leinwand",
   "mindmapUndo": "Rückgängig",
   "mindmapRedo": "Wiederholen",

@@ -1895,7 +1895,6 @@
   "mindmapFieldTarget": "Link target",
   "mindmapFieldEnds": "Connected elements",
   "mindmapFieldRotation": "Rotation",
-  "mindmapGone": "This element is no longer on the map.",
   "mindmapCanvas": "Mind map canvas",
   "mindmapUndo": "Undo",
   "mindmapRedo": "Redo",

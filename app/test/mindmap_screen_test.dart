@@ -1322,6 +1322,23 @@ void main() {
     expect(find.byKey(MindmapKeys.undo).hitTestable(), findsOneWidget);
   });
 
+  testWidgets('a map whose page is deleted meanwhile says the page is gone', (
+    tester,
+  ) async {
+    await seed(tester);
+    await open(tester);
+
+    await tester.runAsync(() async {
+      final wiki = container.read(wikiRepositoryProvider);
+      await wiki.deletePage((await wiki.watchPage(pageId).first)!);
+    });
+    await settle(tester);
+
+    // What any item says once it is gone — not that an element left the map.
+    expect(find.text(lookupL(const Locale('en')).stateGone), findsOneWidget);
+    expect(find.text('Meer'), findsNothing);
+  });
+
   testWidgets('a map archived while it is edited is edited no more', (
     tester,
   ) async {
