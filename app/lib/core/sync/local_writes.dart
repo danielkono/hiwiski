@@ -170,6 +170,40 @@ final class LocalWrite {
     );
   }
 
+  /// Brings the deleted item [id] back and queues it with **every field it holds**,
+  /// not only what changed — for what comes back alongside another item, as a mind
+  /// map's elements with their page from the trash of a device without a server.
+  /// Its own mutations may be gone by then: while it lay in the trash, a compaction
+  /// (`LocalTakeover.compact`) dropped everything about an item the server never
+  /// knew, and what went out after would change something the server does not have.
+  ///
+  /// `null` if there is no such row.
+  Future<Queued?> revive<T extends SyncedItem, D>(
+    TableInfo<T, D> table, {
+    required String id,
+    String? containerType,
+  }) async {
+    _ensureOpen();
+    final stored = await _codecOf(table).stored(_db, id);
+    if (stored == null) return null;
+    final deletedAt = table.asDslTable.deletedAt as GeneratedColumn<DateTime>;
+    await (_db.update(table)..where((item) => item.id.equals(id))).write(
+      RawValuesInsertable({deletedAt.name: const Variable<DateTime>(null)}),
+    );
+    await _outbox.supersedeHeld(id, stored.fields.keys);
+    return _queue(
+      table,
+      id: id,
+      op: SyncOps.upsert,
+      fields: stored.fields,
+      containerType: containerType,
+      containerId: stored.containerId,
+      baseVersion: stored.version,
+      dependsOn: await _outbox.lastPendingFor(id),
+      label: stored.label,
+    );
+  }
+
   /// Writes [row] onto the rows [where] picks, **without a mutation of their own**:
   /// they follow from [cause], and the server does the same when it applies it — the
   /// events of a deleted calendar, the pages below a deleted one. Locally right away,
@@ -224,10 +258,13 @@ final class LocalWrite {
 
   /// The entity type the server knows the table by — from the codec the sync applies
   /// its changes with, so what goes out and what comes back are the same type.
-  String _entityTypeOf(TableInfo<Table, Object?> table) {
+  String _entityTypeOf(TableInfo<Table, Object?> table) =>
+      _codecOf(table).entityType;
+
+  EntityCodec _codecOf(TableInfo<Table, Object?> table) {
     for (final codec in entityCodecs) {
       if (codec.table(_db).actualTableName == table.actualTableName) {
-        return codec.entityType;
+        return codec;
       }
     }
     throw ArgumentError.value(
