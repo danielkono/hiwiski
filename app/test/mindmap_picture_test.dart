@@ -16,10 +16,12 @@ import 'package:hiwiski/core/l10n/generated/app_localizations.dart';
 import 'package:hiwiski/core/storage/local_image_store.dart';
 import 'package:hiwiski/core/sync/outbox.dart';
 import 'package:hiwiski/core/theme/hiwiski_theme.dart';
+import 'package:hiwiski/components/rich_text/view/rich_image.dart';
 import 'package:hiwiski/data/media/media_repository.dart';
 import 'package:hiwiski/domain/wiki/mindmap.dart';
 import 'package:hiwiski/domain/wiki/page_images.dart';
 import 'package:hiwiski/features/wiki/view/mindmap/mindmap_picture.dart';
+import 'package:hiwiski/features/wiki/view/mindmap/mindmap_scene.dart';
 
 import 'support/fakes.dart';
 
@@ -105,6 +107,46 @@ void main() {
 
     expect(took.elapsed, lessThan(const Duration(seconds: 3)));
     expect((await tester.runAsync(() => _middleOf(png)))!, isNot(_red));
+  });
+
+  testWidgets('a picture resized a little is not decoded anew', (tester) async {
+    media = _Media(bytes: (await tester.runAsync(_redPng))!);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    Future<int?> decodedAt(int width) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          retry: noRetry,
+          overrides: [mediaRepositoryProvider.overrideWithValue(media)],
+          child: MaterialApp(
+            theme: HiwiskiTheme.light(),
+            localizationsDelegates: L.localizationsDelegates,
+            home: Center(
+              child: SizedBox(
+                width: width.toDouble(),
+                height: 100,
+                child: MindmapElementView(
+                  node: picture.map.nodes.single.changed(width: width),
+                  linkTarget: (_) => null,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      return tester.widget<RichImage>(find.byType(RichImage)).decodeWidth;
+    }
+
+    // A drag on its corner, frame by frame: one width to decode at, sharp at each.
+    final widths = {
+      for (int width = 300; width <= 320; width += 4) await decodedAt(width),
+    };
+    expect(widths, hasLength(1));
+    expect(widths.single, greaterThanOrEqualTo(320 * 2));
+    expect(widths.single, lessThan(320 * 2 * 1.5));
+    // Taken down, and what was still on its way let out.
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 1));
   });
 }
 

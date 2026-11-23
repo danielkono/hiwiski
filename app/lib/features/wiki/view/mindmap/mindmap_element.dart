@@ -516,8 +516,9 @@ class _Picture extends StatelessWidget {
     // while the map is zoomed nor costs a phone's photo at full size.
     final picture = RichImage(
       imageId: id,
-      decodeWidth: (node.width * MediaQuery.devicePixelRatioOf(context))
-          .round(),
+      decodeWidth: _decodeStep(
+        node.width * MediaQuery.devicePixelRatioOf(context),
+      ),
       radius: const .circular(HiwiskiMetrics.radiusChip),
     );
     return interactive
@@ -525,6 +526,19 @@ class _Picture extends StatelessWidget {
         : picture;
   }
 }
+
+/// [pixels] rounded up to the next width a picture is decoded at. The widths go up
+/// by half an octave each — about 1.4 times the one before —, so a picture holds at
+/// most twice the pixels it shows. Decoded at its exact width, a picture resized by
+/// hand was decoded anew from the whole file in every frame of the drag.
+int _decodeStep(double pixels) {
+  if (pixels <= 1) return 1;
+  // Half octaves; a width right on a step stays on it, whatever the rounding.
+  final steps = (math.log(pixels) / math.ln2 * 2 - _onStep).ceil();
+  return math.pow(2, steps / 2).ceil();
+}
+
+const _onStep = 1e-9;
 
 /// A stroke through [fractions] of [box], [width] thick, smoothed through the middles
 /// of its points; a single point is a dot. Hit within [reach] of the line only.
