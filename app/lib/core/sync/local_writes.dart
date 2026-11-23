@@ -75,7 +75,8 @@ final class LocalWrite {
   ///
   /// The id comes from [row]. [after] is the item whose still-pending mutation this
   /// one waits for: the task created offline in a list created offline must not go
-  /// out if the list fails permanently.
+  /// out if the list fails permanently. [alsoAfter] are more the new item needs on
+  /// the server — a mind map's connection both its elements ([_prerequisite]).
   Future<Queued> create<T extends SyncedItem, D>(
     TableInfo<T, D> table,
     Insertable<D> row, {
@@ -83,6 +84,7 @@ final class LocalWrite {
     String? containerType,
     String? containerId,
     String? after,
+    Iterable<String> alsoAfter = const [],
     required String label,
   }) async {
     _ensureOpen();
@@ -99,7 +101,7 @@ final class LocalWrite {
       containerType: containerType,
       containerId: containerId,
       baseVersion: null,
-      dependsOn: after == null ? null : await _outbox.lastPendingFor(after),
+      dependsOn: await _prerequisite([?after, ...alsoAfter]),
       label: label,
     );
   }
@@ -108,6 +110,8 @@ final class LocalWrite {
   /// checks off while someone else moves the due date loses nothing.
   ///
   /// [version] is the one the change builds on — the item as the member saw it.
+  /// [alsoAfter] are items it needs on the server besides itself: a connection
+  /// brought back needs both its elements.
   Future<Queued> change<T extends SyncedItem, D>(
     TableInfo<T, D> table,
     Insertable<D> row, {
@@ -116,6 +120,7 @@ final class LocalWrite {
     required Map<String, dynamic> fields,
     String? containerType,
     String? containerId,
+    Iterable<String> alsoAfter = const [],
     required String label,
   }) async {
     _ensureOpen();
@@ -135,9 +140,28 @@ final class LocalWrite {
       containerType: containerType,
       containerId: containerId,
       baseVersion: version,
-      dependsOn: await _outbox.lastPendingFor(id),
+      dependsOn: await _prerequisite([id, ...alsoAfter]),
       label: label,
     );
+  }
+
+  /// The mutation a new one hangs off when it needs each of [items] on the server.
+  ///
+  /// An entry has room for one: the first item's last pending one, as long as all
+  /// can go out — they go in the order they were made, so the new entry follows
+  /// every one of them anyway. But one that cannot go out yet, of any of the items,
+  /// comes first: the new entry has to wait for exactly that one. Hung off the first
+  /// item alone, a mind map connection went out while its other element was held
+  /// back or refused, and the server refused the connection as pointing at nothing.
+  Future<String?> _prerequisite(List<String> items) async {
+    String? first;
+    for (final item in items) {
+      final pending = await _outbox.lastPendingFor(item);
+      if (pending == null) continue;
+      if (await _outbox.waitsOn(pending)) return pending;
+      first ??= pending;
+    }
+    return first;
   }
 
   /// Soft delete, locally and as a mutation: the tombstone carries it.

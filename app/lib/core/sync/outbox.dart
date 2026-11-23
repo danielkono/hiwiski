@@ -282,8 +282,8 @@ class Outbox {
   }
 
   /// Whether a new entry hanging off [dependsOn] has to wait: its prerequisite is
-  /// held back as a new item (the server does not know the item yet), or waits
-  /// itself.
+  /// a new item held back or refused — the server does not know the item yet, and
+  /// would refuse what needs it as well — or waits itself.
   Future<bool> waitsOn(String? dependsOn) async {
     if (dependsOn == null) return false;
     final parent = await (_db.select(
@@ -291,7 +291,7 @@ class Outbox {
     )..where((entry) => entry.mutationId.equals(dependsOn))).getSingleOrNull();
     if (parent == null) return false;
     return parent.state == OutboxStates.blocked ||
-        (_isHeld(parent) &&
+        (parent.state == OutboxStates.rejected &&
             parent.op == SyncOps.upsert &&
             parent.baseVersion == null);
   }

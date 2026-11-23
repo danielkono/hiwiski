@@ -499,6 +499,7 @@ class MindmapRepository {
           containerType: EntityTypes.wikiPage,
           containerId: edge.pageId,
           after: edge.fromId.compareTo(edge.toId) > 0 ? edge.fromId : edge.toId,
+          alsoAfter: [edge.fromId, edge.toId],
           label: edge.text,
         );
       } else {
@@ -510,6 +511,8 @@ class MindmapRepository {
           fields: fields,
           containerType: EntityTypes.wikiPage,
           containerId: edge.pageId,
+          // Brought back, it needs both its elements back on the server too.
+          alsoAfter: [edge.fromId, edge.toId],
           label: edge.text,
         );
       }
@@ -556,10 +559,11 @@ class MindmapRepository {
         },
         containerType: EntityTypes.wikiPage,
         containerId: from.pageId,
-        // Not before its newer end: elements go out in the order they were made, so
-        // the later one waits for the earlier too — and a refused element holds the
-        // connection back instead of letting it fail on its own.
+        // Not before either end: elements go out in the order they were made, so
+        // hung off the newer it follows both — and an element held back or refused
+        // holds the connection back too, instead of letting it fail on its own.
         after: from.id.compareTo(to.id) > 0 ? from.id : to.id,
+        alsoAfter: [from.id, to.id],
         label: text,
       ),
     );

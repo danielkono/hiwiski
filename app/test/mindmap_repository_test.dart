@@ -5,10 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hiwiski/app/data_providers.dart';
 import 'package:hiwiski/app/repositories.dart';
+import 'package:hiwiski/core/common/sync_limits.dart';
 import 'package:hiwiski/core/common/wire.dart';
 import 'package:hiwiski/core/db/hiwiski_database.dart';
+import 'package:hiwiski/core/db/tables.dart';
 import 'package:hiwiski/core/storage/local_settings.dart';
 import 'package:hiwiski/core/sync/entity_codec.dart';
+import 'package:hiwiski/core/sync/outbox.dart';
 import 'package:hiwiski/domain/common/change.dart';
 import 'package:hiwiski/domain/wiki/mindmap.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -131,6 +134,63 @@ void main() {
       expect(rows.single.deletedAt, isNotNull);
     },
   );
+
+  group('a connection waits for an element that cannot go out yet', () {
+    Future<String> connect(String a, String b) async {
+      final shown = await map();
+      return container
+          .read(mindmapRepositoryProvider)
+          .connect(shown.node(a)!, shown.node(b)!);
+    }
+
+    test(
+      'the older one, held back as too long, and is let go with it',
+      () async {
+        final a = await add('x' * (SyncLimits.textChars + 1));
+        final b = await add('Berge', x: 200);
+        final edgeId = await connect(a, b);
+
+        final [aEntry] = await outboxOf(a);
+        final [edgeEntry] = await outboxOf(edgeId);
+        expect(edgeEntry.dependsOn, equals(aEntry.mutationId));
+        expect(edgeEntry.state, equals(OutboxStates.blocked));
+
+        // Shortened, the element goes out — and the connection after it.
+        await container
+            .read(mindmapRepositoryProvider)
+            .changeNode((await map()).node(a)!, text: 'Meer');
+        final [released] = await outboxOf(edgeId);
+        expect(released.state, equals(OutboxStates.pending));
+      },
+    );
+
+    test('the older one, refused by the server', () async {
+      final a = await add('Meer');
+      final b = await add('Berge', x: 200);
+      final [aEntry] = await outboxOf(a);
+      await Outbox(db).reject(aEntry.mutationId, 'sync.invalid_field');
+
+      final [edgeEntry] = await outboxOf(await connect(b, a));
+      expect(edgeEntry.dependsOn, equals(aEntry.mutationId));
+      expect(edgeEntry.state, equals(OutboxStates.blocked));
+    });
+
+    test('brought back by "Undo"', () async {
+      final a = await add('Meer');
+      final b = await add('Berge', x: 200);
+      final edgeId = await connect(a, b);
+      final maps = container.read(mindmapRepositoryProvider);
+      final edge = (await maps.edge(edgeId))!;
+      await maps.deleteEdge(edge);
+      final [aEntry] = await outboxOf(a);
+      await Outbox(db).reject(aEntry.mutationId, 'sync.invalid_field');
+
+      await maps.restore(edges: [edge]);
+      final [..., brought] = await outboxOf(edgeId);
+      expect(brought.dependsOn, equals(aEntry.mutationId));
+      expect(brought.state, equals(OutboxStates.blocked));
+    });
+  });
 
   test('a deleted page takes its map along on the device', () async {
     final a = await add('Meer');
