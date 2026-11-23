@@ -28,6 +28,9 @@ String historyFieldLabel(L l, String field) => switch (field) {
   WireFields.strokeWidth => l.mindmapStrokeWidth,
   WireFields.linkView => l.mindmapLinkView,
   WireFields.fromId || WireFields.toId => l.mindmapFieldEnds,
+  WireFields.rotation => l.mindmapFieldRotation,
+  // One choice in the form: a dashed arrow is a kind of line.
+  WireFields.line || WireFields.arrows => l.mindmapEdgeStyle,
   WireFields.tags => l.tagsTitle,
   WireFields.kind => l.historyFieldKind,
   WireFields.archivedAt || WireFields.archivedBy => l.archiveTitle,
