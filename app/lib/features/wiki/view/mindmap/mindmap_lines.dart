@@ -21,7 +21,8 @@ const mindmapEdgeStyles = <MindmapEdgeStyle>[
 
 /// Draws a connection from [start] through the quadratic curve's [control] to
 /// [end] with [paint]: dashed or dotted as [style] says, with arrow heads where it
-/// says — each at least [minHead] long.
+/// says — each at least [minHead] long. Of a dashed or dotted line, only the dashes
+/// within [cull] are drawn, where it is given.
 void paintMindmapLine(
   Canvas canvas, {
   required Offset start,
@@ -30,6 +31,7 @@ void paintMindmapLine(
   required Paint paint,
   required MindmapEdgeStyle style,
   required double minHead,
+  Rect? cull,
 }) {
   final width = paint.strokeWidth;
   final head = math.max(width * _headPerWidth, minHead);
@@ -52,6 +54,7 @@ void paintMindmapLine(
         paint,
         dash: math.max(width * _dashPerWidth, minHead / 2),
         gap: math.max(width * _gapPerWidth, minHead / 2),
+        cull: cull,
       );
     case MindmapLines.dotted:
       _dashes(
@@ -60,6 +63,7 @@ void paintMindmapLine(
         paint..strokeCap = .round,
         dash: 0,
         gap: math.max(width * _dotGapPerWidth, minHead / 3),
+        cull: cull,
       );
     default:
       canvas.drawPath(path, paint);
@@ -138,23 +142,34 @@ void _head(
   );
 }
 
+/// [path] dashed, drawn at once — a long line has hundreds of dashes, and each its
+/// own drawing took twice as long. Only those near [cull] are worked out: a dash
+/// starting farther out than its length and the line's thickness cannot reach it.
 void _dashes(
   Canvas canvas,
   Path path,
   Paint paint, {
   required double dash,
   required double gap,
+  Rect? cull,
 }) {
+  // A dot is a dash of no length: the round end makes it a dot.
+  final piece = math.max(dash, _dot);
+  final near = cull?.inflate(piece + paint.strokeWidth);
+  final dashes = Path();
   for (final metric in path.computeMetrics()) {
-    // A dot is a dash of no length: the round end makes it a dot.
-    final piece = math.max(dash, _dot);
     for (double at = 0; at < metric.length; at += dash + gap) {
-      canvas.drawPath(
+      if (near != null &&
+          !near.contains(metric.getTangentForOffset(at)?.position ?? .zero)) {
+        continue;
+      }
+      dashes.addPath(
         metric.extractPath(at, math.min(at + piece, metric.length)),
-        paint,
+        Offset.zero,
       );
     }
   }
+  canvas.drawPath(dashes, paint);
 }
 
 /// An arrow head's length and half its width, by the line's thickness.

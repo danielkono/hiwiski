@@ -140,6 +140,27 @@ class MindmapScene extends StatelessWidget {
           vertical: math.max(0, (grip - node.height) / 2),
         );
 
+  /// What the connections are drawn within: [visible] grown outwards to a grid of
+  /// about a screen's size. The connections lie on a layer of their own that a move
+  /// of the map does not redraw; drawn within [visible] itself, they would be redrawn
+  /// in every frame of it, but this way only as it crosses a line of the grid — and
+  /// what is seen always lies within what was drawn.
+  static Rect _cullOf(Rect visible) {
+    final cell = visible.longestSide / _cullCells;
+    if (cell <= 0) return visible;
+    double down(double value) => (value / cell).floorToDouble() * cell;
+    double up(double value) => (value / cell).ceilToDouble() * cell;
+    return .fromLTRB(
+      down(visible.left),
+      down(visible.top),
+      up(visible.right),
+      up(visible.bottom),
+    );
+  }
+
+  /// [visible] is the view and a screen's worth around it: three screens across.
+  static const _cullCells = 3;
+
   /// How far a grip reaches into its element at most, as a share of the element:
   /// the rest of it is moved by a drag, at every zoom.
   static const _gripReach = 1 / 3;
@@ -228,6 +249,10 @@ class MindmapScene extends StatelessWidget {
                     },
                     pendingWidth: pendingLook?.width?.toDouble(),
                     zoom: zoom,
+                    cull: switch (visible) {
+                      final visible? => _cullOf(visible),
+                      null => null,
+                    },
                   ),
                 ),
               ),
@@ -831,11 +856,16 @@ class _EdgesPainter extends CustomPainter {
     required this.pendingInk,
     required this.pendingWidth,
     required this.zoom,
+    required this.cull,
   });
 
   final Mindmap map;
   final Offset origin;
   final Map<String, MindmapPaint> paints;
+
+  /// Where the dashes of a dashed or dotted line are worked out — in the map's units;
+  /// `null`: along the whole line.
+  final Rect? cull;
   final TextStyle label;
   final Color labelInk;
 
@@ -892,6 +922,7 @@ class _EdgesPainter extends CustomPainter {
         paint: line,
         style: (line: edge.line, arrows: edge.arrows),
         minHead: minHead,
+        cull: cull,
       );
       if (edge.text.isNotEmpty || conflicts.contains(edge.id)) {
         _label(canvas, edge, path.bend, color);
@@ -975,6 +1006,7 @@ class _EdgesPainter extends CustomPainter {
       old.pendingInk != pendingInk ||
       old.pendingWidth != pendingWidth ||
       old.zoom != zoom ||
+      old.cull != cull ||
       old.labelInk != labelInk ||
       old.background != background;
 }
