@@ -1339,6 +1339,31 @@ void main() {
     expect(find.text('Meer'), findsNothing);
   });
 
+  testWidgets('a new dot shows at once beside the dots already there', (
+    tester,
+  ) async {
+    await seed(tester);
+    await open(tester);
+    await tester.tap(find.byKey(MindmapKeys.edit));
+    await settle(tester);
+    await pick(tester, MindmapKeys.drawMenu, MindmapKeys.pen);
+    await settle(tester);
+    final strokes = find.byWidgetPredicate(
+      (widget) => widget is CustomPaint && widget.painter is StrokePainter,
+    );
+    await tester.tapAt(const Offset(200, 600));
+    await settle(tester);
+    expect(strokes, findsOneWidget);
+
+    // Every dot has the same points in its own box: the first on the map did not
+    // make the second count as there before it was.
+    await tester.tapAt(const Offset(500, 600));
+    await tester.pump();
+    expect(strokes, findsNWidgets(2));
+    await settle(tester);
+    expect(strokes, findsNWidgets(2));
+  });
+
   testWidgets('a map left while it glides lets go of its ticker', (
     tester,
   ) async {

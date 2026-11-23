@@ -738,7 +738,7 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
     if (map == null) return;
     final strokes = [
       for (final stroke in _strokes)
-        if (map.nodes.any((node) => node.points == stroke.points)) stroke,
+        if (_holds(map, stroke)) stroke,
     ];
     final held = _held;
     // A new snippet has arrived once it is there; a rewritten one once it is no
@@ -1679,10 +1679,7 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
       // Those the map has by now are drawn by it.
       final map = _state?.map;
       _strokes
-        ..removeWhere(
-          (held) =>
-              map?.nodes.any((node) => node.points == held.points) ?? false,
-        )
+        ..removeWhere((held) => map != null && _holds(map, held))
         ..add(shown);
     });
     unawaited(
@@ -1691,6 +1688,19 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
   }
 
   static const _strokeDraft = 'mindmap-stroke-';
+
+  /// Whether [map] has the [stroke] just drawn by now: the same points in the same
+  /// place, at the same size. Its points alone are counted within its own box — every
+  /// dot has the same ones, and a new dot was taken for one already on the map and
+  /// vanished until the map had it.
+  static bool _holds(Mindmap map, MindmapNode stroke) => map.nodes.any(
+    (node) =>
+        node.x == stroke.x &&
+        node.y == stroke.y &&
+        node.width == stroke.width &&
+        node.height == stroke.height &&
+        node.points == stroke.points,
+  );
 
   /// The whole map — what "Show everything" shows — as a picture, saved where the
   /// person chooses: a download in the browser.
@@ -1957,10 +1967,7 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
                                 ?held,
                                 // Drawn, and not yet back from the database.
                                 for (final stroke in _strokes)
-                                  if (!state.map.nodes.any(
-                                    (node) => node.points == stroke.points,
-                                  ))
-                                    stroke,
+                                  if (!_holds(state.map, stroke)) stroke,
                               ],
                               labels: mine == null
                                   ? null
