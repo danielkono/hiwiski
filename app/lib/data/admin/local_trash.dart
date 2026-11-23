@@ -132,6 +132,12 @@ class LocalTrash {
   }
 
   /// Brings an item back — into [targetContainerId] if its own container is gone.
+  ///
+  /// With every field it holds, not only what the restore changes: while it lay in
+  /// the trash, a start without a server dropped everything the outbox held about it
+  /// (`LocalTakeover.compact`), as the server never knew it — and what went out after
+  /// would have changed an item the server does not have, a page without its title
+  /// or kind.
   Future<void> restore(
     String itemType,
     String itemId, {
@@ -139,15 +145,22 @@ class LocalTrash {
   }) => _writes.run((write) async {
     switch (itemType) {
       case EntityTypes.todoList:
-        final row = await _row(_db.todoLists, itemId);
-        await write.change(
-          _db.todoLists,
-          const TodoListsCompanion(deletedAt: Value(null)),
-          id: itemId,
-          version: row.version,
-          fields: const {},
-          label: row.name,
-        );
+        await _revive(write, _db.todoLists, itemId);
+        // Its tasks did not go with it on this device — their rows stayed — but the
+        // same start dropped what they had to send, as their list was gone.
+        final tasks =
+            await (_db.select(_db.todos)..where(
+                  (row) => row.listId.equals(itemId) & row.deletedAt.isNull(),
+                ))
+                .get();
+        for (final task in tasks) {
+          await _revive(
+            write,
+            _db.todos,
+            task.id,
+            containerType: EntityTypes.todoList,
+          );
+        }
       case EntityTypes.todo:
         final row = await _row(_db.todos, itemId);
         final list = await _target(
@@ -155,26 +168,26 @@ class LocalTrash {
           row.listId,
           targetContainerId,
         );
-        await write.change(
+        if (list != row.listId) {
+          await write.change(
+            _db.todos,
+            TodosCompanion(listId: Value(list)),
+            id: itemId,
+            version: row.version,
+            fields: {WireFields.listId: list},
+            containerType: EntityTypes.todoList,
+            containerId: list,
+            label: row.title,
+          );
+        }
+        await _revive(
+          write,
           _db.todos,
-          TodosCompanion(deletedAt: const Value(null), listId: Value(list)),
-          id: itemId,
-          version: row.version,
-          fields: {WireFields.listId: list},
+          itemId,
           containerType: EntityTypes.todoList,
-          containerId: list,
-          label: row.title,
         );
       case EntityTypes.calendar:
-        final row = await _row(_db.calendars, itemId);
-        await write.change(
-          _db.calendars,
-          const CalendarsCompanion(deletedAt: Value(null)),
-          id: itemId,
-          version: row.version,
-          fields: const {},
-          label: row.name,
-        );
+        await _revive(write, _db.calendars, itemId);
       case EntityTypes.event:
         final row = await _row(_db.events, itemId);
         final calendar = await _target(
@@ -182,18 +195,23 @@ class LocalTrash {
           row.calendarId,
           targetContainerId,
         );
-        await write.change(
+        if (calendar != row.calendarId) {
+          await write.change(
+            _db.events,
+            EventsCompanion(calendarId: Value(calendar)),
+            id: itemId,
+            version: row.version,
+            fields: {WireFields.calendarId: calendar},
+            containerType: EntityTypes.calendar,
+            containerId: calendar,
+            label: row.title,
+          );
+        }
+        await _revive(
+          write,
           _db.events,
-          EventsCompanion(
-            deletedAt: const Value(null),
-            calendarId: Value(calendar),
-          ),
-          id: itemId,
-          version: row.version,
-          fields: {WireFields.calendarId: calendar},
+          itemId,
           containerType: EntityTypes.calendar,
-          containerId: calendar,
-          label: row.title,
         );
       case EntityTypes.wikiPage:
         final row = await _row(_db.wikiPages, itemId);
@@ -201,36 +219,50 @@ class LocalTrash {
           null => null,
           final own => await _target(_db.wikiPages, own, targetContainerId),
         };
-        await write.change(
+        if (parent != row.parentId) {
+          await write.change(
+            _db.wikiPages,
+            WikiPagesCompanion(parentId: Value(parent)),
+            id: itemId,
+            version: row.version,
+            fields: {WireFields.parentId: parent},
+            containerType: EntityTypes.wikiPage,
+            containerId: parent,
+            label: row.title,
+          );
+        }
+        await _revive(
+          write,
           _db.wikiPages,
-          WikiPagesCompanion(
-            deletedAt: const Value(null),
-            parentId: Value(parent),
-          ),
-          id: itemId,
-          version: row.version,
-          fields: {WireFields.parentId: parent},
+          itemId,
           containerType: parent == null ? null : EntityTypes.wikiPage,
-          containerId: parent,
-          label: row.title,
         );
         if (row.deletedAt case final since?) {
           await _restoreMap(write, itemId, since);
         }
       case EntityTypes.tag:
-        final row = await _row(_db.tags, itemId);
-        await write.change(
-          _db.tags,
-          const TagsCompanion(deletedAt: Value(null)),
-          id: itemId,
-          version: row.version,
-          fields: const {},
-          label: row.name,
-        );
+        await _revive(write, _db.tags, itemId);
       default:
         throw const HiwiskiFailure(code: FailureCodes.trashItemNotFound);
     }
   });
+
+  /// Brings [id] back with every field it holds, or says it is not in the trash.
+  static Future<void> _revive<T extends SyncedItem, D>(
+    LocalWrite write,
+    TableInfo<T, D> table,
+    String id, {
+    String? containerType,
+  }) async {
+    final revived = await write.revive(
+      table,
+      id: id,
+      containerType: containerType,
+    );
+    if (revived == null) {
+      throw const HiwiskiFailure(code: FailureCodes.trashItemNotFound);
+    }
+  }
 
   /// A page's mind map comes back with it, as from a server's trash: its elements
   /// are in no trash of their own, and left behind they were lost for good once the

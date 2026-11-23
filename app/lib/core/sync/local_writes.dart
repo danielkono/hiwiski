@@ -195,11 +195,13 @@ final class LocalWrite {
   }
 
   /// Brings the deleted item [id] back and queues it with **every field it holds**,
-  /// not only what changed — for what comes back alongside another item, as a mind
-  /// map's elements with their page from the trash of a device without a server.
-  /// Its own mutations may be gone by then: while it lay in the trash, a compaction
-  /// (`LocalTakeover.compact`) dropped everything about an item the server never
-  /// knew, and what went out after would change something the server does not have.
+  /// not only what changed — for what comes back from the trash of a device without
+  /// a server: the item itself, and what comes back alongside it, as a mind map's
+  /// elements with their page. Its own mutations may be gone by then: while it lay
+  /// in the trash, a compaction (`LocalTakeover.compact`) dropped everything about an
+  /// item the server never knew, and what went out after would change something the
+  /// server does not have. An item that is not deleted stays as it is and is queued
+  /// all the same — a list's tasks, whose mutations went along with their list's.
   ///
   /// `null` if there is no such row.
   Future<Queued?> revive<T extends SyncedItem, D>(
