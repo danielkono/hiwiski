@@ -48,6 +48,7 @@ Future<Uint8List> _draw(
 
   // A tree of its own, off the screen: built, laid out and painted here, never shown.
   final boundary = RenderRepaintBoundary();
+  final positioned = RenderPositionedBox(child: boundary);
   final renderView = RenderView(
     view: view,
     configuration: ViewConfiguration(
@@ -55,7 +56,7 @@ Future<Uint8List> _draw(
       physicalConstraints: BoxConstraints.tight(area.size * ratio),
       devicePixelRatio: ratio,
     ),
-    child: RenderPositionedBox(child: boundary),
+    child: positioned,
   );
   final images = StillImages();
   final pipeline = PipelineOwner()..rootNode = renderView;
@@ -156,6 +157,12 @@ Future<Uint8List> _draw(
       ..rootNode = null
       ..dispose();
     focus.dispose();
+    // What was put together here by hand goes too, child before parent, and with it
+    // every layer of the picture: left to the garbage collector, the engine held on
+    // to them — a large map's pixels among them — for as long as it pleased.
+    boundary.dispose();
+    positioned.dispose();
+    renderView.dispose();
   }
 }
 

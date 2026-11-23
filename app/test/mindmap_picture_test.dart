@@ -1,7 +1,7 @@
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:drift/native.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -109,6 +109,28 @@ void main() {
     expect((await tester.runAsync(() => _middleOf(png)))!, isNot(_red));
   });
 
+  testWidgets('the tree a map is drawn in is taken down after it', (
+    tester,
+  ) async {
+    media = _Media(bytes: (await tester.runAsync(_redPng))!);
+    final draw = await drawing(tester);
+    // What the drawing builds of its own and does not dispose of.
+    final left = <Object>{};
+    void track(ObjectEvent event) => switch (event) {
+      ObjectCreated(:final object, :final className)
+          when className == _renderObject || className == _layer =>
+        left.add(object),
+      ObjectDisposed(:final object) => left.remove(object),
+      _ => null,
+    };
+    FlutterMemoryAllocations.instance.addListener(track);
+    addTearDown(() => FlutterMemoryAllocations.instance.removeListener(track));
+
+    await tester.runAsync(() => draw(picture));
+
+    expect(left, isEmpty);
+  });
+
   testWidgets('a picture resized a little is not decoded anew', (tester) async {
     media = _Media(bytes: (await tester.runAsync(_redPng))!);
     tester.view.devicePixelRatio = 2;
@@ -151,6 +173,10 @@ void main() {
 }
 
 const _red = 0xFFFF0000;
+
+/// What the render tree reports of itself, as it is made and disposed of.
+const _renderObject = 'RenderObject';
+const _layer = 'Layer';
 
 /// A red picture of one pixel.
 Future<Uint8List> _redPng() async {
