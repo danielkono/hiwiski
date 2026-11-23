@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:drift/drift.dart' show Table, TableInfo;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hiwiski/core/db/hiwiski_database.dart';
@@ -42,6 +43,55 @@ void main() {
     expect(await db.select(db.mindmapEdges).get(), isEmpty);
     // And the snapshot fetches what the older app skipped as a type it did not know.
     expect(await db.snapshotFrom, isNotNull);
+  });
+
+  test('every step from 20 on brings the columns its version added', () async {
+    // What each version added to a mind map's tables, as SQLite names them.
+    const added = {
+      21: ['mindmap_nodes.link_view'],
+      22: ['mindmap_nodes.text_color'],
+      23: ['mindmap_nodes.points', 'mindmap_nodes.stroke_width'],
+      24: ['mindmap_edges.stroke_width'],
+      25: ['mindmap_edges.line', 'mindmap_edges.arrows'],
+      26: ['mindmap_nodes.rotation'],
+    };
+    for (int from = 20; from < 26; from++) {
+      final dir = await Directory.systemTemp.createTemp('hiwiski_schema');
+      addTearDown(() => dir.delete(recursive: true));
+      final file = File('${dir.path}/hiwiski.sqlite');
+
+      // A device on [from]: none of the columns added after it.
+      final old = HiwiskiDatabase(NativeDatabase(file));
+      for (final MapEntry(key: version, value: columns) in added.entries) {
+        if (version <= from) continue;
+        for (final column in columns) {
+          final [table, name] = column.split('.');
+          await old.customStatement('ALTER TABLE $table DROP COLUMN $name');
+        }
+      }
+      await old.customStatement('PRAGMA user_version = $from');
+      await old.close();
+
+      final db = HiwiskiDatabase(NativeDatabase(file));
+      // Every column the tables have now — an empty table reads without complaint
+      // even where one is missing.
+      for (final TableInfo<Table, Object?> table in [
+        db.mindmapNodes,
+        db.mindmapEdges,
+      ]) {
+        final columns = await db
+            .customSelect('PRAGMA table_info(${table.actualTableName})')
+            .get();
+        expect(
+          {for (final column in columns) column.read<String>('name')},
+          containsAll([for (final column in table.$columns) column.name]),
+          reason: 'from $from',
+        );
+      }
+      final version = await db.customSelect('PRAGMA user_version').getSingle();
+      expect(version.read<int>('user_version'), equals(db.schemaVersion));
+      await db.close();
+    }
   });
 
   test('25 gives a connection its line and arrow heads', () async {
