@@ -108,7 +108,17 @@ class EffectiveAccessService {
             return;
         }
 
-        changes.add(write(itemType, itemId, resolve(ownable, itemId, 0)));
+        ItemChange change = write(itemType, itemId, resolve(ownable, itemId, 0));
+        changes.add(change);
+
+        // What lies inside inherits this item's resolved audience and nothing else of
+        // it: where that stayed as it was, so did theirs, and there is nothing to carry
+        // down. Carried down on every write, a page's new title went through every
+        // element of its mind map -- thousands of rows, under the lock every writer
+        // waits for.
+        if (!change.changed()) {
+            return;
+        }
 
         // The cascade: when a list's share changes, it changes for every task in it --
         // and further down.
@@ -295,11 +305,16 @@ class EffectiveAccessService {
 
         List<UUID> granted = resolved.keySet().stream().filter(member -> !before.containsKey(member)).toList();
         List<UUID> revoked = before.keySet().stream().filter(member -> !resolved.containsKey(member)).toList();
-        return new ItemChange(itemType, itemId, granted, revoked);
+        return new ItemChange(itemType, itemId, granted, revoked, !stale.isEmpty() || !fresh.isEmpty());
     }
 
-    /** Who was added to an item and who dropped out. */
-    record ItemChange(String itemType, UUID itemId, List<UUID> granted, List<UUID> revoked) {}
+    /**
+     * Who was added to an item and who dropped out.
+     *
+     * @param changed whether any row changed -- a level or where it comes from too, not
+     *     only who sees the item
+     */
+    record ItemChange(String itemType, UUID itemId, List<UUID> granted, List<UUID> revoked, boolean changed) {}
 
     /** The same for a whole subtree. */
     record Changed(List<ItemChange> items) {

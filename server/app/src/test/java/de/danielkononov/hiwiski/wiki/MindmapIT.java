@@ -1,5 +1,6 @@
 package de.danielkononov.hiwiski.wiki;
 
+import static de.danielkononov.hiwiski.db.generated.Tables.EFFECTIVE_ACCESS;
 import static de.danielkononov.hiwiski.db.generated.Tables.MINDMAP_EDGE;
 import static de.danielkononov.hiwiski.db.generated.Tables.MINDMAP_NODE;
 import static de.danielkononov.hiwiski.db.generated.Tables.WIKI_PAGE;
@@ -389,6 +390,22 @@ class MindmapIT {
         var back = laptop.pullAll();
         assertThat(merged(back, kept)).containsEntry("op", "upsert").containsEntry("text", "Meer");
         assertThat(merged(back, connectionId)).containsEntry("fromId", kept.toString());
+    }
+
+    @Test
+    void aPageWriteThatLeavesItsAudienceAloneLeavesItsMapAlone() {
+        UUID element = node(phone, "Meer");
+        // Taken away by hand: only working out the element's access anew brings its
+        // rows back, and so shows whether a write of the page went through its map.
+        db.deleteFrom(EFFECTIVE_ACCESS).where(EFFECTIVE_ACCESS.ITEM_ID.eq(element)).execute();
+
+        var renamed = phone.push(SyncClient.mutation(PAGE, map, null, Map.of("title", "Urlaub 2027")));
+        assertThat(renamed.getFirst().get("status")).isEqualTo("applied");
+        assertThat(db.fetchCount(EFFECTIVE_ACCESS, EFFECTIVE_ACCESS.ITEM_ID.eq(element))).isZero();
+
+        // A new audience goes down to every element.
+        share("READ");
+        assertThat(db.fetchCount(EFFECTIVE_ACCESS, EFFECTIVE_ACCESS.ITEM_ID.eq(element))).isEqualTo(2);
     }
 
     @Test
