@@ -135,6 +135,24 @@ Stream<List<AttachedText>> _linkMindmaps(Ref ref) => ref
       ],
     );
 
+/// A connection's label speaks for its page as well — the server counts it as one of
+/// the page's texts, and a link written there showed at its target only once the
+/// server's links were asked for.
+@Riverpod(keepAlive: true)
+Stream<List<AttachedText>> _linkMindmapLabels(Ref ref) => ref
+    .watch(mindmapRepositoryProvider)
+    .watchAllLabelledEdges()
+    .map(
+      (edges) => [
+        for (final edge in edges)
+          AttachedText(
+            itemType: EntityTypes.wikiPage,
+            itemId: edge.pageId,
+            text: edge.text,
+          ),
+      ],
+    );
+
 /// What the texts reference, kept across rebuilds of [linkIndex] (see [ReferenceCache]).
 @Riverpod(keepAlive: true)
 ReferenceCache _references(Ref ref) => .new();
@@ -150,6 +168,7 @@ LinkIndex linkIndex(Ref ref) => .from(
   attached: [
     ...?ref.watch(_linkCommentsProvider).value,
     ...?ref.watch(_linkMindmapsProvider).value,
+    ...?ref.watch(_linkMindmapLabelsProvider).value,
   ],
   references: ref.read(_referencesProvider),
 );

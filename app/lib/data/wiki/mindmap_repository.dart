@@ -124,6 +124,15 @@ class MindmapRepository {
           .watch()
           .map((rows) => [for (final row in rows) row.toDomain()]);
 
+  /// Every living connection with a label, whatever page it is on — for the link
+  /// index: a link in a label is one from its page, as on the server.
+  Stream<List<MindmapEdge>> watchAllLabelledEdges() =>
+      (_db.select(
+            _db.mindmapEdges,
+          )..where((row) => row.deletedAt.isNull() & row.body.equals('').not()))
+          .watch()
+          .map((rows) => [for (final row in rows) row.toDomain()]);
+
   /// The page an element or a connection is on — for a conflict, which names only
   /// the item.
   Future<String?> pageOf(String entityType, String id) async =>

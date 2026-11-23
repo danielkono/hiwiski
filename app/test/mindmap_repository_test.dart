@@ -4,6 +4,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hiwiski/app/data_providers.dart';
+import 'package:hiwiski/app/link_index.dart';
 import 'package:hiwiski/app/repositories.dart';
 import 'package:hiwiski/core/common/sync_limits.dart';
 import 'package:hiwiski/core/common/wire.dart';
@@ -233,6 +234,35 @@ void main() {
       jsonDecode(arranged.fields),
       equals({WireFields.width: mindmapMaxSize, WireFields.height: 5}),
     );
+  });
+
+  test('a link in a connection\'s label is one from its page', () async {
+    final target = await container
+        .read(wikiRepositoryProvider)
+        .createPage(title: 'Packliste');
+    final a = await add('Meer');
+    final b = await add('Berge', x: 200);
+    final shown = await map();
+    await container
+        .read(mindmapRepositoryProvider)
+        .connect(
+          shown.node(a)!,
+          shown.node(b)!,
+          text: 'siehe hiwiski://wiki_page/$target',
+        );
+
+    container.listen(linkIndexProvider, (_, _) {});
+    List<String> linking() => [
+      for (final item
+          in container
+              .read(linkIndexProvider)
+              .incoming(EntityTypes.wikiPage, target))
+        item.itemId,
+    ];
+    for (int i = 0; i < 50 && linking().isEmpty; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(linking(), equals([pageId]));
   });
 
   test('a deleted page takes its map along on the device', () async {
