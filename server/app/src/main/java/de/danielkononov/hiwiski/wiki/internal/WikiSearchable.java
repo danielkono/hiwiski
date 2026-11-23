@@ -61,18 +61,18 @@ class WikiSearchable implements Searchable {
                 row.value6() != null));
     }
 
-    /**
-     * The path up to the first page the reader may not see — none of it above that.
-     *
-     * <p>The pages above in one query, nearest first: one query per level made a search
-     * with fifty hits in a deep tree a few hundred queries.
-     */
     /** A change on a mind map is one of its page's text. */
     @Override
     public List<UUID> affectedBy(String entityType, UUID entityId) {
         return mindmaps.pageOf(entityType, entityId).stream().toList();
     }
 
+    /**
+     * The path up to the first page the reader may not see — none of it above that.
+     *
+     * <p>The pages above in one query, nearest first: one query per level made a search
+     * with fifty hits in a deep tree a few hundred queries.
+     */
     @Override
     public String contextFor(UUID itemId, String indexed, BiPredicate<String, UUID> visible) {
         var above = db.resultQuery(
