@@ -408,6 +408,9 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
     }
   }
 
+  /// Asks for an element's new content and writes it. As in [_place], the map may
+  /// have been left while the choice was made — and with it the ViewModel the change
+  /// goes through, which then throws.
   Future<void> _editContent(MindmapNode node) async {
     switch (node.kind) {
       case MindmapKinds.plain:
@@ -419,11 +422,11 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
           pageId: widget.pageId,
           text: node.text,
         );
-        if (text != null) await _viewModel.setText(node, text);
+        if (text != null && mounted) await _viewModel.setText(node, text);
       case MindmapKinds.image:
         // Another picture: as wide as the one before, in its own shape.
         final picture = await _pickPicture();
-        if (picture == null) return;
+        if (picture == null || !mounted) return;
         await _viewModel.setText(
           node,
           picture.markdown,
@@ -435,10 +438,12 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
       case MindmapKinds.link:
         final markdown = await showLinkPicker(context);
         final target = markdown == null ? null : linkAddressOf(markdown);
-        if (target != null) await _viewModel.setTarget(node, target);
+        if (target != null && mounted) {
+          await _viewModel.setTarget(node, target);
+        }
       case MindmapKinds.member:
         final member = await _pickMember(current: memberIdOf(node.target));
-        if (member != null) {
+        if (member != null && mounted) {
           await _viewModel.setTarget(node, memberAddressOf(member.id));
         }
     }
