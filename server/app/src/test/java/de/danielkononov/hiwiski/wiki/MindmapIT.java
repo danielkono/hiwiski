@@ -433,6 +433,43 @@ class MindmapIT {
     }
 
     @Test
+    void aPageBroughtBackWithItsMapLinksAndIsFoundAsBefore() {
+        UUID target = page("Packliste", "PAGE");
+        phone.push(onMap(NODE, UUID.randomUUID(), null, Map.of(
+                "kind", "LINK", "target", "hiwiski://wiki_page/" + target)));
+        for (int i = 0; i < 20; i++) {
+            node(phone, "Schnorchelausrüstung " + i);
+        }
+        phone.push(SyncClient.deletion(PAGE, map, null));
+        FollowUps.await(db);
+        rest.post()
+                .uri("/api/v1/trash/" + PAGE + "/" + map + "/restore")
+                .headers(anna.auth())
+                .exchange()
+                .expectStatus()
+                .isNoContent();
+        FollowUps.await(db);
+
+        Map<?, ?> links = rest.get()
+                .uri("/api/v1/links/" + PAGE + "/" + target)
+                .headers(anna.auth())
+                .exchange()
+                .expectBody(Map.class)
+                .returnResult()
+                .getResponseBody();
+        assertThat((List<?>) links.get("incoming")).singleElement();
+        Map<?, ?> found = rest.get()
+                .uri("/api/v1/search?q={q}", "Schnorchelausrüstung")
+                .headers(anna.auth())
+                .exchange()
+                .expectBody(Map.class)
+                .returnResult()
+                .getResponseBody();
+        assertThat((List<?>) found.get("hits"))
+                .anySatisfy(hit -> assertThat(((Map<?, ?>) hit).get("itemId")).isEqualTo(map.toString()));
+    }
+
+    @Test
     void aLinkOnTheMapIsOneFromThePageAndAWordOnItFindsThePage() {
         UUID target = page("Packliste", "PAGE");
         UUID element = UUID.randomUUID();

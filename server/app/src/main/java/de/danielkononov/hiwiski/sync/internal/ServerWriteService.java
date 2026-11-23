@@ -129,7 +129,7 @@ class ServerWriteService implements ServerWrites {
         // removed used to stay a hit, and a server delete of a container left its
         // children alive.
         cascade.deleteAlong(type, entityId, actor, null);
-        events.publishEvent(new EntityWritten(entityType, entityId, actor, true, true));
+        events.publishEvent(new EntityWritten(entityType, entityId, actor, true, true, seq));
         return seq;
     }
 

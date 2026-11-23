@@ -2,6 +2,8 @@ package de.danielkononov.hiwiski.search.internal;
 
 import static de.danielkononov.hiwiski.db.generated.Tables.SEARCH_INDEX;
 
+import de.danielkononov.hiwiski.platform.ChangeSequence;
+import de.danielkononov.hiwiski.platform.CoveredWrites;
 import de.danielkononov.hiwiski.search.Searchable;
 import de.danielkononov.hiwiski.sync.EntityWritten;
 import java.util.List;
@@ -30,10 +32,18 @@ class SearchIndexer {
     private final DSLContext db;
     private final Map<String, Searchable> sources;
 
-    SearchIndexer(DSLContext db, List<Searchable> sources) {
+    /**
+     * The items rebuilt for what depends on them, by type and id. Once for writes that
+     * come together: a page deleted or brought back with the thousand elements of its
+     * mind map rebuilt its entry -- reading the whole map -- for each of them.
+     */
+    private final CoveredWrites<String> dependents;
+
+    SearchIndexer(DSLContext db, List<Searchable> sources, ChangeSequence sequence) {
         this.db = db;
         this.sources = sources.stream()
                 .collect(java.util.stream.Collectors.toMap(Searchable::itemType, Function.identity()));
+        this.dependents = new CoveredWrites<>(sequence);
     }
 
     @ApplicationModuleListener
@@ -42,7 +52,10 @@ class SearchIndexer {
         // What depends on it: the tasks of a list that was just archived or restored.
         for (Searchable source : sources.values()) {
             for (UUID affected : source.affectedBy(event.entityType(), event.entityId())) {
-                reindex(source.itemType(), affected);
+                dependents.run(
+                        source.itemType() + ":" + affected,
+                        event.version(),
+                        () -> reindex(source.itemType(), affected));
             }
         }
     }

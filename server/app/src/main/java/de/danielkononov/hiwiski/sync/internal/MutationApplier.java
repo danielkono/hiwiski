@@ -233,7 +233,7 @@ class MutationApplier {
             // stay as it is and find something that no longer exists -- and the
             // references would keep pointing to an item that is gone.
             events.publishEvent(new de.danielkononov.hiwiski.sync.EntityWritten(
-                    type.entityType(), entityId, principal.memberId(), true));
+                    type.entityType(), entityId, principal.memberId(), true, false, seq));
             return applied(mutation, seq, null);
         }
 

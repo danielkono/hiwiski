@@ -109,7 +109,7 @@ class Cascade {
                     goneSeq);
             // The ones taken along too: an event that disappears with its calendar has to
             // leave the search index as well.
-            events.publishEvent(new EntityWritten(gone.entityType(), gone.entityId(), actor, true));
+            events.publishEvent(new EntityWritten(gone.entityType(), gone.entityId(), actor, true, false, goneSeq));
             deleteAlong(goneType, gone.entityId(), actor, device, visited);
         }
     }
