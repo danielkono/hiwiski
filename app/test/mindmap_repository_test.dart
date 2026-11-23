@@ -192,6 +192,49 @@ void main() {
     });
   });
 
+  test('an element is never larger than the server keeps one', () async {
+    final maps = container.read(mindmapRepositoryProvider);
+    final id = await maps.addNode(
+      pageId: pageId,
+      kind: MindmapKinds.drawing,
+      x: 0,
+      y: 0,
+      width: 3 * mindmapMaxSize,
+      height: 0,
+    );
+    final [made] = await outboxOf(id);
+    expect(
+      jsonDecode(made.fields),
+      allOf(
+        containsPair(WireFields.width, mindmapMaxSize),
+        containsPair(WireFields.height, 1),
+      ),
+    );
+
+    await maps.changeNode((await map()).node(id)!, width: 10, height: 10);
+    await maps.changeNode((await map()).node(id)!, height: mindmapMaxSize + 1);
+    await maps.arrangeNodes({
+      (await map()).node(id)!: (
+        x: 0,
+        y: 0,
+        width: 2 * mindmapMaxSize,
+        height: 5,
+      ),
+    });
+    final node = (await map()).node(id)!;
+    expect(node.width, equals(mindmapMaxSize));
+    expect(node.height, equals(5));
+    final [..., resized, arranged] = await outboxOf(id);
+    expect(
+      jsonDecode(resized.fields),
+      equals({WireFields.height: mindmapMaxSize}),
+    );
+    expect(
+      jsonDecode(arranged.fields),
+      equals({WireFields.width: mindmapMaxSize, WireFields.height: 5}),
+    );
+  });
+
   test('a deleted page takes its map along on the device', () async {
     final a = await add('Meer');
     final b = await add('Berge', x: 200);

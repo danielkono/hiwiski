@@ -1361,6 +1361,10 @@ const mindmapMaxTextPixels = 400;
 /// The thickness of a line or a stroke of one's own the server takes.
 const mindmapMaxStrokeWidth = 1000;
 
+/// The widest and highest an element may be, in the map's units — the server refuses
+/// a larger one.
+const mindmapMaxSize = 100000;
+
 // --- Selecting several -------------------------------------------------------------
 
 /// The elements a lasso drawn along [path] goes round — each by its middle, the

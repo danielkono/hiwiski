@@ -170,8 +170,8 @@ class MindmapRepository {
           kind: Value(kind),
           x: Value(x),
           y: Value(y),
-          width: Value(width),
-          height: Value(height),
+          width: Value(_size(width)),
+          height: Value(_size(height)),
           layer: Value(layer),
           body: Value(text),
           target: Value(target),
@@ -185,8 +185,8 @@ class MindmapRepository {
           WireFields.kind: kind,
           WireFields.x: x,
           WireFields.y: y,
-          WireFields.width: width,
-          WireFields.height: height,
+          WireFields.width: _size(width),
+          WireFields.height: _size(height),
           WireFields.layer: layer,
           WireFields.text: text,
           WireFields.target: ?target,
@@ -245,8 +245,8 @@ class MindmapRepository {
       id: Value(node.id),
       x: _changed(x, node.x),
       y: _changed(y, node.y),
-      width: _changed(width, node.width),
-      height: _changed(height, node.height),
+      width: _changed(width == null ? null : _size(width), node.width),
+      height: _changed(height == null ? null : _size(height), node.height),
       layer: _changed(layer, node.layer),
       body: _changed(text, node.text),
       target: _changed(target, node.target),
@@ -340,11 +340,13 @@ class MindmapRepository {
   ) async {
     await _writes.run((write) async {
       for (final MapEntry(key: node, value: to) in places.entries) {
+        final width = _size(to.width);
+        final height = _size(to.height);
         final fields = <String, dynamic>{
           if (to.x != node.x) WireFields.x: to.x,
           if (to.y != node.y) WireFields.y: to.y,
-          if (to.width != node.width) WireFields.width: to.width,
-          if (to.height != node.height) WireFields.height: to.height,
+          if (width != node.width) WireFields.width: width,
+          if (height != node.height) WireFields.height: height,
         };
         if (fields.isEmpty) continue;
         await write.change(
@@ -353,8 +355,8 @@ class MindmapRepository {
             id: Value(node.id),
             x: _changed(to.x, node.x),
             y: _changed(to.y, node.y),
-            width: _changed(to.width, node.width),
-            height: _changed(to.height, node.height),
+            width: _changed(width, node.width),
+            height: _changed(height, node.height),
           ),
           id: node.id,
           version: node.version,
@@ -625,6 +627,11 @@ class MindmapRepository {
       label: edge.text,
     ),
   );
+
+  /// A width or height as the server keeps it: from 1 to [mindmapMaxSize]. Every
+  /// size an element gets passes here — resized, aligned, sized for its text, a
+  /// stroke drawn across the map zoomed out — and one beyond it was refused for good.
+  static int _size(int value) => value.clamp(1, mindmapMaxSize);
 
   /// [value] where it is given and differs from [now]; absent otherwise.
   static Value<T> _changed<T extends Object>(T? value, T? now) =>
