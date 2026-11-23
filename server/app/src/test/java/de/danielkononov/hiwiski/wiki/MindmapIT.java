@@ -215,9 +215,14 @@ class MindmapIT {
         assertThat(tooSmall.getFirst().get("status")).isEqualTo("rejected");
         var elsewhere = phone.push(onMap(NODE, element, null, Map.of("target", "https://example.org")));
         assertThat(elsewhere.getFirst().get("status")).isEqualTo("rejected");
+        var noId = phone.push(onMap(NODE, element, null, Map.of("target", "hiwiski://wiki_page/" + "-".repeat(36))));
+        assertThat(noId.getFirst().get("status")).isEqualTo("rejected");
+        var item = phone.push(onMap(NODE, element, null, Map.of("target", "hiwiski://wiki_page/" + map)));
+        assertThat(item.getFirst().get("status")).isEqualTo("applied");
         var stroke = phone.push(onMap(NODE, element, null, Map.of("points", "0,0 5000,10000 10000,0", "strokeWidth", 4)));
         assertThat(stroke.getFirst().get("status")).isEqualTo("applied");
-        for (Object scribble : List.of("", "0,0 ", "1;2", "0,0  1,1", "a,b", "123456,1")) {
+        // Across the element only, in digits 0 to 9.
+        for (Object scribble : List.of("", "0,0 ", "1;2", "0,0  1,1", "a,b", "123456,1", "0,0 10001,0", "\u0663,1")) {
             var result = phone.push(onMap(NODE, element, null, Map.of("points", scribble)));
             assertThat(result.getFirst().get("status")).describedAs("points %s", scribble).isEqualTo("rejected");
         }
@@ -232,7 +237,7 @@ class MindmapIT {
             var result = phone.push(onMap(NODE, element, null, Map.of("textSize", size)));
             assertThat(result.getFirst().get("status")).describedAs("size %s", size).isEqualTo("applied");
         }
-        for (Object size : List.of("huge", "1", "9999", "-3")) {
+        for (Object size : List.of("huge", "1", "9999", "-3", "\u0661\u0668", "\u00c4")) {
             var result = phone.push(onMap(NODE, element, null, Map.of("textSize", size)));
             assertThat(result.getFirst().get("status")).describedAs("size %s", size).isEqualTo("rejected");
         }

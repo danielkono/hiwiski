@@ -78,14 +78,24 @@ class MindmapSyncTypes {
      */
     private static final Pattern EDGE_STYLE_VALUE = Pattern.compile("[A-Z][A-Z_]{0,31}");
 
-    /** A link element points to an item in the app, never to an address outside it. */
-    private static final Pattern TARGET_VALUE = Pattern.compile("hiwiski://[a-z_]+/[0-9a-fA-F-]{36}");
+    /**
+     * A link element points to an item in the app, never to an address outside it -- and
+     * a member element to a member: a type and an id the app can read as one.
+     */
+    private static final Pattern TARGET_VALUE = Pattern.compile(
+            "hiwiski://[a-z_]+/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
 
     /** Far beyond any element a person draws; it keeps a typo from making one endless. */
     private static final int MAX_SIZE = 100_000;
 
     /** A stroke of some thousand points; the app thins out what is drawn longer. */
     private static final int MAX_POINTS_CHARS = 100_000;
+
+    /**
+     * A stroke's points lie across its element, from 0 to this on either axis: the app
+     * draws a point beyond it outside the element, where nothing else of it is.
+     */
+    private static final int STROKE_SCALE = 10_000;
 
     /** Thicker than any pen; a stroke is at least a line. */
     private static final int MAX_STROKE_WIDTH = 1_000;
@@ -337,11 +347,15 @@ class MindmapSyncTypes {
         }
         for (String point : value.split(" ", -1)) {
             int comma = point.indexOf(',');
-            if (comma < 0 || !isWhole(point.substring(0, comma)) || !isWhole(point.substring(comma + 1))) {
+            if (comma < 0 || !isAcross(point.substring(0, comma)) || !isAcross(point.substring(comma + 1))) {
                 return false;
             }
         }
         return true;
+    }
+
+    private static boolean isAcross(String coordinate) {
+        return isWhole(coordinate) && Integer.parseInt(coordinate) <= STROKE_SCALE;
     }
 
     /**
@@ -354,7 +368,7 @@ class MindmapSyncTypes {
             return true;
         }
         String value = size.toString();
-        if (value.chars().allMatch(Character::isUpperCase) && !value.isEmpty() && value.length() <= 4) {
+        if (value.chars().allMatch(c -> c >= 'A' && c <= 'Z') && !value.isEmpty() && value.length() <= 4) {
             return true;
         }
         if (!isWhole(value)) {
@@ -369,8 +383,12 @@ class MindmapSyncTypes {
 
     private static final int MAX_TEXT_SIZE = 400;
 
+    /**
+     * Digits 0 to 9 only: {@link Character#isDigit} takes the digits of every script,
+     * which the app does not read as a number.
+     */
     private static boolean isWhole(String part) {
-        return !part.isEmpty() && part.length() <= 5 && part.chars().allMatch(Character::isDigit);
+        return !part.isEmpty() && part.length() <= 5 && part.chars().allMatch(c -> c >= '0' && c <= '9');
     }
 
     private static boolean fitsSize(Map<String, Object> changes) {
