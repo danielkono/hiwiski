@@ -468,11 +468,14 @@ class Mindmap {
   /// Connections drawn between the same two elements — the index of [edge] among
   /// them and how many there are. Two people may connect the same pair offline, each
   /// with a label; both are drawn, bent apart, so neither label hides the other.
+  ///
+  /// In the order of their ids, not as the database lists them: each device would
+  /// bend them its own way, and a label pointed at on one was elsewhere on another.
   (int, int) siblingsOf(MindmapEdge edge) {
     final same = [
       for (final other in edges)
         if (other.joins(edge.fromId, edge.toId)) other.id,
-    ];
+    ]..sort();
     return (same.indexOf(edge.id), same.length);
   }
 

@@ -186,6 +186,24 @@ void main() {
       },
     );
 
+    test('connections between the same pair bend alike on every device', () {
+      // Listed in another order on each device, as a database may.
+      final here = Mindmap(
+        nodes: [node('a'), node('b', x: 400)],
+        edges: [edge('one', 'a', 'b'), edge('two', 'a', 'b')],
+      );
+      final there = Mindmap(
+        nodes: [node('a'), node('b', x: 400)],
+        edges: [edge('two', 'a', 'b'), edge('one', 'a', 'b')],
+      );
+      for (final id in ['one', 'two']) {
+        expect(
+          edgePathOf(there, there.edge(id)!, 30)!.bend,
+          equals(edgePathOf(here, here.edge(id)!, 30)!.bend),
+        );
+      }
+    });
+
     test('a tap near a line hits it', () {
       final map = Mindmap(
         nodes: [node('a'), node('b', x: 400)],
