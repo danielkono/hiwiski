@@ -8,27 +8,34 @@ import 'package:hiwiski/app/data_providers.dart';
 import 'package:hiwiski/app/repositories.dart';
 import 'package:hiwiski/components/export/export_view_model.dart';
 import 'package:hiwiski/components/import/import_view_model.dart';
+import 'package:hiwiski/core/api/generated/export.dart' show Member;
+import 'package:hiwiski/core/api/hiwiski_failure.dart';
+import 'package:hiwiski/core/common/wire.dart';
 import 'package:hiwiski/core/db/hiwiski_database.dart';
 import 'package:hiwiski/core/storage/local_settings.dart';
 import 'package:hiwiski/data/media/media_repository.dart';
 import 'package:hiwiski/domain/common/item_ref.dart';
 import 'package:hiwiski/domain/links/link_text.dart';
 import 'package:hiwiski/domain/todo/kanban.dart';
+import 'package:hiwiski/domain/wiki/mindmap.dart';
 import 'package:hiwiski/domain/transfer/transfer_bundle.dart';
 import 'package:hiwiski/domain/transfer/transfer_models.dart';
 import 'package:hiwiski/domain/wiki/page_images.dart';
 import 'package:hiwiski/domain/wiki/wiki_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'support/fakes.dart';
+
 /// **An export imported again is the same list, the same pages** — as new items,
 /// through the outbox like anything typed.
 void main() {
   late HiwiskiDatabase db;
+  late LocalSettings settings;
   late ProviderContainer container;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    final settings = await LocalSettings.open();
+    settings = await LocalSettings.open();
     db = HiwiskiDatabase(NativeDatabase.memory());
     container = ProviderContainer(
       retry: noRetry,
@@ -272,9 +279,70 @@ void main() {
     expect(text, contains('Das Passwort.'));
     expect(text, isNot(contains('some-image')));
   });
+
+  test(
+    'a page goes out offline, a mind map drawn without the family',
+    () async {
+      // The family comes from the server, and this one cannot be reached.
+      final offline = ProviderContainer(
+        retry: noRetry,
+        overrides: [
+          databaseProvider.overrideWithValue(db),
+          localSettingsProvider.overrideWithValue(settings),
+          familyRepositoryProvider.overrideWithValue(_Unreachable()),
+        ],
+      );
+      addTearDown(offline.dispose);
+      final wiki = offline.read(wikiRepositoryProvider);
+      final pageId = await wiki.createPage(title: 'Router');
+      final mapId = await wiki.createPage(
+        title: 'Urlaub',
+        kind: PageKinds.mindmap,
+      );
+      await offline
+          .read(mindmapRepositoryProvider)
+          .addNode(
+            pageId: mapId,
+            kind: MindmapKinds.plain,
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 50,
+            text: 'Strand',
+          );
+      final drawn = <MindmapPicture>[];
+      Future<ExportedFile> export(String id) {
+        final provider = exportViewModelProvider(ItemRef.wikiPage(id));
+        final held = offline.listen(provider, (_, _) {});
+        addTearDown(held.close);
+        return offline
+            .read(provider.notifier)
+            .export(
+              drawMindmap: (picture) async {
+                drawn.add(picture);
+                return Uint8List.fromList([0x89, 0x50, 0x4E, 0x47]);
+              },
+            );
+      }
+
+      expect((await export(pageId)).name, equals('Router.md'));
+      expect(drawn, isEmpty);
+
+      await export(mapId);
+      expect(drawn.single.title, equals('Urlaub'));
+      expect(drawn.single.members, isEmpty);
+    },
+  );
 }
 
 List<String> imageIdsOf(String content) => [
   for (final segment in pageSegments(content))
     if (segment is ImageGroup) ...segment.imageIds,
 ];
+
+/// A family on a server that cannot be reached.
+class _Unreachable extends NoFamily {
+  @override
+  Stream<List<Member>> watchMembers() =>
+      .error(const HiwiskiFailure(code: FailureCodes.networkUnreachable));
+}

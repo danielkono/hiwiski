@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../app/link_index.dart';
 import '../../app/repositories.dart';
+import '../../core/api/generated/export.dart' show Member;
 import '../../core/api/hiwiski_failure.dart';
 import '../../core/common/command.dart';
 import '../../core/common/wire.dart';
@@ -157,16 +158,29 @@ class ExportViewModel extends _$ExportViewModel {
         if (await image(id) case final bytes?) images[id] = bytes;
       }
     }
+    // Whom a member element shows only decorates its picture. The family comes from
+    // the server, and offline it may not come at all: the picture is drawn without
+    // the names then, rather than the export failing. Asked for only once there is a
+    // map to draw, so that a page without one never waits for it.
+    Future<Map<String, Member>> membersOf() async {
+      try {
+        return {
+          for (final member in await family.watchMembers().first)
+            member.id: member,
+        };
+      } on HiwiskiFailure {
+        return const {};
+      }
+    }
+
     final pictures = <String, Uint8List>{};
     if (drawMindmap != null) {
-      final members = {
-        for (final member in await family.watchMembers().first)
-          member.id: member,
-      };
+      Map<String, Member>? members;
       for (final page in branch) {
         if (page.kind != PageKinds.mindmap) continue;
         final map = await mindmaps.watchMap(page.id).first;
         if (map.nodes.isEmpty) continue;
+        members ??= await membersOf();
         // On the device before the drawing waits for them.
         for (final node in map.nodes) {
           if (node.imageId case final id?) await image(id);
