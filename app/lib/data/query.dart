@@ -8,10 +8,11 @@ import 'dart:async';
 /// last watcher does — the next one fetches afresh, as a screen that is opened again
 /// should; with it the answer stays for the next watcher, until [refresh].
 ///
-/// A fetch that failed is tried again after the wait [retryAfter] names for the
-/// error and the number of tries so far, as long as anyone watches — meanwhile the
-/// watchers go on waiting; they hear of the error only once [retryAfter] gives up
-/// (`null`). Without it, a failure is told at once.
+/// A fetch that failed is told to the watchers at once, and tried again after the wait
+/// [retryAfter] names for the error and the number of tries so far, as long as anyone
+/// watches, until it gives up (`null`): an answer that comes later takes the failure's
+/// place. The watchers do not wait through the tries — an image that could not come
+/// spun for minutes instead of saying so.
 class Query<K, V> {
   Query(this._fetch, {this.keep = false, this.retryAfter});
 
@@ -92,6 +93,9 @@ class Query<K, V> {
       }
     } on Object catch (error, stack) {
       entry.failed = true;
+      for (final watcher in [...entry.watchers]) {
+        watcher.addError(error, stack);
+      }
       final wait = entry.watchers.isEmpty
           ? null
           : retryAfter?.call(error, ++entry.tries);
@@ -102,9 +106,6 @@ class Query<K, V> {
         });
       } else {
         entry.tries = 0;
-        for (final watcher in [...entry.watchers]) {
-          watcher.addError(error, stack);
-        }
       }
     } finally {
       entry.loading = false;

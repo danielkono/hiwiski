@@ -204,7 +204,8 @@ class MediaRepository {
 /// later. Another device showing the carrier meanwhile asked too early, and nothing
 /// told it when the upload was done: it showed the failure until it was reloaded. So
 /// such an image, or one the network or the server failed to bring, is asked for
-/// again, ever less often, for some minutes.
+/// again, ever less often, for some minutes — showing its failure meanwhile, and
+/// itself in its place once it comes.
 Duration? imageRetryAfter(Object error, int tries) {
   final failure = HiwiskiFailure.from(error);
   final worth =
