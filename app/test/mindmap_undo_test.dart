@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:ui';
 
 import 'package:drift/native.dart';
@@ -11,6 +12,7 @@ import 'package:hiwiski/core/storage/local_settings.dart';
 import 'package:hiwiski/core/sync/local_writes.dart';
 import 'package:hiwiski/core/sync/outbox.dart';
 import 'package:hiwiski/core/sync/sync_engine.dart';
+import 'package:hiwiski/domain/common/change.dart';
 import 'package:hiwiski/domain/wiki/mindmap.dart';
 import 'package:hiwiski/features/wiki/mindmap/mindmap_view_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -259,6 +261,121 @@ void main() {
       expect((await state()).map.node(id)?.text, equals('Meer'));
     },
   );
+
+  group('"Undo" and "Redo" write only what the step changed', () {
+    // What someone else changed meanwhile: written as a pulled change would leave
+    // the element — on the row, past the version the step was made on.
+    Future<void> meanwhile(
+      String id, {
+      int? x,
+      int? y,
+      String? text,
+      String? color,
+    }) async {
+      final maps = container.read(mindmapRepositoryProvider);
+      await maps.changeNode(
+        (await maps.node(id))!,
+        x: x,
+        y: y,
+        text: text,
+        color: color == null ? null : Change(color),
+      );
+    }
+
+    test('a move taken back leaves the other axis as it is now', () async {
+      container.listen(mindmapViewModelProvider(pageId), (_, _) {});
+      final id = await place('Meer');
+      await viewModel().move({(await state()).map.node(id)!: (x: 300, y: 0)});
+      await meanwhile(id, y: 80);
+
+      await viewModel().undo();
+      expect(
+        (await state()).map.node(id)!.bounds.topLeft,
+        equals(const Offset(0, 80)),
+      );
+      await viewModel().redo();
+      expect(
+        (await state()).map.node(id)!.bounds.topLeft,
+        equals(const Offset(300, 80)),
+      );
+    });
+
+    test('a resize taken back leaves where it was moved since', () async {
+      container.listen(mindmapViewModelProvider(pageId), (_, _) {});
+      final id = await place('Meer');
+      final node = (await state()).map.node(id)!;
+      await viewModel().arrange({node: node.changed(width: 200)});
+      await meanwhile(id, x: 50);
+
+      await viewModel().undo();
+      expect(
+        (await state()).map.node(id)!.bounds,
+        equals(const Rect.fromLTWH(50, 0, 100, 40)),
+      );
+    });
+
+    test('a colour taken back leaves a text written since', () async {
+      container.listen(mindmapViewModelProvider(pageId), (_, _) {});
+      final id = await place('Meer');
+      await viewModel().setColor((await state()).map.node(id)!, 'TEAL');
+      await meanwhile(id, text: 'Strand');
+
+      await viewModel().undo();
+      final node = (await state()).map.node(id)!;
+      expect(node.color, isNull);
+      expect(node.text, equals('Strand'));
+      await viewModel().redo();
+      expect((await state()).map.node(id)!.color, equals('TEAL'));
+      expect((await state()).map.node(id)!.text, equals('Strand'));
+    });
+
+    test('a connection\'s thickness taken back leaves its new label', () async {
+      container.listen(mindmapViewModelProvider(pageId), (_, _) {});
+      final a = await place('Meer');
+      final b = await place('Berge', x: 300);
+      Mindmap map = (await state()).map;
+      await viewModel().connect(map.node(a)!, map.node(b)!);
+      map = (await state()).map;
+      await viewModel().setEdgeWidth(map.edges.single, 6);
+      final maps = container.read(mindmapRepositoryProvider);
+      final edge = (await maps.edge(map.edges.single.id))!;
+      await maps.changeEdge(edge, text: 'oder');
+
+      await viewModel().undo();
+      final back = (await state()).map.edges.single;
+      expect(back.strokeWidth, isNull);
+      expect(back.text, equals('oder'));
+    });
+
+    test('one colour for a group paints over nothing else', () async {
+      container.listen(mindmapViewModelProvider(pageId), (_, _) {});
+      final a = await place('Meer');
+      final b = await place('Berge', x: 300);
+      // As the corner showed them when the colour was chosen.
+      final shown = [...(await state()).map.nodes];
+      await meanwhile(a, text: 'Strand');
+      await meanwhile(b, color: 'RUST');
+
+      await viewModel().setColors(shown, 'TEAL');
+      Mindmap map = (await state()).map;
+      expect(map.node(a)!.text, equals('Strand'));
+      expect(map.node(a)!.color, equals('TEAL'));
+      expect(map.node(b)!.color, equals('TEAL'));
+      final [..., painted] = await (db.select(
+        db.outboxEntries,
+      )..where((row) => row.entityId.equals(a))).get();
+      expect(jsonDecode(painted.fields), equals({WireFields.color: 'TEAL'}));
+
+      await meanwhile(b, text: 'Gipfel');
+      await viewModel().undo();
+      map = (await state()).map;
+      // Each the colour it had when painted, and what was written since stays.
+      expect(map.node(a)!.color, isNull);
+      expect(map.node(a)!.text, equals('Strand'));
+      expect(map.node(b)!.color, equals('RUST'));
+      expect(map.node(b)!.text, equals('Gipfel'));
+    });
+  });
 
   test('a link shown with its content grows to room for it', () async {
     container.listen(mindmapViewModelProvider(pageId), (_, _) {});

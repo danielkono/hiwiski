@@ -237,6 +237,25 @@ class MindmapNode {
     rotation: rotation,
   );
 
+  /// The fields [other] holds otherwise, by their names on the wire — what a change
+  /// from this element to [other] writes, and all that taking it back writes again.
+  Set<String> fieldsChangedTo(MindmapNode other) => {
+    if (other.x != x) WireFields.x,
+    if (other.y != y) WireFields.y,
+    if (other.width != width) WireFields.width,
+    if (other.height != height) WireFields.height,
+    if (other.layer != layer) WireFields.layer,
+    if (other.text != text) WireFields.text,
+    if (other.target != target) WireFields.target,
+    if (other.linkView != linkView) WireFields.linkView,
+    if (other.color != color) WireFields.color,
+    if (other.shape != shape) WireFields.shape,
+    if (other.textSize != textSize) WireFields.textSize,
+    if (other.textColor != textColor) WireFields.textColor,
+    if (other.strokeWidth != strokeWidth) WireFields.strokeWidth,
+    if (other.rotation != rotation) WireFields.rotation,
+  };
+
   /// The same element with another look or target — `Change(null)` clears one.
   MindmapNode styled({
     Change<String?>? target,
