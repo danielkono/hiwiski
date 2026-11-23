@@ -130,6 +130,27 @@ void main() {
     },
   );
 
+  test(
+    '"apply anyway" on something deleted since only clears the conflict',
+    () async {
+      await conflictOnContent();
+      final conflict = (await db.select(db.conflicts).get()).single;
+      final wiki = container.read(wikiRepositoryProvider);
+      await wiki.deletePage((await wiki.watchPage('page').first)!);
+      final deletion = (await db.select(db.outboxEntries).get()).single;
+
+      await container.read(syncEngineProvider).takeMine(conflict);
+
+      final row = await reload();
+      expect(row.deletedAt, isNotNull);
+      expect(row.content, equals("Ben's version"));
+      expect([
+        for (final entry in await db.select(db.outboxEntries).get()) entry.op,
+      ], equals([deletion.op]));
+      expect(await db.select(db.conflicts).get(), isEmpty);
+    },
+  );
+
   test('discarding keeps the server state and clears the conflict', () async {
     await conflictOnContent();
     final conflict = (await db.select(db.conflicts).get()).single;

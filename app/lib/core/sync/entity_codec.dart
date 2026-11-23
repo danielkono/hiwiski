@@ -32,6 +32,18 @@ abstract class EntityCodec {
   Future<int?> localVersion(HiwiskiDatabase db, String id) =>
       _localColumn(db, id, (row) => row.version);
 
+  /// Whether the local row is there and not deleted.
+  Future<bool> livesLocally(HiwiskiDatabase db, String id) async {
+    final info = table(db);
+    final row = info as SyncedItem;
+    final found =
+        await (db.selectOnly(info)
+              ..addColumns([row.id])
+              ..where(row.id.equals(id) & row.deletedAt.isNull()))
+            .getSingleOrNull();
+    return found != null;
+  }
+
   Future<T?> _localColumn<T extends Object>(
     HiwiskiDatabase db,
     String id,

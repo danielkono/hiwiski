@@ -67,6 +67,9 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
 - A picture added on another device shows as soon as its upload is through, instead of
   an error until the app was reloaded; and a picture or a backup that cannot be loaded
   says why, instead of "The server had a problem".
+- **Apply anyway** on a conflict about something deleted on the device since no longer
+  brings it back — for everyone, once it synced. The conflict is simply settled, as it
+  is for something no longer shared with you.
 
 ## 2026.1.15 — 2026-11-20 {#2026.1.15}
 
