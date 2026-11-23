@@ -471,6 +471,44 @@ void main() {
     },
   );
 
+  group(
+    'a step that fails to be taken back or done again stays where it was',
+    () {
+      test('"Undo"', () async {
+        container.listen(mindmapViewModelProvider(pageId), (_, _) {});
+        final id = await place('Meer');
+        await viewModel().move({(await state()).map.node(id)!: (x: 300, y: 0)});
+        final maps = container.read(mindmapRepositoryProvider) as _GatedMaps;
+
+        maps.failNext = true;
+        await expectLater(viewModel().undo(), throwsStateError);
+        final shown = await state();
+        expect(shown.map.node(id)!.x, equals(300));
+        expect(shown.canRedo, isFalse);
+
+        // Tried again, it is the move that is taken back — not the placing before it.
+        await viewModel().undo();
+        expect((await state()).map.node(id)?.x, equals(0));
+      });
+
+      test('"Redo"', () async {
+        container.listen(mindmapViewModelProvider(pageId), (_, _) {});
+        final id = await place('Meer');
+        await viewModel().move({(await state()).map.node(id)!: (x: 300, y: 0)});
+        await viewModel().undo();
+        final maps = container.read(mindmapRepositoryProvider) as _GatedMaps;
+
+        maps.failNext = true;
+        await expectLater(viewModel().redo(), throwsStateError);
+        expect((await state()).map.node(id)!.x, equals(0));
+        expect((await state()).canRedo, isTrue);
+
+        await viewModel().redo();
+        expect((await state()).map.node(id)!.x, equals(300));
+      });
+    },
+  );
+
   test('a link shown with its content grows to room for it', () async {
     container.listen(mindmapViewModelProvider(pageId), (_, _) {});
     final id = await viewModel().addNode(
@@ -504,6 +542,20 @@ class _GatedMaps extends MindmapRepository {
   });
 
   Completer<void>? gate;
+
+  /// Whether the next arrangement fails — a write that does not get through.
+  bool failNext = false;
+
+  @override
+  Future<void> arrangeNodes(
+    Map<MindmapNode, ({int x, int y, int width, int height})> places,
+  ) async {
+    if (failNext) {
+      failNext = false;
+      throw StateError('The database is gone.');
+    }
+    await super.arrangeNodes(places);
+  }
 
   @override
   Future<void> moveNodes(Map<MindmapNode, ({int x, int y})> moves) async {

@@ -805,7 +805,12 @@ class MindmapViewModel extends _$MindmapViewModel {
     _undo.removeLast();
     _redo.add(step);
     ref.invalidateSelf();
-    await _inTurn(step.undo);
+    try {
+      await _inTurn(step.undo);
+    } on Object {
+      _putBack(step, from: _redo, to: _undo);
+      rethrow;
+    }
   }
 
   /// Does what was taken back again.
@@ -815,7 +820,26 @@ class MindmapViewModel extends _$MindmapViewModel {
     _redo.removeLast();
     _undo.add(step);
     ref.invalidateSelf();
-    await _inTurn(step.redo);
+    try {
+      await _inTurn(step.redo);
+    } on Object {
+      _putBack(step, from: _undo, to: _redo);
+      rethrow;
+    }
+  }
+
+  /// A step that could not be taken back, or done again, goes back where it was, so
+  /// that the history says what the map shows. Moved over all the same, "Redo"
+  /// offered a step that had never been taken back, and the next "Undo" skipped one
+  /// still on the map and took back the one before it.
+  void _putBack(
+    _Step step, {
+    required List<_Step> from,
+    required List<_Step> to,
+  }) {
+    if (!from.remove(step)) return;
+    to.add(step);
+    if (ref.mounted) ref.invalidateSelf();
   }
 
   /// Runs [write] once every write before it is done. A change is remembered before
