@@ -824,9 +824,8 @@ List<MindmapHit> sortHits(
 }) {
   int compare(MindmapHit a, MindmapHit b) => switch (order) {
     .place => _byPlace(a, b),
-    .alphabetical => switch (a.text.trim().toLowerCase().compareTo(
-      b.text.trim().toLowerCase(),
-    )) {
+    .alphabetical => switch (_alphabetical(a.text)
+        .compareTo(_alphabetical(b.text))) {
       0 => _byPlace(a, b),
       final other => other,
     },
@@ -835,6 +834,28 @@ List<MindmapHit> sortHits(
   final sorted = [...hits]..sort(compare);
   return descending ? sorted.reversed.toList() : sorted;
 }
+
+/// [text] as it is put in alphabetical order: its case and the marks on its letters
+/// ignored, as in a dictionary — `Äpfel` among the A. Compared by their codes, the
+/// letters with marks all came after the Z.
+String _alphabetical(String text) {
+  final key = StringBuffer();
+  for (final rune in text.trim().toLowerCase().runes) {
+    final letter = String.fromCharCode(rune);
+    key.write(_plainLetters[letter] ?? letter);
+  }
+  return key.toString();
+}
+
+/// The letters with marks of the languages the app is used in, and the plain
+/// letters a dictionary files them under.
+const _plainLetters = {
+  'à': 'a', 'á': 'a', 'â': 'a', 'ã': 'a', 'ä': 'a', 'å': 'a', 'æ': 'ae', //
+  'ç': 'c', 'è': 'e', 'é': 'e', 'ê': 'e', 'ë': 'e', 'ì': 'i', 'í': 'i', //
+  'î': 'i', 'ï': 'i', 'ñ': 'n', 'ò': 'o', 'ó': 'o', 'ô': 'o', 'õ': 'o', //
+  'ö': 'o', 'ø': 'o', 'œ': 'oe', 'ù': 'u', 'ú': 'u', 'û': 'u', 'ü': 'u', //
+  'ý': 'y', 'ÿ': 'y', 'ß': 'ss', //
+};
 
 int _byPlace(MindmapHit a, MindmapHit b) {
   final row = a.bounds.top.compareTo(b.bounds.top);

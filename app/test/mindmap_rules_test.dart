@@ -519,6 +519,23 @@ void main() {
       texts(.created, descending: true),
       equals(['Alpen', 'Berge', 'meer']),
     );
+    // A letter with marks stands with its plain one, as in a dictionary — not after
+    // the Z, where its code would put it.
+    expect([
+      for (final hit in sortHits(
+        [
+          hit('z', 'Zelt', 0),
+          hit('o', 'Öl', 10),
+          hit('a', 'Äpfel', 20),
+          hit('s', 'Straße', 30),
+          hit('b', 'Birne', 40),
+          hit('e', 'Éclair', 50),
+        ],
+        .alphabetical,
+        descending: false,
+      ))
+        hit.text,
+    ], equals(['Äpfel', 'Birne', 'Éclair', 'Öl', 'Straße', 'Zelt']));
   });
 
   test('a turned element covers its turned box and grows from its corner', () {
