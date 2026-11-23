@@ -2,6 +2,7 @@ package de.danielkononov.hiwiski.wiki;
 
 import static de.danielkononov.hiwiski.db.generated.Tables.MINDMAP_EDGE;
 import static de.danielkononov.hiwiski.db.generated.Tables.MINDMAP_NODE;
+import static de.danielkononov.hiwiski.db.generated.Tables.WIKI_PAGE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import de.danielkononov.hiwiski.support.Family;
@@ -388,6 +389,30 @@ class MindmapIT {
         var back = laptop.pullAll();
         assertThat(merged(back, kept)).containsEntry("op", "upsert").containsEntry("text", "Meer");
         assertThat(merged(back, connectionId)).containsEntry("fromId", kept.toString());
+    }
+
+    @Test
+    void anEditThatBringsThePageBackBringsItsMapBackToo() {
+        UUID kept = node(phone, "Meer");
+        UUID other = node(phone, "Berge");
+        var connection = edge(kept, other);
+        phone.push(connection);
+        UUID connectionId = UUID.fromString(connection.get("entityId").toString());
+        laptop.pullAll();
+        long seen = db.select(WIKI_PAGE.VERSION).from(WIKI_PAGE).where(WIKI_PAGE.ID.eq(map)).fetchSingle().value1();
+
+        phone.push(SyncClient.deletion(PAGE, map, null));
+        // The laptop was offline and renamed the page meanwhile: its edit brings the
+        // page back, as an edit does.
+        var renamed = laptop.push(SyncClient.mutation(PAGE, map, seen, Map.of("title", "Urlaub 2027")));
+        assertThat(renamed.getFirst().get("status")).isEqualTo("applied");
+
+        assertThat(deleted(MINDMAP_NODE, kept)).isFalse();
+        assertThat(deleted(MINDMAP_NODE, other)).isFalse();
+        assertThat(deleted(MINDMAP_EDGE, connectionId)).isFalse();
+        var back = phone.pullAll();
+        assertThat(merged(back, kept)).containsEntry("op", "upsert").containsEntry("text", "Meer");
+        assertThat(merged(back, connectionId)).containsEntry("op", "upsert").containsEntry("toId", other.toString());
     }
 
     @Test
