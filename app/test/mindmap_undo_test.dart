@@ -377,6 +377,64 @@ void main() {
     });
   });
 
+  group('what a delete took is brought back as it was when taken', () {
+    Future<void> rewrite(String id, String text) async {
+      final maps = container.read(mindmapRepositoryProvider);
+      await maps.changeNode((await maps.node(id))!, text: text);
+    }
+
+    test('not as the screen last showed it', () async {
+      container.listen(mindmapViewModelProvider(pageId), (_, _) {});
+      final id = await place('Meer');
+      final shown = (await state()).map.node(id)!;
+      await rewrite(id, 'Strand');
+
+      await viewModel().deleteAll([shown]);
+      await viewModel().undo();
+      expect((await state()).map.node(id)?.text, equals('Strand'));
+    });
+
+    test('as "Redo" took it again, with what came since', () async {
+      container.listen(mindmapViewModelProvider(pageId), (_, _) {});
+      final a = await place('Meer');
+      final b = await place('Berge', x: 300);
+      await viewModel().deleteAll([(await state()).map.node(a)!]);
+      await viewModel().undo();
+      // Meanwhile, outside this screen's steps: a new text, a new connection.
+      await rewrite(a, 'Strand');
+      final map = (await state()).map;
+      await container
+          .read(mindmapRepositoryProvider)
+          .connect(map.node(a)!, map.node(b)!);
+
+      await viewModel().redo();
+      expect((await state()).map.node(a), isNull);
+      await viewModel().undo();
+      final back = (await state()).map;
+      expect(back.node(a)?.text, equals('Strand'));
+      expect(back.edges, hasLength(1));
+    });
+
+    test('a connection between two taken goes out once', () async {
+      container.listen(mindmapViewModelProvider(pageId), (_, _) {});
+      final a = await place('Meer');
+      final b = await place('Berge', x: 300);
+      Mindmap map = (await state()).map;
+      await viewModel().connect(map.node(a)!, map.node(b)!);
+      map = (await state()).map;
+      final edge = map.edges.single.id;
+
+      await viewModel().deleteAll([map.node(a)!, map.node(b)!]);
+      await viewModel().undo();
+      expect((await state()).map.edges, hasLength(1));
+      final entries = await (db.select(
+        db.outboxEntries,
+      )..where((row) => row.entityId.equals(edge))).get();
+      // Made, and brought back.
+      expect(entries, hasLength(2));
+    });
+  });
+
   test('a link shown with its content grows to room for it', () async {
     container.listen(mindmapViewModelProvider(pageId), (_, _) {});
     final id = await viewModel().addNode(

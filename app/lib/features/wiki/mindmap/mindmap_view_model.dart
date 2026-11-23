@@ -303,14 +303,12 @@ class MindmapViewModel extends _$MindmapViewModel {
   /// The way back from placing [id], and forth again.
   void _rememberPlaced(String id) {
     final maps = ref.read(mindmapRepositoryProvider);
+    _Taken? taken;
     _remember(
-      undo: () async {
-        if (await maps.node(id) case final node?) await _deleteWithEdges(node);
-      },
+      undo: () async => taken = await _take(maps, [id]),
       redo: () async {
-        final again = _deleted[id];
-        if (again != null) {
-          await maps.restore(nodes: [again.node], edges: again.edges);
+        if (taken case final gone?) {
+          await maps.restore(nodes: gone.nodes, edges: gone.edges);
         }
       },
     );
@@ -562,30 +560,22 @@ class MindmapViewModel extends _$MindmapViewModel {
 
   /// Takes several elements away at once — a swipe of the eraser, a group — with
   /// their connections: one step for "Undo".
-  Future<void> deleteAll(List<MindmapNode> strokes) async {
-    if (strokes.isEmpty) return;
+  Future<void> deleteAll(List<MindmapNode> nodes) async {
+    if (nodes.isEmpty) return;
     final maps = ref.read(mindmapRepositoryProvider);
-    // Known once they are taken: "Undo" runs only after that ([_inTurn]).
-    List<({MindmapNode node, List<MindmapEdge> edges})> gone = const [];
+    final ids = [for (final node in nodes) node.id];
+    // Known once they are taken — and taken anew by every "Redo", with whatever was
+    // changed or connected to them since: "Undo" runs only after that ([_inTurn]).
+    _Taken? taken;
     _remember(
-      undo: () => maps.restore(
-        nodes: [for (final each in gone) each.node],
-        edges: [for (final each in gone) ...each.edges],
-      ),
-      redo: () async {
-        final current = [
-          for (final stroke in strokes) ?await maps.node(stroke.id),
-        ];
-        await maps.deleteNodes(current);
+      undo: () async {
+        if (taken case final gone?) {
+          await maps.restore(nodes: gone.nodes, edges: gone.edges);
+        }
       },
+      redo: () async => taken = await _take(maps, ids),
     );
-    await _inTurn(() async {
-      gone = [
-        for (final stroke in strokes)
-          (node: stroke, edges: await maps.edgesAt(stroke.id)),
-      ];
-      await maps.deleteNodes(strokes);
-    });
+    await _inTurn(() async => taken = await _take(maps, ids));
   }
 
   /// One step up, past the next element overlapping it.
@@ -660,32 +650,20 @@ class MindmapViewModel extends _$MindmapViewModel {
   }
 
   /// Takes the element away, and its connections with it.
-  Future<void> delete(MindmapNode node) async {
-    _remember(
-      undo: () async {
-        final gone = _deleted[node.id];
-        if (gone != null) {
-          await ref
-              .read(mindmapRepositoryProvider)
-              .restore(nodes: [gone.node], edges: gone.edges);
-        }
-      },
-      redo: () async {
-        final current = await ref.read(mindmapRepositoryProvider).node(node.id);
-        if (current != null) await _deleteWithEdges(current);
-      },
-    );
-    await _inTurn(() => _deleteWithEdges(node));
-  }
+  Future<void> delete(MindmapNode node) => deleteAll([node]);
 
-  /// What was deleted, with the connections that went along — what "Undo" brings
-  /// back.
-  final _deleted = <String, ({MindmapNode node, List<MindmapEdge> edges})>{};
-
-  Future<void> _deleteWithEdges(MindmapNode node) async {
-    final maps = ref.read(mindmapRepositoryProvider);
-    _deleted[node.id] = (node: node, edges: await maps.edgesAt(node.id));
-    await maps.deleteNode(node);
+  /// Takes the elements [ids] away with their connections, and returns what "Undo"
+  /// brings back: the elements as they are on the device when taken — not as the
+  /// screen last showed them, or a text written meanwhile went back to the old one —
+  /// and each connection once, however many of them it joins.
+  static Future<_Taken> _take(MindmapRepository maps, List<String> ids) async {
+    final nodes = [for (final id in ids) ?await maps.node(id)];
+    final edges = <String, MindmapEdge>{
+      for (final node in nodes)
+        for (final edge in await maps.edgesAt(node.id)) edge.id: edge,
+    };
+    await maps.deleteNodes(nodes);
+    return (nodes: nodes, edges: [...edges.values]);
   }
 
   /// Connects [from] to [to] with a line of [line] and heads at [arrows] — both
@@ -871,6 +849,9 @@ class MindmapViewModel extends _$MindmapViewModel {
     }
   }
 }
+
+/// Elements taken away, and the connections that went with them.
+typedef _Taken = ({List<MindmapNode> nodes, List<MindmapEdge> edges});
 
 /// One change, and the ways back and forth.
 class const _Step({
