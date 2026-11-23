@@ -48,11 +48,28 @@ class MindmapCamera extends ChangeNotifier {
   /// The canvas point that shows [scene].
   Offset toLocal(Offset scene) => _origin + scene * _scale;
 
-  /// Lets [show] glide — the canvas's ticker.
+  /// Lets [show] glide — the canvas's ticker. A glide under way on the one before
+  /// ends where it is.
   void attach(TickerProvider vsync) {
+    _endGlide();
     _glide?.dispose();
     _glide = AnimationController(vsync: vsync, duration: _glideDuration);
+    _vsync = vsync;
   }
+
+  /// Lets go of [vsync]'s ticker as the canvas goes — before the screen around it
+  /// lets go of the camera: a glide still under way would leave the ticker running,
+  /// which the canvas may not be disposed with. Until the next [attach], the camera
+  /// jumps instead of gliding.
+  void detach(TickerProvider vsync) {
+    if (!identical(vsync, _vsync)) return;
+    _endGlide();
+    _glide?.dispose();
+    _glide = null;
+    _vsync = null;
+  }
+
+  TickerProvider? _vsync;
 
   void resize(Size viewport) {
     if (viewport == _viewport) return;

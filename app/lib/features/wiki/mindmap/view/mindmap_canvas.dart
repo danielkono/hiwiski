@@ -248,7 +248,10 @@ class _MindmapCanvasState extends State<MindmapCanvas>
   @override
   void didUpdateWidget(MindmapCanvas old) {
     super.didUpdateWidget(old);
-    if (old.camera != widget.camera) widget.camera.attach(this);
+    if (old.camera != widget.camera) {
+      old.camera.detach(this);
+      widget.camera.attach(this);
+    }
     // Gone from the map: nothing left to hide — and back with "Undo", shown again.
     _erased.removeWhere((id) => widget.state.map.node(id) == null);
     // Moved or resized in the map: the map shows it. Held on, "Undo" — putting it
@@ -270,6 +273,7 @@ class _MindmapCanvasState extends State<MindmapCanvas>
       limit.cancel();
     }
     _hand.dispose();
+    widget.camera.detach(this);
     super.dispose();
   }
 

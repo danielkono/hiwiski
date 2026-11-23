@@ -1339,6 +1339,20 @@ void main() {
     expect(find.text('Meer'), findsNothing);
   });
 
+  testWidgets('a map left while it glides lets go of its ticker', (
+    tester,
+  ) async {
+    await seed(tester);
+    await open(tester);
+
+    await tester.tap(find.byKey(MindmapKeys.fit));
+    await tester.pump(const Duration(milliseconds: 50));
+    // Gone mid-glide: the canvas that ticked for it goes first.
+    await tester.pumpWidget(const SizedBox.shrink());
+
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('a map archived while it is edited is edited no more', (
     tester,
   ) async {
