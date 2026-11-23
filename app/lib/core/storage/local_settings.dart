@@ -233,8 +233,6 @@ class LocalSettings {
   Future<void> setShareSheets(Map<String, String> value) =>
       _preferences.setString(_shareSheetsKey, jsonEncode(value));
 
-  /// The tags used last, newest first — filtering by one or putting one on an item.
-  /// Repeated: a tag used often appears often. The filter bar ranks by it.
   /// Whether a mind map's elements snap to one another while they are moved or
   /// resized. On by default.
   bool get mindmapSnap => _preferences.getBool(_mindmapSnapKey) ?? true;
@@ -257,6 +255,8 @@ class LocalSettings {
   Future<void> setMindmapSizes(List<String> value) =>
       _preferences.setStringList(_mindmapSizesKey, value);
 
+  /// The tags used last, newest first — filtering by one or putting one on an item.
+  /// Repeated: a tag used often appears often. The filter bar ranks by it.
   List<String> get tagUses =>
       _preferences.getStringList(_tagUsesKey) ?? const [];
 
