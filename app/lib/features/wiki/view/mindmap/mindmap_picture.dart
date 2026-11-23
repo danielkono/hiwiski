@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../components/rich_text/view/still_images.dart';
 import '../../../../core/l10n/generated/app_localizations.dart';
 import '../../../../core/theme/hiwiski_metrics.dart';
 import '../../../../core/theme/hiwiski_theme.dart';
@@ -56,6 +57,7 @@ Future<Uint8List> _draw(
     ),
     child: RenderPositionedBox(child: boundary),
   );
+  final images = StillImages();
   final pipeline = PipelineOwner()..rootNode = renderView;
   renderView.prepareInitialFrame();
   bool changed = false;
@@ -86,12 +88,15 @@ Future<Uint8List> _draw(
               child: Overlay(
                 initialEntries: [
                   OverlayEntry(
-                    builder: (_) => MindmapMembers(
-                      members: picture.members,
-                      child: MindmapScene(
-                        map: map,
-                        area: area,
-                        linkTarget: (target) => picture.targets[target],
+                    builder: (_) => StillImageScope(
+                      images: images,
+                      child: MindmapMembers(
+                        members: picture.members,
+                        child: MindmapScene(
+                          map: map,
+                          area: area,
+                          linkTarget: (target) => picture.targets[target],
+                        ),
                       ),
                     ),
                   ),
@@ -117,10 +122,12 @@ Future<Uint8List> _draw(
   try {
     frame();
     // What arrives later — a picture from the device's store, a linked page's
-    // text — is waited for, until nothing has changed for a moment.
+    // text — is waited for, until nothing has changed for a moment and no picture
+    // is on its way any more. One that has not come when the wait gives up is left
+    // out.
     final waited = Stopwatch()..start();
     Duration quiet = .zero;
-    while (quiet < _settled && waited.elapsed < _longest) {
+    while ((quiet < _settled || !images.settled) && waited.elapsed < _longest) {
       await Future<void>.delayed(_tick);
       if (changed) {
         changed = false;
