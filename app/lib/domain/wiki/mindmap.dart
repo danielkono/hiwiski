@@ -1185,9 +1185,16 @@ List<SyncConflict> inReadingOrder(List<SyncConflict> group) => [...group]
 /// The resolution a stroke's points are stored at, across its element.
 const strokeScale = 10000;
 
+/// The longest a stroke's points may be written — the server refuses a longer one.
+const mindmapMaxPointsChars = 100000;
+
 /// [points] — a stroke as it was drawn, in the map's units — as a drawing element
 /// keeps it: its bounds, wide enough for a line [width] thick, and the points across
 /// them. A single point is a dot.
+///
+/// A stroke too long to keep is thinned out harder until it fits: it loses detail,
+/// never its ends. Kept as drawn, the server refused it, and the stroke stood only on
+/// the device that drew it.
 ({Rect bounds, String points}) strokeOf(List<Offset> points, double width) {
   final Offset first = points.firstOrNull ?? .zero;
   double left = first.dx, top = first.dy, right = first.dx, bottom = first.dy;
@@ -1208,14 +1215,22 @@ const strokeScale = 10000;
           .round()
           .clamp(0, strokeScale)
           .toString();
-  return (
-    bounds: bounds,
-    points: [
-      for (final point in points.isEmpty ? [first] : points)
-        '${coordinate(point.dx, bounds.left, bounds.width)}$_coordinateSeparator'
-            '${coordinate(point.dy, bounds.top, bounds.height)}',
-    ].join(_pointSeparator),
-  );
+  String written(List<Offset> kept) => [
+    for (final point in kept)
+      '${coordinate(point.dx, bounds.left, bounds.width)}$_coordinateSeparator'
+          '${coordinate(point.dy, bounds.top, bounds.height)}',
+  ].join(_pointSeparator);
+  List<Offset> kept = points.isEmpty ? [first] : points;
+  String stored = written(kept);
+  // From what a stored point can tell apart at all, twice as coarse each time; a
+  // tolerance beyond the whole stroke leaves its two ends, which always fit.
+  double tolerance = bounds.longestSide / strokeScale;
+  while (stored.length > mindmapMaxPointsChars) {
+    kept = thinOut(kept, tolerance);
+    stored = written(kept);
+    tolerance *= 2;
+  }
+  return (bounds: bounds, points: stored);
 }
 
 /// A drawing element's stroke as fractions of its element, 0 to 1 across — read once

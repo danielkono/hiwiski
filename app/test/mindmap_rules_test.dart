@@ -375,6 +375,25 @@ void main() {
       }
     });
 
+    test('a stroke too long for the server is thinned until it fits', () {
+      // A long scribble: every point a turn, nothing a first thinning drops.
+      final scribble = [
+        for (int i = 0; i < 20000; i++)
+          Offset(i * 3.0, (i.isEven ? 0 : 40) + i % 7 * 3.0),
+      ];
+      final stroke = strokeOf(scribble, 4);
+
+      expect(stroke.points.length, lessThanOrEqualTo(mindmapMaxPointsChars));
+      // Its ends where they were drawn, as near as a stored point can say.
+      final resolution = stroke.bounds.longestSide / strokeScale;
+      final back = strokePointsOf(drawingOf(stroke));
+      expect((back.first - scribble.first).distance, lessThan(resolution));
+      expect((back.last - scribble.last).distance, lessThan(resolution));
+      // What fits stays as drawn.
+      const short = [Offset(0, 0), Offset(50, 40), Offset(100, 0)];
+      expect(strokePointsOf(drawingOf(strokeOf(short, 4))), hasLength(3));
+    });
+
     test('a straight line keeps its ends, a corner its corner', () {
       final straight = [for (int i = 0; i <= 20; i++) Offset(i * 10.0, 0)];
       expect(thinOut(straight, 0.5), equals([straight.first, straight.last]));
