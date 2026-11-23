@@ -440,6 +440,19 @@ class MindmapIT {
     }
 
     @Test
+    void theMapsIndexesCoverDeletedRowsToo() {
+        // What was deleted with a page is looked up by its page, and removed for good
+        // through the keys of its page and its elements.
+        var definitions = db.resultQuery(
+                        "select indexname, indexdef from pg_indexes where tablename in ('mindmap_node', 'mindmap_edge')")
+                .fetchMap(row -> row.get(0, String.class), row -> row.get(1, String.class));
+        assertThat(definitions)
+                .containsKeys(
+                        "mindmap_node_by_page", "mindmap_edge_by_page", "mindmap_edge_by_from", "mindmap_edge_by_to");
+        assertThat(definitions.values()).noneMatch(definition -> definition.contains("WHERE"));
+    }
+
+    @Test
     void anEditThatBringsThePageBackBringsItsMapBackToo() {
         UUID kept = node(phone, "Meer");
         UUID other = node(phone, "Berge");

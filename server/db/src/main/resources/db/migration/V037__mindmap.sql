@@ -87,13 +87,18 @@ ALTER TABLE ONLY mindmap_node
 ALTER TABLE ONLY mindmap_edge
     ADD CONSTRAINT mindmap_edge_pkey PRIMARY KEY (id);
 
-CREATE INDEX mindmap_node_by_page ON mindmap_node USING btree (page_id) WHERE (deleted_at IS NULL);
+-- Over deleted rows too, unlike the other tables' indexes: a page brought back from
+-- the trash looks for what was deleted with it, removing a page or an element for good
+-- removes its elements and connections through the keys below, and a page's share
+-- reaches every element it holds. A map has hundreds of them; without these, each of
+-- those read the whole table.
+CREATE INDEX mindmap_node_by_page ON mindmap_node USING btree (page_id);
 
-CREATE INDEX mindmap_edge_by_page ON mindmap_edge USING btree (page_id) WHERE (deleted_at IS NULL);
+CREATE INDEX mindmap_edge_by_page ON mindmap_edge USING btree (page_id);
 
-CREATE INDEX mindmap_edge_by_from ON mindmap_edge USING btree (from_id) WHERE (deleted_at IS NULL);
+CREATE INDEX mindmap_edge_by_from ON mindmap_edge USING btree (from_id);
 
-CREATE INDEX mindmap_edge_by_to ON mindmap_edge USING btree (to_id) WHERE (deleted_at IS NULL);
+CREATE INDEX mindmap_edge_by_to ON mindmap_edge USING btree (to_id);
 
 -- Gone for good with their page: the trash removes a page after its retention period.
 ALTER TABLE ONLY mindmap_node
