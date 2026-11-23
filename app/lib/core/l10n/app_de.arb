@@ -259,6 +259,8 @@
   "errorSyncContainerNotFound": "Diesen Ort gibt es nicht mehr, oder du kannst dort nichts ablegen.",
   "errorAdminKeyPrefixTaken": "Dieses Präfix nutzt schon eine andere Art von Eintrag.",
   "errorSyncBoardGone": "Das Dashboard, zu dem dieses Widget gehörte, gibt es nicht mehr.",
+  "errorWikiNotAMindmap": "Die Seite, auf die das gehört, ist keine Mindmap mehr oder nicht mehr da.",
+  "errorWikiMindmapElementGone": "Ein Element an einem Ende dieser Verbindung ist nicht mehr auf der Mindmap.",
   "errorDashboardBoardNotFound": "Unter dieser Adresse gibt es kein Dashboard. Die aktuelle Adresse steht in der App unter Konto › Dashboard.",
   "errorAccessCheckNotApplicable": "„Abhaken“ gibt es nur für Listen und Aufgaben.",
   "errorIdentityUsernameTaken": "Diesen Benutzernamen gibt es schon.",

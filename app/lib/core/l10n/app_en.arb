@@ -381,6 +381,8 @@
   "errorSyncContainerNotFound": "That place no longer exists, or you can't add anything there.",
   "errorAdminKeyPrefixTaken": "Another kind of item already uses this prefix.",
   "errorSyncBoardGone": "The dashboard this widget belonged to is gone.",
+  "errorWikiNotAMindmap": "The page this belongs on is no longer a mind map, or no longer there.",
+  "errorWikiMindmapElementGone": "An element at one end of this connection is no longer on the map.",
   "errorDashboardBoardNotFound": "This address opens no dashboard. The current address is in the app under Account › Dashboard.",
   "errorAccessCheckNotApplicable": "“Check off” only exists for lists and tasks.",
   "errorIdentityUsernameTaken": "That username is taken.",
