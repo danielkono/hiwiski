@@ -849,8 +849,13 @@ List<MindmapHit> searchMindmap(
   String query, {
   required String? Function(String target) titleOf,
 }) {
-  final needle = query.trim().toLowerCase();
-  if (needle.isEmpty) return const [];
+  final words = _oneLine(query.trim());
+  if (words.isEmpty) return const [];
+  // Looked for in each text with its whitespace collapsed, as the snippet shows it: a
+  // match found in the text as written sits elsewhere in the shorter line, or past its
+  // end. The pattern ignores case rather than both texts being lowered, as lowering can
+  // change a text's length on some platforms and so move the match as well.
+  final pattern = RegExp(RegExp.escape(words), caseSensitive: false);
   final hits = <MindmapHit>[];
   for (final node in map.nodes) {
     final text = switch (node.kind) {
@@ -864,31 +869,33 @@ List<MindmapHit> searchMindmap(
       ].join(' '),
       _ => node.text,
     };
-    final at = text.toLowerCase().indexOf(needle);
-    if (at < 0) continue;
+    final line = _oneLine(text);
+    final match = pattern.firstMatch(line);
+    if (match == null) continue;
     hits.add(
       MindmapHit(
         id: node.id,
         isEdge: false,
         kind: node.kind,
-        snippet: snippetAround(text, at, needle.length),
+        snippet: snippetAround(line, match.start, match.end - match.start),
         bounds: node.bounds,
         text: text,
       ),
     );
   }
   for (final edge in map.edges) {
-    final at = edge.text.toLowerCase().indexOf(needle);
+    final line = _oneLine(edge.text);
+    final match = pattern.firstMatch(line);
     final from = map.node(edge.fromId);
     final to = map.node(edge.toId);
-    if (at < 0 || from == null || to == null) continue;
+    if (match == null || from == null || to == null) continue;
     final middle = (from.center + to.center) / 2;
     hits.add(
       MindmapHit(
         id: edge.id,
         isEdge: true,
         kind: MindmapKinds.plain,
-        snippet: snippetAround(edge.text, at, needle.length),
+        snippet: snippetAround(line, match.start, match.end - match.start),
         bounds: Rect.fromCenter(center: middle, width: 0, height: 0),
         text: edge.text,
       ),
@@ -897,16 +904,19 @@ List<MindmapHit> searchMindmap(
   return hits..sort(_byPlace);
 }
 
-/// [text] shortened to a line around the match at [at].
-String snippetAround(String text, int at, int length, {int context = 32}) {
-  final flat = text.replaceAll(_whitespace, ' ');
+/// [line], a text with its whitespace collapsed ([searchMindmap]), shortened around
+/// the match of [length] characters at [at] — both counted in [line].
+String snippetAround(String line, int at, int length, {int context = 32}) {
   final start = math.max(0, at - context);
-  final end = math.min(flat.length, at + length + context);
-  final cut = flat.substring(start, end).trim();
-  return '${start > 0 ? _ellipsis : ''}$cut${end < flat.length ? _ellipsis : ''}';
+  final end = math.min(line.length, at + length + context);
+  final cut = line.substring(start, end).trim();
+  return '${start > 0 ? _ellipsis : ''}$cut${end < line.length ? _ellipsis : ''}';
 }
 
 const _ellipsis = '…';
+
+/// [text] on one line: every run of whitespace, line breaks too, one space.
+String _oneLine(String text) => text.replaceAll(_whitespace, ' ');
 
 final _whitespace = RegExp(r'\s+');
 

@@ -248,6 +248,29 @@ void main() {
       expect(searchMindmap(map, '##', titleOf: (_) => null), isEmpty);
     });
 
+    test('a match behind a lot of whitespace shows in its snippet', () {
+      final map = Mindmap(
+        nodes: [
+          node('beach', text: 'Strand${' ' * 80}Sonne\n\nMeer'),
+          node('plain', y: 100, text: 'Berge   und\n\nSonne'),
+        ],
+        edges: const [],
+      );
+      final hits = searchMindmap(map, 'sonne', titleOf: (_) => null);
+      expect([
+        for (final hit in hits) hit.snippet,
+      ], equals(['Strand Sonne Meer', 'Berge und Sonne']));
+      // What is typed with a line break or two spaces finds the words on one line.
+      expect(
+        searchMindmap(
+          map,
+          'und  sonne',
+          titleOf: (_) => null,
+        ).map((hit) => hit.id),
+        equals(['plain']),
+      );
+    });
+
     test('an empty search finds nothing', () {
       final map = Mindmap(
         nodes: [node('a', text: 'x')],
