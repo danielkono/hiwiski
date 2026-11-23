@@ -194,15 +194,21 @@ class PageViewModel extends _$PageViewModel {
     final members = ref.watch(_membersProvider).value ?? const <Member>[];
     final pageList = ref.watch(_pagesProvider.future);
     final tags = ref.watch(_tagsProvider.future);
-    final map = ref.watch(_mindmapProvider(pageId).future);
     final pages = await pageList;
     final page = pages.where((page) => page.id == pageId).firstOrNull;
     if (page == null) return null;
-    final mindmap = await map;
+    // A mind map and what it links to, only on a mind map's page: watched on every
+    // page, a page was built anew whenever anything anywhere that can be linked to
+    // changed — a task's title, a list's name.
+    final mindmap = page.kind == PageKinds.mindmap
+        ? await ref.watch(_mindmapProvider(pageId).future)
+        : null;
     return PageState(
       page: page,
       mindmap: mindmap,
-      mindmapTargets: mindmapTargetsOf(mindmap, ref.watch(linkIndexProvider)),
+      mindmapTargets: mindmap == null
+          ? const {}
+          : mindmapTargetsOf(mindmap, ref.watch(linkIndexProvider)),
       pages: pages,
       level: level,
       members: {for (final member in members) member.id: member},
