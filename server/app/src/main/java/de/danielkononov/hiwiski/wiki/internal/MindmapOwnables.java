@@ -10,6 +10,8 @@ import de.danielkononov.hiwiski.admin.JooqRestorable;
 import de.danielkononov.hiwiski.admin.Restorable;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Table;
@@ -53,13 +55,23 @@ class MindmapOwnables {
      */
     private static final class ElementsOfAPage extends JooqRestorable {
 
-        ElementsOfAPage(DSLContext db, String itemType, Table<?> table, Field<java.util.UUID> pageColumn) {
+        ElementsOfAPage(DSLContext db, String itemType, Table<?> table, Field<UUID> pageColumn) {
             super(db, itemType, table, null, null, pageColumn, WIKI_PAGE);
         }
 
         @Override
         public List<Deleted> deleted(Instant notBefore) {
             return List.of();
+        }
+
+        /**
+         * Not in the trash, so not restored from it either: asked for by its id, an
+         * element came back on a page that is gone, or a connection to an element that
+         * is -- a restore checks none of what a push does.
+         */
+        @Override
+        public Optional<UUID> deletedOwnerOf(UUID itemId) {
+            return Optional.empty();
         }
     }
 }

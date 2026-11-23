@@ -414,6 +414,32 @@ class MindmapIT {
     }
 
     @Test
+    void anElementIsNotBroughtBackFromTheTrashOnItsOwn() {
+        UUID first = node(phone, "Meer");
+        UUID second = node(phone, "Berge");
+        var connection = edge(first, second);
+        phone.push(connection);
+        UUID connectionId = UUID.fromString(connection.get("entityId").toString());
+        phone.push(SyncClient.deletion(NODE, second, null));
+
+        // The connection would point at an element that is gone.
+        rest.post()
+                .uri("/api/v1/trash/" + EDGE + "/" + connectionId + "/restore")
+                .headers(anna.auth())
+                .exchange()
+                .expectStatus()
+                .isNotFound();
+        rest.post()
+                .uri("/api/v1/trash/" + NODE + "/" + second + "/restore")
+                .headers(anna.auth())
+                .exchange()
+                .expectStatus()
+                .isNotFound();
+        assertThat(deleted(MINDMAP_EDGE, connectionId)).isTrue();
+        assertThat(deleted(MINDMAP_NODE, second)).isTrue();
+    }
+
+    @Test
     void anEditThatBringsThePageBackBringsItsMapBackToo() {
         UUID kept = node(phone, "Meer");
         UUID other = node(phone, "Berge");
