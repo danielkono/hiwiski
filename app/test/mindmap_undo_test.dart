@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 
@@ -12,6 +13,7 @@ import 'package:hiwiski/core/storage/local_settings.dart';
 import 'package:hiwiski/core/sync/local_writes.dart';
 import 'package:hiwiski/core/sync/outbox.dart';
 import 'package:hiwiski/core/sync/sync_engine.dart';
+import 'package:hiwiski/data/wiki/mindmap_repository.dart';
 import 'package:hiwiski/domain/common/change.dart';
 import 'package:hiwiski/domain/wiki/mindmap.dart';
 import 'package:hiwiski/features/wiki/mindmap/mindmap_view_model.dart';
@@ -37,6 +39,13 @@ void main() {
         sessionAt(signedInAnna),
         localWritesProvider.overrideWith(
           (ref) => LocalWrites(db: db, outbox: Outbox(db), sync: _NoSync()),
+        ),
+        mindmapRepositoryProvider.overrideWith(
+          (ref) => _GatedMaps(
+            db: db,
+            writes: ref.watch(localWritesProvider),
+            currentMemberId: () => 'anna',
+          ),
         ),
       ],
     );
@@ -435,6 +444,33 @@ void main() {
     });
   });
 
+  test(
+    'a move waiting for its turn is written after the screen closed',
+    () async {
+      final watching = container.listen(
+        mindmapViewModelProvider(pageId),
+        (_, _) {},
+      );
+      final id = await place('Meer');
+      final node = (await state()).map.node(id)!;
+      final gate = Completer<void>();
+      (container.read(mindmapRepositoryProvider) as _GatedMaps).gate = gate;
+
+      // The first move takes its time; the second waits for it.
+      final first = viewModel().move({node: (x: 100, y: 0)});
+      final second = viewModel().move({node: (x: 300, y: 0)});
+      // The screen closes, and its ViewModel goes with it.
+      watching.close();
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      gate.complete();
+      await first;
+      await second;
+
+      final maps = container.read(mindmapRepositoryProvider);
+      expect((await maps.node(id))!.x, equals(300));
+    },
+  );
+
   test('a link shown with its content grows to room for it', () async {
     container.listen(mindmapViewModelProvider(pageId), (_, _) {});
     final id = await viewModel().addNode(
@@ -456,6 +492,26 @@ void main() {
     expect(shown.width, equals(360));
     expect(shown.height, equals(420));
   });
+}
+
+/// The repository, with a gate a test can close in front of the next move — a
+/// write that takes its time.
+class _GatedMaps extends MindmapRepository {
+  _GatedMaps({
+    required super.db,
+    required super.writes,
+    required super.currentMemberId,
+  });
+
+  Completer<void>? gate;
+
+  @override
+  Future<void> moveNodes(Map<MindmapNode, ({int x, int y})> moves) async {
+    final closed = gate;
+    gate = null;
+    await closed?.future;
+    await super.moveNodes(moves);
+  }
 }
 
 class _NoSync implements SyncTrigger {

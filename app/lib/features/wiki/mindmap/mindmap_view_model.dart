@@ -346,7 +346,9 @@ class MindmapViewModel extends _$MindmapViewModel {
       ]),
       redo: () => _place(maps, steps),
     );
-    await _inTurn(() => ref.read(mindmapRepositoryProvider).moveNodes(moves));
+    // The repository taken now, not when its turn comes: the screen may be closed
+    // by then, and its ViewModel with it — a read then failed, and the move was lost.
+    await _inTurn(() => maps.moveNodes(moves));
   }
 
   /// Puts each element of [steps] where `to` has it — in the place and size it
