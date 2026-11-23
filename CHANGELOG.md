@@ -70,6 +70,10 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
 - **Apply anyway** on a conflict about something deleted on the device since no longer
   brings it back — for everyone, once it synced. The conflict is simply settled, as it
   is for something no longer shared with you.
+- On an app used without a server, something brought back from the trash after the
+  app had been restarted reaches the server complete once the app connects to one.
+  Before, a page, list, task or event arrived without its title or kind and was
+  refused, and the tasks of a list brought back stayed behind.
 
 ## 2026.1.15 — 2026-11-20 {#2026.1.15}
 
