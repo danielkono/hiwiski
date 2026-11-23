@@ -166,6 +166,17 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
   MindmapState? get _state =>
       ref.read(mindmapViewModelProvider(widget.pageId)).value;
 
+  /// Whether the map is being edited: switched on, and the map still writable. Every
+  /// key and tap that changes something asks this, not the switch alone — a map
+  /// archived or no longer shared for writing meanwhile still took a key's delete.
+  bool get _editable => _editing && (_state?.writable ?? false);
+
+  /// The map stopped being writable: editing ends, as "Done" ends it.
+  void _writableChanged(bool? before, bool? writable) {
+    if (writable ?? true) return;
+    if (_editing) _toggleEditing();
+  }
+
   void _back() {
     final navigator = Navigator.of(context);
     if (navigator.canPop()) {
@@ -230,7 +241,7 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
         (steps ? HiwiskiMetrics.minTapTarget : 0);
     // The conflict being decided across the foot; editing, the corner's buttons —
     // its quarter circle opens over the map and goes again.
-    final bars = switch ((deciding, _editing)) {
+    final bars = switch ((deciding, _editable)) {
       (true, _) => HiwiskiMetrics.mindmapConflictBarHeight,
       (false, true) => HiwiskiMetrics.fabClearance,
       (false, false) => 0.0,
@@ -337,7 +348,7 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
     if (!_keys.hasPrimaryFocus) return .ignored;
     final keys = HardwareKeyboard.instance;
     final command = keys.isMetaPressed || keys.isControlPressed;
-    if (_editing && command && key == .keyZ) {
+    if (_editable && command && key == .keyZ) {
       unawaited(keys.isShiftPressed ? _viewModel.redo() : _viewModel.undo());
       return .handled;
     }
@@ -350,7 +361,7 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
       return .handled;
     }
     if (_selection == null && _group.isEmpty) return .ignored;
-    if (_editing && (key == .delete || key == .backspace)) {
+    if (_editable && (key == .delete || key == .backspace)) {
       _deleteSelection();
       return .handled;
     }
@@ -366,11 +377,11 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
   Future<void> _open(MindmapNode node) async {
     final state = _state;
     if (state == null) return;
-    if (state.conflicts[node.id] != null && !_editing) {
+    if (state.conflicts[node.id] != null && !_editable) {
       _decideOnMap(node.id);
       return;
     }
-    if (_editing) {
+    if (_editable) {
       await _editContent(node);
       return;
     }
@@ -1464,7 +1475,7 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
   void _deleteSelection() {
     final state = _state;
     final selection = _selection;
-    if (state == null || !_editing) return;
+    if (state == null || !_editable) return;
     if (_group.isNotEmpty) {
       unawaited(
         _viewModel.deleteAll([for (final id in _group) ?state.map.node(id)]),
@@ -1766,6 +1777,11 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
         mindmapViewModelProvider(widget.pageId)
             .select((state) => state.value?.map),
         (_, map) => _arrived(map),
+      )
+      ..listen<bool?>(
+        mindmapViewModelProvider(widget.pageId)
+            .select((state) => state.value?.writable),
+        _writableChanged,
       );
     final header = PageHeader(title: '', onBack: _back);
     // A link's target opens in the app's frame, under this screen: the map makes way.
@@ -1789,7 +1805,7 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
                   body: Center(child: Text(l.mindmapGone)),
                 );
               }
-              final editing = _editing && state.writable;
+              final editing = _editable;
               final wide = !Breakpoint.of(context).isCompact;
               final hits = _searching ? state.hits : const <MindmapHit>[];
               final current = hits.isEmpty

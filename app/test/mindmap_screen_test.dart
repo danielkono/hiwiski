@@ -1322,6 +1322,49 @@ void main() {
     expect(find.byKey(MindmapKeys.undo).hitTestable(), findsOneWidget);
   });
 
+  testWidgets('a map archived while it is edited is edited no more', (
+    tester,
+  ) async {
+    await seed(tester);
+    await open(tester);
+    await tester.tap(find.byKey(MindmapKeys.edit));
+    await settle(tester);
+    final element = find
+        .ancestor(
+          of: find.text('Berge'),
+          matching: find.byType(MindmapElementView),
+        )
+        .first;
+    await tester.dragFrom(
+      tester.getRect(element).center,
+      const Offset(100, 50),
+    );
+    await settle(tester);
+    Future<int> bergeX() async => (await tester.runAsync(
+      () => container.read(mindmapRepositoryProvider).node(berge),
+    ))!.x;
+    final moved = await bergeX();
+    expect(moved, isNot(equals(300)));
+
+    await tester.runAsync(() async {
+      final wiki = container.read(wikiRepositoryProvider);
+      await wiki.archivePage((await wiki.watchPage(pageId).first)!);
+    });
+    await settle(tester);
+    expect(find.byKey(MindmapKeys.addMenu), findsNothing);
+
+    // The move is not taken back …
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+    await settle(tester);
+    expect(await bergeX(), equals(moved));
+    // … and a tap reads the snippet instead of writing it.
+    await tester.tap(find.text('Berge'));
+    await settle(tester);
+    expect(find.byKey(MindmapKeys.textField), findsNothing);
+  });
+
   testWidgets('a moved element stays where it was let go', (tester) async {
     await seed(tester);
     await open(tester);
