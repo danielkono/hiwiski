@@ -1256,6 +1256,7 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
                 map: state.map,
                 from: node,
                 linkTarget: state.targetOf,
+                memberName: (target) => state.memberOf(target)?.displayName,
               );
               if (other != null) await viewModel.connect(node, other);
             },

@@ -1034,6 +1034,15 @@ String? linkAddressOf(String markdown) =>
       _ => null,
     };
 
+/// The name a picture element's picture was given — the text of its Markdown image
+/// (`![name](…)`) —, `null` when it has none.
+String? pictureNameOf(String markdown) {
+  final name = _pictureName.firstMatch(markdown)?.group(1)?.trim();
+  return name == null || name.isEmpty ? null : name;
+}
+
+final _pictureName = RegExp(r'!\[([^\]]*)\]');
+
 /// A shape drawn with the pen. It is kept as a stroke along its outline — erased,
 /// coloured and made thicker like any other.
 enum MindmapPenShape { rectangle, ellipse, triangle, diamond, line, arrow }

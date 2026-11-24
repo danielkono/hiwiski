@@ -99,16 +99,28 @@ Future<String?> showMindmapNoteSheet(
 
 /// The element to connect [from] with — the way to connect without drawing a line,
 /// for a screen reader and a keyboard. `null` when none was chosen.
+///
+/// Only elements a name tells apart are offered: a list of dashes for the strokes
+/// and of "Picture" for every picture let no one pick the one they meant.
 Future<MindmapNode?> showMindmapConnectSheet(
   BuildContext context, {
   required Mindmap map,
   required MindmapNode from,
   required MindmapLinkTarget linkTarget,
+  required String? Function(String? target) memberName,
 }) {
   final l = L.of(context);
   final others = [
     for (final node in map.nodes.reversed)
-      if (node.id != from.id) node,
+      if (node.id != from.id)
+        if (MindmapSheetText.labelOf(
+              l,
+              node,
+              linkTarget: linkTarget,
+              memberName: memberName,
+            )
+            case final label?)
+          (node: node, label: label),
   ];
   return showHiwiskiSheet<MindmapNode>(
     context: context,
@@ -121,15 +133,11 @@ Future<MindmapNode?> showMindmapConnectSheet(
         : Column(
             mainAxisSize: .min,
             children: [
-              for (final node in others)
+              for (final (:node, :label) in others)
                 ListTile(
                   key: MindmapKeys.connectTo(node.id),
                   leading: Icon(MindmapSheetText.iconOf(node.kind)),
-                  title: Text(
-                    MindmapSheetText.labelOf(l, node, linkTarget),
-                    maxLines: 2,
-                    overflow: .ellipsis,
-                  ),
+                  title: Text(label, maxLines: 2, overflow: .ellipsis),
                   onTap: () => Navigator.of(context).pop(node),
                 ),
             ],
@@ -139,21 +147,28 @@ Future<MindmapNode?> showMindmapConnectSheet(
 
 /// How an element is named in a list: its text, or what it shows.
 abstract final class MindmapSheetText {
-  static String labelOf(L l, MindmapNode node, MindmapLinkTarget linkTarget) {
+  /// The name of [node] — `null` for one nothing tells apart from another: a stroke,
+  /// a picture without a name, an empty text, a link whose target is not here.
+  static String? labelOf(
+    L l,
+    MindmapNode node, {
+    required MindmapLinkTarget linkTarget,
+    required String? Function(String? target) memberName,
+  }) {
     final text = switch (node.kind) {
       MindmapKinds.note => plainOfMarkdown(node.text),
       MindmapKinds.link => switch (node.target) {
-        final target? => linkTarget(target)?.title ?? l.mindmapLinkGone,
-        null => l.mindmapKindLink,
+        final target? => linkTarget(target)?.title,
+        null => null,
       },
-      MindmapKinds.image => l.mindmapKindImage,
+      MindmapKinds.member => memberName(node.target),
+      MindmapKinds.image => pictureNameOf(node.text),
+      MindmapKinds.drawing => null,
       _ => node.text,
     };
-    return text.trim().isEmpty ? _blank : text.trim();
+    final named = text?.trim();
+    return named == null || named.isEmpty ? null : named;
   }
-
-  /// An element without any text yet.
-  static const _blank = '–';
 
   static IconData iconOf(String kind) => MindmapElementView.iconOfKind(kind);
 }

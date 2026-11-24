@@ -1441,6 +1441,72 @@ void main() {
     expect(await rotation(), isNull);
   });
 
+  testWidgets(
+    'connecting by the list offers only elements a name tells apart',
+    (tester) async {
+      await seed(tester);
+      final ids = (await tester.runAsync(() async {
+        final maps = container.read(mindmapRepositoryProvider);
+        Future<String> add(String kind, String text, {int x = 600}) =>
+            maps.addNode(
+              pageId: pageId,
+              kind: kind,
+              x: x,
+              y: 200,
+              width: 120,
+              height: 80,
+              text: text,
+            );
+        return (
+          stroke: await add(MindmapKinds.drawing, ''),
+          unnamed: await add(
+            MindmapKinds.image,
+            '![](hiwiski-image:a)',
+            x: 800,
+          ),
+          named: await add(
+            MindmapKinds.image,
+            '![Strand](hiwiski-image:b)',
+            x: 1000,
+          ),
+          empty: await add(MindmapKinds.note, '  ', x: 1200),
+        );
+      }))!;
+      await open(tester);
+      await tester.tap(find.byKey(MindmapKeys.edit));
+      await settle(tester);
+      await tester.tap(find.text('Meer'));
+      await settle(tester);
+      for (
+        int turn = 0;
+        find.byKey(MindmapKeys.connect).hitTestable().evaluate().isEmpty;
+        turn++
+      ) {
+        if (turn > 5) fail('no way to connect in the corner');
+        await turnCorner(tester);
+      }
+      await tester.tap(find.byKey(MindmapKeys.connect));
+      await settle(tester);
+
+      expect(find.byKey(MindmapKeys.connectTo(berge)), findsOneWidget);
+      expect(find.byKey(MindmapKeys.connectTo(ids.named)), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(MindmapKeys.connectTo(ids.named)),
+          matching: find.text('Strand'),
+        ),
+        findsOneWidget,
+      );
+      for (final hidden in [ids.stroke, ids.unnamed, ids.empty]) {
+        expect(find.byKey(MindmapKeys.connectTo(hidden)), findsNothing);
+      }
+      expect(find.text('–'), findsNothing);
+      // The two pictures are nowhere to be fetched: their retries end with the view.
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(minutes: 10));
+    },
+  );
+
   testWidgets('a new link shows what it points to', (tester) async {
     await seed(tester);
     await open(tester);
