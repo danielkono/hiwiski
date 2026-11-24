@@ -8,6 +8,7 @@ import '../../../core/theme/hiwiski_tokens.dart';
 import '../../../core/ui/failure_text.dart';
 import '../../../core/ui/loading_strip.dart';
 import '../../../core/ui/notice_bar.dart';
+import '../../../core/ui/sync_item_label.dart';
 import '../../../core/ui/hiwiski_sheet.dart';
 import '../../../domain/sync/sync_items.dart';
 import '../sync_banner_view_model.dart';
@@ -110,7 +111,7 @@ class _StuckList extends ConsumerWidget {
             ),
             // The label given at creation: "Take out the trash", not a UUID.
             // Whoever is supposed to copy it needs to know what.
-            title: Text(entry.label ?? entry.entityType),
+            title: Text(syncItemLabel(l, entry.entityType, entry.label)),
             subtitle: Text(switch (entry.errorCode) {
               null => entry.entityType,
               final code => failureTextForCode(context, code),

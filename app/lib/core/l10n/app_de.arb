@@ -780,6 +780,8 @@
   "stuckDiscardBody": "Was hier steht, ist danach weg. Der Server hat es ohnehin nie übernommen.",
   "stuckEmpty": "Nichts hängt.",
   "stuckShow": "Ansehen",
+  "syncItemMindmapElement": "Element einer Mindmap",
+  "syncItemMindmapConnection": "Verbindung in einer Mindmap",
   "navCollapse": "Navigation einklappen",
   "navExpand": "Navigation ausklappen",
   "calTomorrow": "Morgen",

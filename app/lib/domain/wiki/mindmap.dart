@@ -985,6 +985,19 @@ String _oneLine(String text) => text.replaceAll(_whitespace, ' ');
 
 final _whitespace = RegExp(r'\s+');
 
+/// What an element of [kind] holding [text] — or a connection, as a snippet — is
+/// called in the lists of changes: the first line of its words, a note's without its
+/// Markdown. Empty for a picture, whose text is its picture, and for a stroke: the
+/// lists name those by their kind of item.
+String mindmapLabelOf(String kind, String text) {
+  final words = switch (kind) {
+    MindmapKinds.note => plainOfMarkdown(text),
+    MindmapKinds.image || MindmapKinds.drawing => '',
+    _ => text,
+  };
+  return words.trim().split('\n').first.trim();
+}
+
 /// What a note reads as without its Markdown — for a snippet and for the canvas from
 /// afar, where a rendered note would be too small to read anyway.
 String plainOfMarkdown(String markdown) => markdown

@@ -511,7 +511,7 @@ class MindmapRepository {
           containerId: edge.pageId,
           after: edge.fromId.compareTo(edge.toId) > 0 ? edge.fromId : edge.toId,
           alsoAfter: [edge.fromId, edge.toId],
-          label: edge.text,
+          label: _edgeLabelOf(edge.text),
         );
       } else {
         await write.change(
@@ -524,7 +524,7 @@ class MindmapRepository {
           containerId: edge.pageId,
           // Brought back, it needs both its elements back on the server too.
           alsoAfter: [edge.fromId, edge.toId],
-          label: edge.text,
+          label: _edgeLabelOf(edge.text),
         );
       }
     }
@@ -575,7 +575,7 @@ class MindmapRepository {
         // holds the connection back too, instead of letting it fail on its own.
         after: from.id.compareTo(to.id) > 0 ? from.id : to.id,
         alsoAfter: [from.id, to.id],
-        label: text,
+        label: _edgeLabelOf(text),
       ),
     );
     return given;
@@ -623,7 +623,7 @@ class MindmapRepository {
         fields: fields,
         containerType: EntityTypes.wikiPage,
         containerId: edge.pageId,
-        label: text ?? edge.text,
+        label: _edgeLabelOf(text ?? edge.text),
       ),
     );
   }
@@ -633,7 +633,7 @@ class MindmapRepository {
       _db.mindmapEdges,
       id: edge.id,
       version: edge.version,
-      label: edge.text,
+      label: _edgeLabelOf(edge.text),
     ),
   );
 
@@ -677,9 +677,15 @@ class MindmapRepository {
     });
   }
 
-  /// What a change is called in the list of what could not sync.
+  /// What a change is called in the list of what could not sync — empty where the
+  /// item has no words of its own: the list names it by its kind of item then. Its
+  /// kind's code, or a picture's Markdown, read as nothing anyone wrote.
   static String _labelOf(String kind, String text) =>
-      text.isEmpty ? kind : text.split('\n').first;
+      mindmapLabelOf(kind, text);
+
+  /// What a change of a connection is called there ([_labelOf]).
+  static String _edgeLabelOf(String text) =>
+      mindmapLabelOf(MindmapKinds.plain, text);
 }
 
 extension on MindmapNodeRow {

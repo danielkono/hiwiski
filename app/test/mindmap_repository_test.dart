@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:drift/native.dart';
+import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hiwiski/app/data_providers.dart';
@@ -10,9 +11,11 @@ import 'package:hiwiski/core/common/sync_limits.dart';
 import 'package:hiwiski/core/common/wire.dart';
 import 'package:hiwiski/core/db/hiwiski_database.dart';
 import 'package:hiwiski/core/db/tables.dart';
+import 'package:hiwiski/core/l10n/generated/app_localizations.dart';
 import 'package:hiwiski/core/storage/local_settings.dart';
 import 'package:hiwiski/core/sync/entity_codec.dart';
 import 'package:hiwiski/core/sync/outbox.dart';
+import 'package:hiwiski/core/ui/sync_item_label.dart';
 import 'package:hiwiski/domain/common/change.dart';
 import 'package:hiwiski/domain/wiki/mindmap.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -83,6 +86,56 @@ void main() {
       final [pageEntry] = await outboxOf(pageId);
       expect(entry.dependsOn, equals(pageEntry.mutationId));
       expect(jsonDecode(entry.fields), containsPair(WireFields.text, 'Meer'));
+    },
+  );
+
+  test(
+    'a change is named by its own words in the list of what did not sync',
+    () async {
+      final maps = container.read(mindmapRepositoryProvider);
+      final note = await maps.addNode(
+        pageId: pageId,
+        kind: MindmapKinds.note,
+        x: 0,
+        y: 100,
+        width: 200,
+        height: 100,
+        text: '# Packliste\n- **Sonnencreme**',
+      );
+      final picture = await maps.addNode(
+        pageId: pageId,
+        kind: MindmapKinds.image,
+        x: 0,
+        y: 300,
+        width: 200,
+        height: 100,
+        text: '![](hiwiski-image://01a20b00-0000-7000-8000-000000000001)',
+      );
+      final meer = await add('Meer');
+      final berge = await add('Berge', x: 200);
+      final shown = await map();
+      final edge = await maps.connect(
+        shown.node(meer)!,
+        shown.node(berge)!,
+        text: 'im Sommer\noder im Herbst',
+      );
+      final bare = await maps.connect(shown.node(berge)!, shown.node(note)!);
+
+      Future<String?> labelOf(String id) async =>
+          (await outboxOf(id)).single.label;
+      expect(await labelOf(note), equals('Packliste'));
+      expect(await labelOf(edge), equals('im Sommer'));
+      // No words of its own: named by its kind of item in the list.
+      final l = lookupL(const Locale('en'));
+      expect(
+        syncItemLabel(l, EntityTypes.mindmapNode, await labelOf(picture)),
+        equals('Element of a mind map'),
+      );
+      expect(
+        syncItemLabel(l, EntityTypes.mindmapEdge, await labelOf(bare)),
+        equals('Connection on a mind map'),
+      );
+      expect(syncItemLabel(l, 'NEW_TYPE', ''), equals('NEW_TYPE'));
     },
   );
 

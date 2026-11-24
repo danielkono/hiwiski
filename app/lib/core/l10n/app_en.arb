@@ -985,6 +985,8 @@
   "stuckDiscardBody": "What is listed here will be gone. The server never took it anyway.",
   "stuckEmpty": "Nothing is stuck.",
   "stuckShow": "Show",
+  "syncItemMindmapElement": "Element of a mind map",
+  "syncItemMindmapConnection": "Connection on a mind map",
   "navCollapse": "Collapse navigation",
   "navExpand": "Expand navigation",
   "calTomorrow": "Tomorrow",
