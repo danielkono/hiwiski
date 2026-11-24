@@ -170,11 +170,13 @@ class MindmapScene extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final searching = found.isNotEmpty;
     final inView = visible;
+    // By what is seen of an element: a turned one reaches beyond its unturned box,
+    // and judged by that, it vanished while its end was still in view.
     final shown = [
       for (final node in map.nodes)
         if (inView == null ||
             inView.overlaps(
-              node.bounds.inflate(HiwiskiMetrics.mindmapSceneMargin),
+              node.turnedBounds.inflate(HiwiskiMetrics.mindmapSceneMargin),
             ))
           node,
     ];
