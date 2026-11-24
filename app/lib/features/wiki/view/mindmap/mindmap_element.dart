@@ -315,20 +315,40 @@ class MindmapElementView extends StatelessWidget {
   /// curves in, so the text stays inside an ellipse or a diamond.
   static EdgeInsets insetOf(MindmapNode node) {
     if (!node.hasSurface) return .zero;
+    final width = node.width.toDouble();
+    final height = node.height.toDouble();
     return switch (node.effectiveShape) {
-      MindmapShapes.ellipse || MindmapShapes.diamond => EdgeInsets.symmetric(
-        horizontal: node.width * _curvedInset,
-        vertical: node.height * _curvedInset,
+      // The largest rectangle inside an ellipse leaves (1 − 1/√2) / 2 of each side
+      // free, about 0.15; a little more keeps the letters off the line.
+      MindmapShapes.ellipse => .symmetric(
+        horizontal: width * _curvedInset,
+        vertical: height * _curvedInset,
       ),
-      MindmapShapes.pill => const EdgeInsets.symmetric(
-        horizontal: HiwiskiMetrics.space20,
-        vertical: HiwiskiMetrics.space8,
+      // Inside a diamond a quarter of each side — less, and the lines ran over its
+      // slanted edges.
+      MindmapShapes.diamond => .symmetric(
+        horizontal: width * _diamondInset,
+        vertical: height * _diamondInset,
       ),
-      _ => const EdgeInsets.all(HiwiskiMetrics.space12),
+      // The ends are half circles as wide as the shorter side: the text keeps off
+      // them as it would inside such a circle. A pill as wide as it is high is one,
+      // and its text ran out of it with the fixed room of a long pill.
+      MindmapShapes.pill => .symmetric(
+        horizontal: math.max(
+          HiwiskiMetrics.space20,
+          math.min(width, height) * _curvedInset,
+        ),
+        vertical: math.max(
+          HiwiskiMetrics.space8,
+          math.min(width, height) * _curvedInset,
+        ),
+      ),
+      _ => const .all(HiwiskiMetrics.space12),
     };
   }
 
   static const _curvedInset = 0.18;
+  static const _diamondInset = 0.27;
 
   /// The outline of [shape], drawn with [side].
   static ShapeBorder shapeOf(String shape, BorderSide side) => switch (shape) {
