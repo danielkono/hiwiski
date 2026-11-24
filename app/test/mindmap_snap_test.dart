@@ -101,6 +101,21 @@ void main() {
       );
       expect(result.size, equals(const Size(200, 100)));
     });
+
+    test('with a shape of its own, kept above the smallest it may be', () {
+      // Its right edge snaps to 62: half of that is below the smallest side.
+      final result = snapResize(
+        const Rect.fromLTWH(0, 0, 70, 35),
+        [const Rect.fromLTWH(0, 200, 62, 10)],
+        reach: 10,
+        aspect: 2,
+        minimum: 32,
+      );
+      expect(result.size, equals(const Size(64, 32)));
+      // It no longer meets the edge it snapped to: no guide says it does.
+      expect(result.guides, isEmpty);
+      expect(result.matched, isEmpty);
+    });
   });
 
   group('a group', () {

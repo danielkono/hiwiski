@@ -89,6 +89,17 @@ SnapResize snapResize(
       w = box.width;
       h = box.height;
     }
+    // Grown as a whole where a side fell below [minimum]: each side raised on its
+    // own, a picture snapped small was stretched out of its shape. It then no
+    // longer meets what it snapped to, and no guide says it does.
+    if (w < minimum || h < minimum) {
+      // A side snapped to no length at all has no shape to grow: as it was.
+      final grow = w > 0 && h > 0 ? math.max(minimum / w, minimum / h) : null;
+      w = grow == null ? box.width : w * grow;
+      h = grow == null ? box.height : h * grow;
+      useWidth = false;
+      useHeight = false;
+    }
   }
   w = math.max(minimum, w);
   h = math.max(minimum, h);
