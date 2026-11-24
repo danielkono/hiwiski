@@ -813,6 +813,54 @@ void main() {
     expect(find.text('Berge'), findsOneWidget);
   });
 
+  testWidgets('strokes out of sight are not taken into a group', (
+    tester,
+  ) async {
+    await seed(tester);
+    final stroke = (await tester.runAsync(
+      () => container
+          .read(mindmapRepositoryProvider)
+          .addNode(
+            pageId: pageId,
+            kind: MindmapKinds.drawing,
+            x: 180,
+            y: 0,
+            width: 100,
+            height: 40,
+            points: '0,5000 10000,5000',
+            strokeWidth: 4,
+          ),
+    ))!;
+    await open(tester);
+    await tester.tap(find.byKey(MindmapKeys.edit));
+    await settle(tester);
+    final meerAt = tester.getRect(find.text('Meer'));
+    final bergeAt = tester.getRect(find.text('Berge'));
+
+    // The strokes hidden, a rectangle round everything — and what it took deleted.
+    await pick(tester, MindmapKeys.toolsMenu, MindmapKeys.drawings);
+    await settle(tester);
+    // Closed and opened again: the ring turned to the switch starts at its first
+    // choice once more.
+    await tester.tap(find.byKey(MindmapKeys.toolsMenu));
+    await settle(tester);
+    await pick(tester, MindmapKeys.toolsMenu, MindmapKeys.rectangle);
+    await settle(tester);
+    final around = meerAt.expandToInclude(bergeAt).inflate(40);
+    await tester.dragFrom(around.topLeft, around.bottomRight - around.topLeft);
+    await settle(tester);
+    await tester.tap(find.byKey(MindmapKeys.delete));
+    await settle(tester);
+
+    Future<MindmapNodeRow> row(String id) async => (await tester.runAsync(
+      () => (db.select(
+        db.mindmapNodes,
+      )..where((row) => row.id.equals(id))).getSingle(),
+    ))!;
+    expect((await row(meer)).deletedAt, isNotNull);
+    expect((await row(stroke)).deletedAt, isNull);
+  });
+
   testWidgets('a text size of its own, as a number', (tester) async {
     await seed(tester);
     await open(tester);

@@ -476,7 +476,9 @@ class _MindmapCanvasState extends State<MindmapCanvas>
       if (swept.isNotEmpty) setState(() => _erased.removeAll(swept));
       return;
     }
-    final map = widget.state.map;
+    // Only what is seen goes into a group: a stroke out of sight, or erased and not
+    // gone yet, was moved and deleted along with it unseen.
+    final map = _withoutHidden(widget.state.map);
     switch (mode) {
       case .draw:
         widget.onDraw?.call(thinOut(points, _thinning / _camera.scale), null);
@@ -841,6 +843,20 @@ class _MindmapCanvasState extends State<MindmapCanvas>
         !grips.contains(at);
   }
 
+  /// [map] as it is seen: without what the eraser took, gone from sight before it
+  /// is gone from the map — and without every stroke, while they are hidden.
+  Mindmap _withoutHidden(Mindmap map) => _erased.isEmpty && !widget.hideDrawings
+      ? map
+      : .new(
+          nodes: [
+            for (final node in map.nodes)
+              if (!_erased.contains(node.id) &&
+                  !(widget.hideDrawings && node.kind == MindmapKinds.drawing))
+                node,
+          ],
+          edges: map.edges,
+        );
+
   /// The topmost element at [at], a point of the map.
   MindmapNode? _nodeAt(Offset at, {String? except}) {
     for (final node in widget.state.map.nodes.reversed) {
@@ -862,19 +878,7 @@ class _MindmapCanvasState extends State<MindmapCanvas>
             ? shown.plus(extra)
             : shown.withNodes({extra.id: extra});
       }
-      // What the eraser took, gone from sight before it is gone from the map — and
-      // every stroke, while they are hidden.
-      if (_erased.isNotEmpty || widget.hideDrawings) {
-        shown = Mindmap(
-          nodes: [
-            for (final node in shown.nodes)
-              if (!_erased.contains(node.id) &&
-                  !(widget.hideDrawings && node.kind == MindmapKinds.drawing))
-                node,
-          ],
-          edges: shown.edges,
-        );
-      }
+      shown = _withoutHidden(shown);
       final writing = widget.writing;
       final map = shown.withNodes({
         // Only while the element is as it was: once it changed in the map, the map
