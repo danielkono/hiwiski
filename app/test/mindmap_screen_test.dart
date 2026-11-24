@@ -27,6 +27,7 @@ import 'package:hiwiski/core/theme/hiwiski_theme.dart';
 import 'package:hiwiski/core/ui/flowing_text.dart';
 import 'package:hiwiski/core/ui/ui_keys.dart';
 import 'package:hiwiski/domain/wiki/mindmap.dart';
+import 'package:hiwiski/domain/wiki/mindmap_kinds.dart';
 import 'package:hiwiski/features/wiki/mindmap/view/mindmap_conflict_bar.dart';
 import 'package:hiwiski/features/wiki/mindmap/view/mindmap_corner.dart';
 import 'package:hiwiski/features/wiki/mindmap/view/mindmap_keys.dart';
@@ -1629,6 +1630,20 @@ void main() {
     }
     expect((await stored()).textAlign, isNull);
     expect((await stored()).textFlow, isNull);
+  });
+
+  // A kind described for the rules and drawn, but forgotten on the "Add" menu,
+  // could only come from another device.
+  testWidgets('every kind but a stroke is on the "Add" menu', (tester) async {
+    await seed(tester);
+    await open(tester);
+    await tester.tap(find.byKey(MindmapKeys.edit));
+    await settle(tester);
+    for (final kind in mindmapKinds) {
+      if (kind == MindmapKinds.drawing) continue;
+      await reach(tester, MindmapKeys.addMenu, MindmapKeys.tool(kind));
+      expect(find.byKey(MindmapKeys.tool(kind)), findsOneWidget, reason: kind);
+    }
   });
 
   testWidgets('a new link shows what it points to', (tester) async {

@@ -10,6 +10,7 @@ import '../../core/common/wire.dart';
 import '../links/link_index.dart';
 import '../links/link_text.dart';
 import '../sync/sync_items.dart';
+import 'mindmap_kinds.dart';
 import 'page_images.dart';
 
 // A mind map is a wiki page of the kind MINDMAP; its elements and connections are items
@@ -256,14 +257,9 @@ class MindmapNode {
 
   Offset get center => bounds.center;
 
-  bool get isKnownKind => const {
-    MindmapKinds.plain,
-    MindmapKinds.note,
-    MindmapKinds.image,
-    MindmapKinds.link,
-    MindmapKinds.member,
-    MindmapKinds.drawing,
-  }.contains(kind);
+  /// What its kind is ([MindmapKind]): what it is drawn on, what can be chosen for
+  /// it, how it is resized.
+  MindmapKind get traits => mindmapKindOf(kind);
 
   /// The outline it is drawn with: a plain snippet has none by default, the others a
   /// rounded box.
@@ -283,16 +279,11 @@ class MindmapNode {
   /// Whether it is drawn on a surface of its own. A snippet of text stands on the
   /// canvas itself, its colour its text's; a picture element is its picture, a
   /// member's their round picture in a ring of the element's colour.
-  bool get hasSurface =>
-      kind != MindmapKinds.plain &&
-      kind != MindmapKinds.image &&
-      kind != MindmapKinds.member &&
-      kind != MindmapKinds.drawing;
+  bool get hasSurface => traits.surface;
 
   /// Whether it keeps its shape when resized: a picture its own, a member's circle
   /// its roundness.
-  bool get keepsShape =>
-      kind == MindmapKinds.image || kind == MindmapKinds.member;
+  bool get keepsShape => traits.keepsShape;
 
   MindmapNode moved(Offset delta) =>
       changed(x: (x + delta.dx).round(), y: (y + delta.dy).round());
@@ -981,16 +972,16 @@ List<MindmapHit> searchMindmap(
   final pattern = RegExp(RegExp.escape(words), caseSensitive: false);
   final hits = <MindmapHit>[];
   for (final node in map.nodes) {
-    final text = switch (node.kind) {
-      MindmapKinds.note => plainOfMarkdown(node.text),
-      // Its text is its pictures.
-      MindmapKinds.image => '',
+    final text = switch (node.traits.words) {
+      .markdown => plainOfMarkdown(node.text),
+      // A picture's text is its pictures; a stroke has none.
+      .none => '',
       // Found by the title of what it points to, by the name of whom it shows.
-      MindmapKinds.link || MindmapKinds.member => [
+      .target => [
         node.text,
         if (node.target case final target?) ?titleOf(target),
       ].join(' '),
-      _ => node.text,
+      .text => node.text,
     };
     final line = _oneLine(text);
     final match = pattern.firstMatch(line);
@@ -1048,10 +1039,10 @@ final _whitespace = RegExp(r'\s+');
 /// Markdown. Empty for a picture, whose text is its picture, and for a stroke: the
 /// lists name those by their kind of item.
 String mindmapLabelOf(String kind, String text) {
-  final words = switch (kind) {
-    MindmapKinds.note => plainOfMarkdown(text),
-    MindmapKinds.image || MindmapKinds.drawing => '',
-    _ => text,
+  final words = switch (mindmapKindOf(kind).words) {
+    .markdown => plainOfMarkdown(text),
+    .none => '',
+    .text || .target => text,
   };
   return words.trim().split('\n').first.trim();
 }

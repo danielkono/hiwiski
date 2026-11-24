@@ -244,10 +244,6 @@ abstract final class MindmapKinds {
 
   /// A stroke drawn by hand — its `points` across the element.
   static const drawing = 'DRAWING';
-
-  /// The kinds a new element of which takes the size the last one of its kind was
-  /// given: not a snippet, as large as its text, nor a stroke, as large as drawn.
-  static const sized = {note, image, link, member};
 }
 
 /// What a link element shows of its target. An unknown one shows the title.

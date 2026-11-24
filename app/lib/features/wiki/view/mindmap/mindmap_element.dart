@@ -96,27 +96,24 @@ class MindmapElementView extends StatelessWidget {
       ),
     );
     final style = textStyleOf(context, node.textSize).copyWith(color: ink);
+    final look = lookOf(node.kind);
+    final shown = look.content((
+      node: node,
+      ink: ink,
+      interactive: interactive,
+      linkTarget: linkTarget,
+      detail: detail ?? zoom,
+      zoom: zoom,
+    ));
     final content = DefaultTextStyle.merge(
       style: style,
       child: IconTheme.merge(
         data: IconThemeData(color: ink),
         child:
             editor ??
-            switch (node.kind) {
-              // Taken only near its line, at every zoom: the box around a stroke
-              // across the map would cover what lies under it.
-              MindmapKinds.drawing => _Stroke(node: node, zoom: zoom),
-              _ => IgnorePointer(
-                ignoring: !interactive,
-                child: _Content(
-                  node: node,
-                  ink: ink,
-                  interactive: interactive,
-                  linkTarget: linkTarget,
-                  detail: detail ?? zoom,
-                ),
-              ),
-            },
+            (look.ownTouches
+                ? shown
+                : IgnorePointer(ignoring: !interactive, child: shown)),
       ),
     );
     Widget body = Padding(
@@ -133,10 +130,7 @@ class MindmapElementView extends StatelessWidget {
     final frame = selected || found;
     final drawn = Semantics(
       container: true,
-      label: node.kind == MindmapKinds.member
-          ? MindmapMembers.of(context, memberIdOf(node.target))?.displayName ??
-                semanticLabelOf(L.of(context), node)
-          : semanticLabelOf(L.of(context), node),
+      label: look.name(context, node),
       child: Stack(
         clipBehavior: .none,
         fit: .expand,
@@ -155,12 +149,7 @@ class MindmapElementView extends StatelessWidget {
                 child: DecoratedBox(
                   decoration: ShapeDecoration(
                     shape: shapeOf(
-                      switch ((surface, node.kind)) {
-                        (true, _) => node.effectiveShape,
-                        // Around a member's circle, a circle.
-                        (false, MindmapKinds.member) => MindmapShapes.ellipse,
-                        _ => MindmapShapes.rounded,
-                      },
+                      surface ? node.effectiveShape : look.frame,
                       BorderSide(
                         color: selected
                             ? scheme.primary
@@ -208,15 +197,62 @@ class MindmapElementView extends StatelessWidget {
     return wrap?.call(node, reached) ?? reached;
   }
 
-  /// What a screen reader says for [node].
-  static String semanticLabelOf(L l, MindmapNode node) => switch (node.kind) {
-    MindmapKinds.note => plainOfMarkdown(node.text),
-    MindmapKinds.image => l.mindmapKindImage,
-    MindmapKinds.link => l.mindmapKindLink,
-    MindmapKinds.member => l.mindmapKindMember,
-    MindmapKinds.drawing => l.mindmapKindDrawing,
-    _ => node.text,
+  /// How an element of [kind] is drawn and named. A kind this app does not know is
+  /// a placeholder that says so.
+  static MindmapKindLook lookOf(String kind) => _looks[kind] ?? _unknownLook;
+
+  /// One entry per kind — next to what the kind allows ([MindmapKind]) and how it
+  /// is placed and edited on the map's screen (docs/development/mindmap.md).
+  static final Map<String, MindmapKindLook> _looks = {
+    MindmapKinds.plain: MindmapKindLook(
+      icon: HiwiskiSymbols.title,
+      name: (_, node) => node.text,
+      content: _PlainContent.new,
+    ),
+    MindmapKinds.note: MindmapKindLook(
+      icon: HiwiskiSymbols.stickyNote2,
+      name: (_, node) => plainOfMarkdown(node.text),
+      content: (content) => MindmapNote(node: content.node, ink: content.ink),
+    ),
+    MindmapKinds.image: MindmapKindLook(
+      icon: HiwiskiSymbols.image,
+      name: (context, _) => L.of(context).mindmapKindImage,
+      content: (content) => _Picture(
+        node: content.node,
+        interactive: content.interactive,
+        detail: content.detail,
+      ),
+    ),
+    MindmapKinds.link: MindmapKindLook(
+      icon: HiwiskiSymbols.link,
+      name: (context, _) => L.of(context).mindmapKindLink,
+      content: _LinkContent.new,
+    ),
+    MindmapKinds.member: MindmapKindLook(
+      icon: HiwiskiSymbols.person,
+      // Named as the family knows them, where they are known here.
+      name: (context, node) =>
+          MindmapMembers.of(context, memberIdOf(node.target))?.displayName ??
+          L.of(context).mindmapKindMember,
+      content: (content) => _Member(node: content.node),
+      // Around a member's circle, a circle.
+      frame: MindmapShapes.ellipse,
+    ),
+    MindmapKinds.drawing: MindmapKindLook(
+      icon: HiwiskiSymbols.draw,
+      name: (context, _) => L.of(context).mindmapKindDrawing,
+      content: (content) => _Stroke(node: content.node, zoom: content.zoom),
+      // Taken only near its line, at every zoom: the box around a stroke across
+      // the map would cover what lies under it.
+      ownTouches: true,
+    ),
   };
+
+  static final _unknownLook = MindmapKindLook(
+    icon: HiwiskiSymbols.title,
+    name: (_, node) => node.text,
+    content: _UnknownContent.new,
+  );
 
   /// What a picture element's picture flies from into its large view, and back.
   static Object pictureTagOf(String nodeId) => (_pictureTag, nodeId);
@@ -224,14 +260,7 @@ class MindmapElementView extends StatelessWidget {
   static const _pictureTag = 'mindmap-picture';
 
   /// The symbol of an element's kind — on its tool and in lists.
-  static IconData iconOfKind(String kind) => switch (kind) {
-    MindmapKinds.note => HiwiskiSymbols.stickyNote2,
-    MindmapKinds.image => HiwiskiSymbols.image,
-    MindmapKinds.link => HiwiskiSymbols.link,
-    MindmapKinds.member => HiwiskiSymbols.person,
-    MindmapKinds.drawing => HiwiskiSymbols.draw,
-    _ => HiwiskiSymbols.title,
-  };
+  static IconData iconOfKind(String kind) => lookOf(kind).icon;
 
   /// The symbol of an item a link points to.
   static IconData iconOfItem(String itemType) => switch (itemType) {
@@ -374,82 +403,110 @@ class MindmapElementView extends StatelessWidget {
   };
 }
 
-/// What an element's kind shows on its surface.
-class _Content extends StatelessWidget {
-  const _Content({
-    required this.node,
-    required this.ink,
-    required this.interactive,
-    required this.linkTarget,
-    required this.detail,
-  });
+/// How an element of a kind is drawn and named — one entry per kind
+/// ([MindmapElementView.lookOf]); what the kind allows is its [MindmapKind].
+@immutable
+class const MindmapKindLook({
+  /// Its symbol: on its tool, in lists and in a search's results.
+  required final IconData icon,
 
-  final MindmapNode node;
-  final Color ink;
-  final bool interactive;
-  final MindmapLinkTarget linkTarget;
-  final double detail;
+  /// What a screen reader says for an element of the kind.
+  required final String Function(BuildContext context, MindmapNode node) name,
+
+  /// What it shows, from what it is drawn with.
+  required final Widget Function(MindmapContent content) content,
+
+  /// Whether what it shows takes touches itself, while editing too — a stroke,
+  /// taken only near its line. Anything else takes them only where the map is read.
+  final bool ownTouches = false,
+
+  /// The outline a selection follows around it where it has no surface of its own.
+  final String frame = MindmapShapes.rounded,
+});
+
+/// What an element's content is drawn with: the element, the colour of its text,
+/// whether it takes taps, how its targets read, and how large a unit of the map is
+/// on screen ([MindmapElementView.detail], [MindmapElementView.zoom]).
+typedef MindmapContent = ({
+  MindmapNode node,
+  Color ink,
+  bool interactive,
+  MindmapLinkTarget linkTarget,
+  double detail,
+  double zoom,
+});
+
+/// A snippet: as large as its text, the element measured to it ([plainBoxOf]).
+class _PlainContent extends StatelessWidget {
+  const _PlainContent(this.content);
+
+  final MindmapContent content;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    content.node.text,
+    overflow: .fade,
+    softWrap: true,
+    textHeightBehavior: MindmapElementView.plainHeight,
+  );
+}
+
+/// A link: what it points to, as its preview shows it or by its title.
+class _LinkContent extends StatelessWidget {
+  const _LinkContent(this.content);
+
+  final MindmapContent content;
 
   @override
   Widget build(BuildContext context) {
-    final l = L.of(context);
-    switch (node.kind) {
-      case MindmapKinds.plain:
-        // As large as its text: the element is measured to it ([plainBoxOf]).
-        return Text(
-          node.text,
-          overflow: .fade,
-          softWrap: true,
-          textHeightBehavior: MindmapElementView.plainHeight,
-        );
-      case MindmapKinds.note:
-        return MindmapNote(node: node, ink: ink);
-      case MindmapKinds.image:
-        return _Picture(node: node, interactive: interactive, detail: detail);
-      case MindmapKinds.member:
-        return _Member(node: node);
-      case MindmapKinds.link:
-        final address = node.target;
-        final item = address == null ? null : linkTarget(address);
-        // On the page's preview as on the canvas — but not within a target's content
-        // shown already: a map linking its own page showed itself without end.
-        if (item != null &&
-            node.showsContent &&
-            !MindmapLinkContent.within(context)) {
-          return MindmapLinkContent(
-            item: item,
-            textScale: MindmapElementView.textScaleOf(context, node.textSize),
-          );
-        }
-        return Row(
-          children: [
-            Icon(
-              item == null
-                  ? HiwiskiSymbols.linkOff
-                  : MindmapElementView.iconOfItem(item.itemType),
-              size: HiwiskiMetrics.icon20,
-            ),
-            const SizedBox(width: HiwiskiMetrics.space8),
-            Expanded(
-              child: Text(
-                item?.title ?? l.mindmapLinkGone,
-                maxLines: 2,
-                overflow: .ellipsis,
-              ),
-            ),
-          ],
-        );
-      default:
-        // A kind a newer app placed: kept as it is, shown as what it is not.
-        return Center(
-          child: Text(
-            l.mindmapUnknownKind,
-            textAlign: .center,
-            overflow: .fade,
-          ),
-        );
+    final node = content.node;
+    final address = node.target;
+    final item = address == null ? null : content.linkTarget(address);
+    // On the page's preview as on the canvas — but not within a target's content
+    // shown already: a map linking its own page showed itself without end.
+    if (item != null &&
+        node.showsContent &&
+        !MindmapLinkContent.within(context)) {
+      return MindmapLinkContent(
+        item: item,
+        textScale: MindmapElementView.textScaleOf(context, node.textSize),
+      );
     }
+    return Row(
+      children: [
+        Icon(
+          item == null
+              ? HiwiskiSymbols.linkOff
+              : MindmapElementView.iconOfItem(item.itemType),
+          size: HiwiskiMetrics.icon20,
+        ),
+        const SizedBox(width: HiwiskiMetrics.space8),
+        Expanded(
+          child: Text(
+            item?.title ?? L.of(context).mindmapLinkGone,
+            maxLines: 2,
+            overflow: .ellipsis,
+          ),
+        ),
+      ],
+    );
   }
+}
+
+/// A kind a newer app placed: kept as it is, shown as what it is not.
+class _UnknownContent extends StatelessWidget {
+  const _UnknownContent(this.content);
+
+  final MindmapContent content;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Text(
+      L.of(context).mindmapUnknownKind,
+      textAlign: .center,
+      overflow: .fade,
+    ),
+  );
 }
 
 /// A stroke drawn by hand, in the element's colour as chosen — see-through too, as a

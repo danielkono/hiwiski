@@ -40,7 +40,9 @@ places and nowhere else:
 `test/mindmap_fields_test.dart` takes the fields from the contract and follows each one
 through all of that: stored and read, sent again whole, two versions told apart,
 changed and taken back, this device's in a conflict, named in the history. A field
-forgotten anywhere on the way fails there, by its name.
+forgotten anywhere on the way fails there, by its name. On the server,
+`MindmapIT.everyFieldTheContractNamesIsKeptAndHandedOn` does the same with the
+contract's generated classes: every field is kept and handed to the next device.
 
 ## A value of a field
 
@@ -48,3 +50,40 @@ A new shape, a new place for a note's text, a new kind of line: its constant in
 `wire.dart`, its name for people in the ARB files, and where it is drawn. The server
 takes any name in capitals for these fields, and an older app draws a value it does
 not know as the field's default — the constants' class says which.
+
+## An element kind
+
+An element's `kind` is a name in capitals (`MindmapKinds`); the server takes any, and
+an app that does not know one keeps it and draws a placeholder that is only moved,
+coloured, connected and taken away. A kind is described once for each part of the
+app:
+
+1. **What it is** — `lib/domain/wiki/mindmap_kinds.dart`: its `MindmapKind`, which
+   says whether it is drawn on a surface of its own, takes a colour, shows text with
+   a colour and size, has an outline to choose, room to place its text, a line to
+   thicken; whether it keeps its shape when resized, takes the size of the last of
+   its kind, can be edited and connected; and how its words read for a search and in
+   lists. The rules and the choices offered for a selected element ask this, so a new
+   kind is offered what its description allows without naming it anywhere else.
+2. **How it is drawn** — `MindmapElementView.lookOf`
+   (`lib/features/wiki/view/mindmap/mindmap_element.dart`): its symbol, what a screen
+   reader says for it, and the widget that shows it — on the canvas, on the page's
+   preview and in the map saved as a picture alike.
+3. **How it is made and changed** — `_kindTools` on the map's screen
+   (`lib/features/wiki/mindmap/view/mindmap_screen.dart`): its entry on the "Add"
+   menu, what is asked for a new one and its size, what is asked to change it, and
+   what a tap does where the map is read.
+
+What it holds goes into the fields an element already has — `text` for words or a
+picture, `target` for what it points to (`hiwiski://<type>/<id>`) — and into fields of
+its own where it needs more ("A field of an element or a connection" above). The
+choices for a selected element are plain data (`MindmapCornerOption`): the corner
+draws them, and another way to offer them would draw the same list.
+
+`test/mindmap_kinds_test.dart` checks that every kind the app knows is drawn as
+itself; `mindmap_screen_test.dart` that every kind but a stroke is on the "Add" menu.
+
+A kind that is a view of an item elsewhere in the app — a calendar's agenda, a list —
+may not need to be a kind at all: a link element points to any item the link index
+knows and shows its content as its preview does (`MindmapLinkContent`). A new kind
+is for what a link's preview cannot show.

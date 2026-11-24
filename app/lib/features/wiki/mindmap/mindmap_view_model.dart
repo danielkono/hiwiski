@@ -23,6 +23,7 @@ import '../../../domain/links/link_index.dart';
 import '../../../domain/preferences/preferences.dart';
 import '../../../domain/sync/sync_items.dart';
 import '../../../domain/wiki/mindmap.dart';
+import '../../../domain/wiki/mindmap_kinds.dart';
 import '../../../domain/wiki/page_images.dart';
 import '../../../domain/wiki/wiki_page.dart';
 
@@ -234,11 +235,12 @@ class MindmapViewModel extends _$MindmapViewModel {
       lastSizes: {
         // The newest of each kind — ids are made in time order …
         for (final node in [...map.nodes]..sort((a, b) => a.id.compareTo(b.id)))
-          if (MindmapKinds.sized.contains(node.kind))
+          if (node.traits.remembersSize)
             node.kind: (width: node.width, height: node.height),
         // … unless one was placed or resized here since.
-        for (final kind in MindmapKinds.sized)
-          kind: ?lining.sizes[Preferences.mindmapSizeKey(pageId, kind)],
+        for (final kind in mindmapKinds)
+          if (mindmapKindOf(kind).remembersSize)
+            kind: ?lining.sizes[Preferences.mindmapSizeKey(pageId, kind)],
       },
     );
   }
@@ -290,7 +292,7 @@ class MindmapViewModel extends _$MindmapViewModel {
   /// Remembers that an element of [kind] now is [width] × [height]: the next new
   /// one of its kind on this map takes it.
   void _sized(String kind, int width, int height) {
-    if (!MindmapKinds.sized.contains(kind)) return;
+    if (!mindmapKindOf(kind).remembersSize) return;
     unawaited(
       ref
           .read(preferencesStoreProvider)

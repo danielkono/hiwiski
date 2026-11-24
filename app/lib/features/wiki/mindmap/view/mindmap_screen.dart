@@ -420,43 +420,75 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
       return;
     }
     // Read, a link element leads to its target; a picture opens large.
-    if (node.target case final target? when node.kind == MindmapKinds.link) {
-      final item = state.targetOf(target);
-      if (item != null) {
-        await openLinkTarget(context, ref, item, leave: _back);
-      }
-      return;
-    }
-    if (node.imageId case final id? when node.kind == MindmapKinds.image) {
-      await showImageGallery(
-        context,
-        imageIds: [id],
-        initial: 0,
-        heroTag: (_) => MindmapElementView.pictureTagOf(node.id),
-        aspects: {id: node.width / node.height},
-        previewWidth: (node.width * MediaQuery.devicePixelRatioOf(context))
-            .round(),
-        onShown: (_) {},
-      );
-    }
+    await _kindTools[node.kind]?.open?.call(node);
   }
 
   /// Asks for an element's new content and writes it. As in [_place], the map may
   /// have been left while the choice was made — and with it the ViewModel the change
   /// goes through, which then throws.
-  Future<void> _editContent(MindmapNode node) async {
-    switch (node.kind) {
-      case MindmapKinds.plain:
-        // Written where it stands, not in a sheet over the map.
-        _write(node);
-      case MindmapKinds.note:
+  Future<void> _editContent(MindmapNode node) async =>
+      _kindTools[node.kind]?.edit(node);
+
+  /// How an element of each kind a member places is made, changed and opened here —
+  /// one entry per kind, in the order the "Add" menu offers them. What the kind
+  /// allows is its [MindmapKind], how it is drawn its look
+  /// ([MindmapElementView.lookOf]); docs/development/mindmap.md says what goes where.
+  Map<String, _KindTool> get _kindTools => {
+    MindmapKinds.plain: _KindTool(
+      icon: HiwiskiSymbols.title,
+      label: (l) => l.mindmapToolPlain,
+      make: _makePlain,
+      // Written where it stands, not in a sheet over the map.
+      edit: (node) async => _write(node),
+    ),
+    MindmapKinds.note: _KindTool(
+      icon: HiwiskiSymbols.stickyNote2,
+      label: (l) => l.mindmapToolNote,
+      make: (last, _) async {
+        final typed = await showMindmapNoteSheet(
+          context,
+          pageId: widget.pageId,
+          text: '',
+        );
+        if (typed == null || typed.trim().isEmpty) return null;
+        return (
+          text: typed,
+          look: const <String, Object?>{},
+          size: last ?? HiwiskiMetrics.mindmapNoteSize,
+        );
+      },
+      edit: (node) async {
         final text = await showMindmapNoteSheet(
           context,
           pageId: widget.pageId,
           text: node.text,
         );
         if (text != null && mounted) await _viewModel.setText(node, text);
-      case MindmapKinds.image:
+      },
+    ),
+    MindmapKinds.image: _KindTool(
+      icon: HiwiskiSymbols.image,
+      label: (l) => l.mindmapToolImage,
+      make: (last, _) async {
+        final picture = await _pickPicture();
+        if (picture == null) return null;
+        // In the picture's own shape, within the room a new one takes.
+        // Taken after the last picture, it is as high, in its own shape.
+        const room = HiwiskiMetrics.mindmapImageSize;
+        return (
+          text: picture.markdown,
+          look: const <String, Object?>{},
+          size: switch (last) {
+            final last? => Size(last.height * picture.aspect, last.height),
+            null when picture.aspect >= room.width / room.height => Size(
+              room.width,
+              room.width / picture.aspect,
+            ),
+            null => Size(room.height * picture.aspect, room.height),
+          },
+        );
+      },
+      edit: (node) async {
         // Another picture: as wide as the one before, in its own shape.
         final picture = await _pickPicture();
         if (picture == null || !mounted) return;
@@ -468,20 +500,111 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
             height: math.max(1, (node.width / picture.aspect).round()),
           ),
         );
-      case MindmapKinds.link:
+      },
+      open: (node) async {
+        final id = node.imageId;
+        if (id == null) return;
+        await showImageGallery(
+          context,
+          imageIds: [id],
+          initial: 0,
+          heroTag: (_) => MindmapElementView.pictureTagOf(node.id),
+          aspects: {id: node.width / node.height},
+          previewWidth: (node.width * MediaQuery.devicePixelRatioOf(context))
+              .round(),
+          onShown: (_) {},
+        );
+      },
+    ),
+    MindmapKinds.link: _KindTool(
+      icon: HiwiskiSymbols.link,
+      label: (l) => l.mindmapToolLink,
+      make: (last, _) async {
+        final markdown = await showLinkPicker(context);
+        final target = markdown == null ? null : linkAddressOf(markdown);
+        if (target == null) return null;
+        return (
+          text: '',
+          // Shown with what it points to: the title alone said too little.
+          look: {
+            WireFields.target: target,
+            WireFields.linkView: MindmapLinkViews.content,
+          },
+          // A link last placed as its title only is no measure for one showing
+          // content.
+          size: switch (last) {
+            final last?
+                when last.height > HiwiskiMetrics.mindmapLinkSize.height =>
+              last,
+            _ => HiwiskiMetrics.mindmapLinkContentSize,
+          },
+        );
+      },
+      edit: (node) async {
         final markdown = await showLinkPicker(context);
         final target = markdown == null ? null : linkAddressOf(markdown);
         if (target != null && mounted) {
           await _viewModel.setFields(node, {WireFields.target: target});
         }
-      case MindmapKinds.member:
+      },
+      open: (node) async {
+        final item = switch (node.target) {
+          final target? => _state?.targetOf(target),
+          null => null,
+        };
+        if (item != null) {
+          await openLinkTarget(context, ref, item, leave: _back);
+        }
+      },
+    ),
+    MindmapKinds.member: _KindTool(
+      icon: HiwiskiSymbols.person,
+      label: (l) => l.mindmapToolMember,
+      make: (last, _) async {
+        final member = await _pickMember();
+        if (member == null) return null;
+        return (
+          text: '',
+          look: {WireFields.target: memberAddressOf(member.id)},
+          size: last ?? HiwiskiMetrics.mindmapMemberSize,
+        );
+      },
+      edit: (node) async {
         final member = await _pickMember(current: memberIdOf(node.target));
         if (member != null && mounted) {
           await _viewModel.setFields(node, {
             WireFields.target: memberAddressOf(member.id),
           });
         }
-    }
+      },
+    ),
+  };
+
+  /// A snippet is written on the canvas where it lands, and is on the map once it
+  /// holds a word — nothing to place before.
+  Future<_Made?> _makePlain(Size? last, Offset? at) async {
+    final box = _writingBox(L.of(context).mindmapPlainHint, null, isNew: true);
+    final half = Offset(box.width / 2, box.height / 2);
+    final corner = at == null
+        ? _middle(Size(box.width.toDouble(), box.height.toDouble()))
+        : (x: (at.dx - half.dx).round(), y: (at.dy - half.dy).round());
+    _write(
+      MindmapNode(
+        id: _draftId,
+        ownerId: '',
+        version: 0,
+        pageId: widget.pageId,
+        kind: MindmapKinds.plain,
+        x: corner.x,
+        y: corner.y,
+        width: box.width,
+        height: box.height,
+        layer: (_state?.map ?? .empty).topLayer,
+        text: '',
+      ),
+      isNew: true,
+    );
+    return null;
   }
 
   /// Someone of the family, for a member element.
@@ -495,7 +618,8 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
   /// picker places nothing. [at] is where it was dropped; `null`: the middle of the
   /// view.
   Future<void> _place(String kind, Offset? at) async {
-    final l = L.of(context);
+    final tool = _kindTools[kind];
+    if (tool == null) return;
     // As large as the one of its kind placed or resized last here — a row of
     // pictures or notes comes out alike.
     final last = switch (_state?.lastSizes[kind]) {
@@ -505,81 +629,9 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
       ),
       null => null,
     };
-    String text = '';
-    String? target;
-    String? linkView;
-    Size size;
-    switch (kind) {
-      case MindmapKinds.plain:
-        // Written on the canvas where it lands; on the map once it holds a word.
-        final box = _writingBox(l.mindmapPlainHint, null, isNew: true);
-        final half = Offset(box.width / 2, box.height / 2);
-        final corner = at == null
-            ? _middle(Size(box.width.toDouble(), box.height.toDouble()))
-            : (x: (at.dx - half.dx).round(), y: (at.dy - half.dy).round());
-        _write(
-          MindmapNode(
-            id: _draftId,
-            ownerId: '',
-            version: 0,
-            pageId: widget.pageId,
-            kind: MindmapKinds.plain,
-            x: corner.x,
-            y: corner.y,
-            width: box.width,
-            height: box.height,
-            layer: (_state?.map ?? .empty).topLayer,
-            text: '',
-          ),
-          isNew: true,
-        );
-        return;
-      case MindmapKinds.note:
-        final typed = await showMindmapNoteSheet(
-          context,
-          pageId: widget.pageId,
-          text: '',
-        );
-        if (typed == null || typed.trim().isEmpty) return;
-        text = typed;
-        size = last ?? HiwiskiMetrics.mindmapNoteSize;
-      case MindmapKinds.image:
-        final picture = await _pickPicture();
-        if (picture == null) return;
-        text = picture.markdown;
-        // In the picture's own shape, within the room a new one takes.
-        // Taken after the last picture, it is as high, in its own shape.
-        const room = HiwiskiMetrics.mindmapImageSize;
-        size = switch (last) {
-          final last? => Size(last.height * picture.aspect, last.height),
-          null when picture.aspect >= room.width / room.height => Size(
-            room.width,
-            room.width / picture.aspect,
-          ),
-          null => Size(room.height * picture.aspect, room.height),
-        };
-      case MindmapKinds.link:
-        final markdown = await showLinkPicker(context);
-        target = markdown == null ? null : linkAddressOf(markdown);
-        if (target == null) return;
-        // Shown with what it points to: the title alone said too little. A link
-        // last placed as its title only is no measure for one showing content.
-        linkView = MindmapLinkViews.content;
-        size = switch (last) {
-          final last?
-              when last.height > HiwiskiMetrics.mindmapLinkSize.height =>
-            last,
-          _ => HiwiskiMetrics.mindmapLinkContentSize,
-        };
-      case MindmapKinds.member:
-        final member = await _pickMember();
-        if (member == null) return;
-        target = memberAddressOf(member.id);
-        size = last ?? HiwiskiMetrics.mindmapMemberSize;
-      default:
-        return;
-    }
-    if (!mounted) return;
+    final made = await tool.make(last, at);
+    if (made == null || !mounted) return;
+    final size = made.size;
     final corner = at == null
         ? _middle(size)
         : (
@@ -598,8 +650,8 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
               width: math.max(1, size.width.round()),
               height: math.max(1, size.height.round()),
             ),
-            text: text,
-            look: {WireFields.target: target, WireFields.linkView: linkView},
+            text: made.text,
+            look: made.look,
           ),
     );
     if (mounted) _select(.node(id));
@@ -877,17 +929,11 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
         label: l.mindmapMenuAdd,
         on: _tool == .connect,
         options: [
-          for (final (kind, icon, label) in [
-            (MindmapKinds.plain, HiwiskiSymbols.title, l.mindmapToolPlain),
-            (MindmapKinds.note, HiwiskiSymbols.stickyNote2, l.mindmapToolNote),
-            (MindmapKinds.image, HiwiskiSymbols.image, l.mindmapToolImage),
-            (MindmapKinds.link, HiwiskiSymbols.link, l.mindmapToolLink),
-            (MindmapKinds.member, HiwiskiSymbols.person, l.mindmapToolMember),
-          ])
+          for (final MapEntry(key: kind, value: tool) in _kindTools.entries)
             MindmapCornerOption(
               key: MindmapKeys.tool(kind),
-              icon: icon,
-              label: label,
+              icon: tool.icon,
+              label: tool.label(l),
               dragged: kind,
               onTap: () => unawaited(_place(kind, null)),
             ),
@@ -1031,15 +1077,10 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
     final l = L.of(context);
     final node = selection.edge ? null : state.map.node(selection.id);
     final edge = selection.edge ? state.map.edge(selection.id) : null;
-    final kind = node?.kind;
     final viewModel = _viewModel;
-    final drawing = kind == MindmapKinds.drawing;
-    // A picture is its picture, a member their circle, a stroke its line: no text.
-    final texted =
-        node != null &&
-        kind != MindmapKinds.image &&
-        kind != MindmapKinds.member &&
-        !drawing;
+    // What is offered for an element is what its kind allows ([MindmapKind]).
+    final traits = node?.traits;
+    final texted = traits?.texted ?? false;
     return [
       if (state.conflicts.containsKey(selection.id))
         MindmapCornerOption(
@@ -1048,8 +1089,7 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
           label: l.mindmapConflictElement,
           onTap: () => _decideOnMap(selection.id),
         ),
-      // A stroke is drawn again, not edited.
-      if (!drawing)
+      if (edge != null || (traits?.editable ?? false))
         MindmapCornerOption(
           key: MindmapKeys.editContent,
           icon: HiwiskiSymbols.edit,
@@ -1069,8 +1109,7 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
             }
           },
         ),
-      // A snippet of text has no surface to colour, only its text.
-      if (kind != MindmapKinds.image && kind != MindmapKinds.plain)
+      if (edge != null || (traits?.coloured ?? false))
         MindmapCornerOption(
           key: MindmapKeys.color,
           icon: HiwiskiSymbols.palette,
@@ -1139,7 +1178,7 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
             }
           },
         ),
-      if (node != null && drawing)
+      if (node != null && (traits?.stroked ?? false))
         MindmapCornerOption(
           key: MindmapKeys.strokeWidth,
           icon: HiwiskiSymbols.lineWeight,
@@ -1155,7 +1194,7 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
             }
           },
         ),
-      if (texted)
+      if (node != null && texted)
         MindmapCornerOption(
           key: MindmapKeys.textColor,
           icon: HiwiskiSymbols.formatColorText,
@@ -1174,15 +1213,14 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
             }
           },
         ),
-      if (texted)
+      if (node != null && texted)
         MindmapCornerOption(
           key: MindmapKeys.textSize,
           icon: HiwiskiSymbols.formatSize,
           label: l.mindmapTextSize,
           onTap: () => unawaited(_chooseTextSize(node)),
         ),
-      // A note has room around its text; a snippet is just as large as its words.
-      if (node != null && kind == MindmapKinds.note)
+      if (node != null && (traits?.placesText ?? false))
         MindmapCornerOption(
           key: MindmapKeys.textAlign,
           icon: HiwiskiSymbols.formatSize,
@@ -1212,8 +1250,7 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
             });
           },
         ),
-      // Only what has a surface has an outline.
-      if (kind == MindmapKinds.note || kind == MindmapKinds.link)
+      if (node != null && (traits?.outlined ?? false))
         MindmapCornerOption(
           key: MindmapKeys.shape,
           icon: HiwiskiSymbols.category,
@@ -1222,7 +1259,7 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
             final shape = await showMindmapChoiceSheet<String>(
               context,
               title: l.mindmapShape,
-              current: node?.shape ?? MindmapShapes.rounded,
+              current: node.shape ?? MindmapShapes.rounded,
               choices: [
                 (MindmapShapes.rounded, l.mindmapShapeRounded),
                 (MindmapShapes.rectangle, l.mindmapShapeRectangle),
@@ -1231,12 +1268,12 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
                 (MindmapShapes.diamond, l.mindmapShapeDiamond),
               ],
             );
-            if (shape != null && node != null) {
+            if (shape != null) {
               await viewModel.setFields(node, {WireFields.shape: shape});
             }
           },
         ),
-      if (kind == MindmapKinds.link)
+      if (node != null && node.kind == MindmapKinds.link)
         MindmapCornerOption(
           key: MindmapKeys.linkView,
           icon: HiwiskiSymbols.visibility,
@@ -1245,14 +1282,14 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
             final view = await showMindmapChoiceSheet<String>(
               context,
               title: l.mindmapLinkView,
-              current: node?.linkView ?? MindmapLinkViews.title,
+              current: node.linkView ?? MindmapLinkViews.title,
               choices: [
                 (MindmapLinkViews.title, l.mindmapLinkTitle),
                 (MindmapLinkViews.content, l.mindmapLinkContent),
               ],
             );
             const room = HiwiskiMetrics.mindmapLinkContentSize;
-            if (view != null && node != null) {
+            if (view != null) {
               await viewModel.setLinkView(
                 node,
                 view,
@@ -1286,8 +1323,7 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
           label: l.mindmapLayerBack,
           onTap: () => unawaited(viewModel.toBack(node)),
         ),
-        // A stroke is part of the picture, not a thought to connect.
-        if (!drawing)
+        if (node.traits.connectable)
           MindmapCornerOption(
             key: MindmapKeys.connect,
             icon: HiwiskiSymbols.hub,
@@ -2798,3 +2834,28 @@ const _spreadAtLeast = 3;
 const _addMenu = 0;
 const _drawMenu = 1;
 const _toolsMenu = 2;
+
+/// How an element of a kind is made, changed and opened on the map's screen
+/// ([_MindmapScreenState._kindTools]).
+@immutable
+class const _KindTool({
+  /// Its symbol and its name on the "Add" menu.
+  required final IconData icon,
+  required final String Function(L l) label,
+
+  /// Asks for a new element's content and size — `null`: nothing is placed. [last]
+  /// is the size the last of its kind was given on this map, [at] where it was
+  /// dropped.
+  required final Future<_Made?> Function(Size? last, Offset? at) make,
+
+  /// Asks for an element's new content and writes it.
+  required final Future<void> Function(MindmapNode node) edit,
+
+  /// What a tap on it does where the map is read — opens what it points to, shows
+  /// its picture large; `null`: nothing.
+  final Future<void> Function(MindmapNode node)? open,
+});
+
+/// A new element's content: its text, its other fields by their names on the wire,
+/// and its size.
+typedef _Made = ({String text, Map<String, Object?> look, Size size});
