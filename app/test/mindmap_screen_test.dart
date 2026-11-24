@@ -26,6 +26,7 @@ import 'package:hiwiski/core/sync/sync_status.dart';
 import 'package:hiwiski/core/theme/hiwiski_theme.dart';
 import 'package:hiwiski/core/ui/ui_keys.dart';
 import 'package:hiwiski/domain/wiki/mindmap.dart';
+import 'package:hiwiski/features/wiki/mindmap/view/mindmap_conflict_bar.dart';
 import 'package:hiwiski/features/wiki/mindmap/view/mindmap_corner.dart';
 import 'package:hiwiski/features/wiki/mindmap/view/mindmap_keys.dart';
 import 'package:hiwiski/features/wiki/mindmap/view/mindmap_results.dart';
@@ -1958,6 +1959,41 @@ void main() {
     expect(left, isEmpty);
     expect(find.byKey(MindmapKeys.conflicts), findsNothing);
     expect(find.text('Meer und Strand'), findsNothing);
+  });
+
+  testWidgets('a text size of its own that lost is read as its number', (
+    tester,
+  ) async {
+    await seed(tester);
+    await tester.runAsync(
+      () => db
+          .into(db.conflicts)
+          .insert(
+            ConflictRow(
+              id: '$meer:${WireFields.textSize}',
+              entityType: EntityTypes.mindmapNode,
+              entityId: meer,
+              field: WireFields.textSize,
+              mine: '"24"',
+              theirs: '"${MindmapTextSizes.large}"',
+              detectedAt: clock.now(),
+            ),
+          ),
+    );
+    await open(tester);
+
+    await tester.tap(find.byKey(MindmapKeys.conflicts));
+    await settle(tester);
+    final bar = find.byType(MindmapConflictBar);
+    expect(find.descendant(of: bar, matching: find.text('24')), findsOneWidget);
+    expect(
+      find.descendant(of: bar, matching: find.text('Large')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: bar, matching: find.text('Medium')),
+      findsNothing,
+    );
   });
 
   testWidgets('a position that lost is one conflict, shown on the map', (

@@ -271,6 +271,9 @@ class _Value extends StatelessWidget {
         MindmapTextSizes.small => l.mindmapTextSmall,
         MindmapTextSizes.large => l.mindmapTextLarge,
         MindmapTextSizes.xLarge => l.mindmapTextXLarge,
+        // A size of its own is its number, as it was typed — not "Medium", which
+        // only an element without a size of its own has.
+        final own? when mindmapTextPixels(own) != null => own,
         _ => l.mindmapTextMedium,
       },
       WireFields.linkView => switch (stored) {
