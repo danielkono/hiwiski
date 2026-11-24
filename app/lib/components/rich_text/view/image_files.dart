@@ -1,9 +1,7 @@
-import 'dart:math' as math;
-import 'dart:ui' as ui;
-
 import 'package:flutter/foundation.dart';
 
 import '../../../core/ui/pick_files.dart';
+import 'picture_redraw.dart';
 
 /// Pictures chosen in the system's dialog, read into memory, each in a form the
 /// server takes ([servableImage]) — empty when the choice was cancelled.
@@ -26,7 +24,8 @@ Future<List<({Uint8List bytes, String filename})>> pickImageFiles({
 /// [bytes] as the server takes a picture: a JPEG, PNG, GIF or WebP no larger than an
 /// upload may be stays as it is. Any other the device can read — a HEIC from the
 /// Files app or a Mac, which the browser shows but the server refuses — or one too
-/// large is drawn again as a PNG, its longer side at most [edge].
+/// large is drawn again ([redrawPicture]), its longer side at most [edge]: as a PNG
+/// on a device, as a JPEG in the browser.
 ///
 /// A picture kept on the device is uploaded after its page or element has synced;
 /// refused then, it was given up without a word, and in the browser, which keeps
@@ -44,33 +43,9 @@ Future<({Uint8List bytes, String filename})> servableImage(
   if (_servable(bytes) && bytes.length <= limit) {
     return (bytes: bytes, filename: filename);
   }
-  final ui.Codec codec;
-  try {
-    codec = await ui.instantiateImageCodec(bytes);
-  } on Object catch (error) {
-    debugPrint('hiwiski: picture not converted: $error');
-    return (bytes: bytes, filename: filename);
-  }
-  try {
-    final image = (await codec.getNextFrame()).image;
-    final scale = math.min(1.0, edge / math.max(image.width, image.height));
-    final width = math.max(1, (image.width * scale).round());
-    final height = math.max(1, (image.height * scale).round());
-    final recorder = ui.PictureRecorder();
-    ui.Canvas(recorder)
-      ..scale(width / image.width, height / image.height)
-      ..drawImage(image, ui.Offset.zero, ui.Paint());
-    image.dispose();
-    final picture = recorder.endRecording();
-    final drawn = await picture.toImage(width, height);
-    picture.dispose();
-    final png = await drawn.toByteData(format: ui.ImageByteFormat.png);
-    drawn.dispose();
-    if (png == null) return (bytes: bytes, filename: filename);
-    return (bytes: png.buffer.asUint8List(), filename: _asPng(filename));
-  } finally {
-    codec.dispose();
-  }
+  final redrawn = await redrawPicture(bytes, edge: edge);
+  if (redrawn == null) return (bytes: bytes, filename: filename);
+  return (bytes: redrawn.bytes, filename: _endingAs(filename, redrawn.ending));
 }
 
 /// Whether [bytes] begin as a JPEG, PNG, GIF or WebP — the formats the server takes.
@@ -85,16 +60,16 @@ bool _servable(Uint8List bytes) {
       (startsWith(_riff) && startsWith(_webp, _webpAt));
 }
 
-/// [filename] with the ending of a PNG.
-String _asPng(String filename) {
+/// [filename] with [ending] in place of its own.
+String _endingAs(String filename, String ending) {
   final dot = filename.lastIndexOf(_dot);
-  return '${dot > 0 ? filename.substring(0, dot) : filename}$_pngEnding';
+  return '${dot > 0 ? filename.substring(0, dot) : filename}$ending';
 }
 
 /// 25 MB, as the server's multipart limit.
 const _uploadLimit = 25 * 1024 * 1024;
 
-/// A converted photo's longer side: as a PNG, larger came close to the upload limit.
+/// A redrawn photo's longer side: as a PNG, larger came close to the upload limit.
 const _convertedEdge = 2560.0;
 
 const _jpeg = [0xFF, 0xD8, 0xFF];
@@ -104,4 +79,3 @@ const _riff = [0x52, 0x49, 0x46, 0x46];
 const _webp = [0x57, 0x45, 0x42, 0x50];
 const _webpAt = 8;
 const _dot = '.';
-const _pngEnding = '.png';

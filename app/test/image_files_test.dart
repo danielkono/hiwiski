@@ -18,13 +18,22 @@ void main() {
   });
 
   test(
-    'a format the server refuses becomes a PNG of the same picture',
+    'a format the server refuses is drawn again as the same picture',
     () async {
       // A BMP stands in for a HEIC: the device reads it, the server does not.
       final served = await servableImage(_bmp(30, 20), 'strand.heic');
-      expect(served.bytes.sublist(0, 4), equals([0x89, 0x50, 0x4E, 0x47]));
-      expect(served.filename, equals('strand.png'));
+      // A PNG on a device, a JPEG in the browser — both taken by the server.
+      expect(
+        served.bytes.sublist(0, 3),
+        anyOf(equals([0x89, 0x50, 0x4E]), equals([0xFF, 0xD8, 0xFF])),
+      );
+      expect(
+        served.filename,
+        anyOf(equals('strand.png'), equals('strand.jpg')),
+      );
       expect(await _sizeOf(served.bytes), equals(const Size(30, 20)));
+      // The picture itself: redrawn, a photo once came out black.
+      _expectColour(await _middleOf(served.bytes), const Color(0xFF2E7D6B));
     },
   );
 
@@ -36,6 +45,7 @@ void main() {
       edge: 120,
     );
     expect(await _sizeOf(served.bytes), equals(const Size(120, 40)));
+    _expectColour(await _middleOf(served.bytes), const Color(0xFF2E7D6B));
   });
 
   test('what the device cannot read stays as it is', () async {
@@ -92,4 +102,32 @@ Future<Size> _sizeOf(Uint8List bytes) async {
   image.dispose();
   codec.dispose();
   return size;
+}
+
+/// The colour in the middle of the picture [bytes].
+Future<Color> _middleOf(Uint8List bytes) async {
+  final codec = await ui.instantiateImageCodec(bytes);
+  final image = (await codec.getNextFrame()).image;
+  final pixels = (await image.toByteData())!;
+  final at = ((image.height ~/ 2) * image.width + image.width ~/ 2) * 4;
+  final colour = Color.fromARGB(
+    pixels.getUint8(at + 3),
+    pixels.getUint8(at),
+    pixels.getUint8(at + 1),
+    pixels.getUint8(at + 2),
+  );
+  image.dispose();
+  codec.dispose();
+  return colour;
+}
+
+/// [actual] is [expected], give or take what a JPEG changes.
+void _expectColour(Color actual, Color expected) {
+  for (final (got, wanted) in [
+    (actual.r, expected.r),
+    (actual.g, expected.g),
+    (actual.b, expected.b),
+  ]) {
+    expect(got, closeTo(wanted, 0.03), reason: '$actual, not $expected');
+  }
 }
