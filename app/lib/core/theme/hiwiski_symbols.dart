@@ -254,6 +254,8 @@ abstract final class HiwiskiSymbols {
     0xe076,
     fontFamily: fontFamily,
   );
+  static const IconData viewAgenda = IconData(0xe8e9, fontFamily: fontFamily);
+  static const IconData viewColumn = IconData(0xe8ec, fontFamily: fontFamily);
   static const IconData viewKanban = IconData(0xeb7f, fontFamily: fontFamily);
   static const IconData viewList = IconData(0xe8ef, fontFamily: fontFamily);
   static const IconData viewWeek = IconData(0xe8f3, fontFamily: fontFamily);

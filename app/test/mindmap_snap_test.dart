@@ -143,6 +143,28 @@ void main() {
       expect(first, closeTo(second, 0.001));
     });
 
+    test('is lined up side by side or one below the other, a gap apart', () {
+      // A column, read from the top: side by side in that order.
+      final column = {
+        'a': const Rect.fromLTWH(0, 300, 100, 50),
+        'b': const Rect.fromLTWH(0, 0, 50, 100),
+        'c': const Rect.fromLTWH(0, 150, 80, 80),
+      };
+      final row = lineUpBoxes(column, horizontal: true, gap: 24);
+      expect(row['b']!.left, equals(0));
+      expect(row['c']!.left, equals(row['b']!.right + 24));
+      expect(row['a']!.left, equals(row['c']!.right + 24));
+      // On the group's middle, each keeping its size.
+      expect(row.values.map((box) => box.center.dy), everyElement(175));
+      expect(row['a']!.size, equals(const Size(100, 50)));
+
+      final down = lineUpBoxes(boxes, horizontal: false, gap: 24);
+      expect(down['a']!.top, equals(0));
+      expect(down['c']!.top, equals(down['a']!.bottom + 24));
+      expect(down['b']!.top, equals(down['c']!.bottom + 24));
+      expect(down.values.map((box) => box.center.dx), everyElement(245));
+    });
+
     test('takes the largest height, a picture keeping its shape', () {
       final sized = sameSizeBoxes(
         boxes,

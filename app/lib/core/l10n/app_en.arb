@@ -1959,6 +1959,8 @@
   "mindmapAlignTop": "Align top",
   "mindmapAlignMiddle": "Align middles",
   "mindmapAlignBottom": "Align bottom",
+  "mindmapSideBySide": "Side by side",
+  "mindmapBelowEachOther": "One below the other",
   "mindmapDistributeAcross": "Distribute horizontally",
   "mindmapDistributeDown": "Distribute vertically",
   "mindmapSameWidth": "Same width",

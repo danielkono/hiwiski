@@ -508,9 +508,8 @@ void main() {
     expect(row!.height, equals(80));
   });
 
-  testWidgets('a group is aligned and made one height, each one step', (
-    tester,
-  ) async {
+  testWidgets('a group is aligned, lined up and made one height, each one '
+      'step', (tester) async {
     await seed(tester);
     final notes = await tester.runAsync(() async {
       final maps = container.read(mindmapRepositoryProvider);
@@ -589,6 +588,15 @@ void main() {
     final before = await boxes();
     await command('left');
     expect((await boxes()).map((box) => box.left), everyElement(0));
+    await tester.tap(find.byKey(MindmapKeys.undo));
+    await settle(tester);
+    expect(await boxes(), equals(before));
+
+    // Side by side, a gap apart, on one middle — the two stood apart and askew.
+    await command('sideBySide');
+    final [first, second] = await boxes();
+    expect(second.left - first.right, closeTo(HiwiskiMetrics.mindmapRowGap, 1));
+    expect(second.center.dy, closeTo(first.center.dy, 1));
     await tester.tap(find.byKey(MindmapKeys.undo));
     await settle(tester);
     expect(await boxes(), equals(before));

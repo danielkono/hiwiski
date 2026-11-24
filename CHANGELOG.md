@@ -35,7 +35,8 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
   arrow, which can be resized afterwards — and the **eraser** takes away every stroke it is swiped over; one tap
   hides the drawings to see what lies under them. A **lasso** or a **rectangle**
   selects several elements at once, to move, colour or delete together — or to
-  align, distribute evenly or give the same width, height or size. What is moved
+  align, put side by side or one below the other a gap apart, distribute evenly or
+  give the same width, height or size. What is moved
   or resized snaps to the edges, middles, gaps and sizes of the elements around
   it, a thin guide showing where; a new picture, note, link or member takes the
   size of the last one of its kind; an optional grid snaps everything to its dots.

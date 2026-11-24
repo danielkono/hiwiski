@@ -1470,6 +1470,29 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
         label: label,
         onTap: () => _moveGroup(group, (boxes) => alignBoxes(boxes, align)),
       ),
+    // In a row or a column, as pictures chosen together stand.
+    for (final (name, icon, label, horizontal) in [
+      (_sideBySide, HiwiskiSymbols.viewColumn, l.mindmapSideBySide, true),
+      (
+        _belowEachOther,
+        HiwiskiSymbols.viewAgenda,
+        l.mindmapBelowEachOther,
+        false,
+      ),
+    ])
+      MindmapCornerOption(
+        key: MindmapKeys.arrange(name),
+        icon: icon,
+        label: label,
+        onTap: () => _moveGroup(
+          group,
+          (boxes) => lineUpBoxes(
+            boxes,
+            horizontal: horizontal,
+            gap: HiwiskiMetrics.mindmapRowGap,
+          ),
+        ),
+      ),
     // Spreading out takes a first, a last and one between.
     if (group.length >= _spreadAtLeast) ...[
       MindmapCornerOption(
@@ -2880,6 +2903,8 @@ const _png = '.png';
 enum _Submenu { edges, shapes, align }
 
 /// The names of the group's commands that are not an alignment.
+const _sideBySide = 'sideBySide';
+const _belowEachOther = 'belowEachOther';
 const _spreadAcross = 'spreadAcross';
 const _spreadDown = 'spreadDown';
 const _sameWidth = 'sameWidth';

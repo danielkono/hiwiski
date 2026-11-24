@@ -1403,6 +1403,8 @@
   "mindmapAlignTop": "Oben ausrichten",
   "mindmapAlignMiddle": "Vertikal mittig",
   "mindmapAlignBottom": "Unten ausrichten",
+  "mindmapSideBySide": "Nebeneinander",
+  "mindmapBelowEachOther": "Untereinander",
   "mindmapDistributeAcross": "Horizontal verteilen",
   "mindmapDistributeDown": "Vertikal verteilen",
   "mindmapSameWidth": "Gleiche Breite",

@@ -400,6 +400,53 @@ Map<K, Rect> distributeBoxes<K>(
   return placed;
 }
 
+/// [boxes] side by side ([horizontal]) or one below the other, [gap] apart: in the
+/// order they stand that way — the first where it is — and lined up on the group's
+/// middle the other way. Two that stand level go in reading order. None resized.
+Map<K, Rect> lineUpBoxes<K>(
+  Map<K, Rect> boxes, {
+  required bool horizontal,
+  required double gap,
+}) {
+  final all = boxes.values.fold<Rect?>(
+    null,
+    (all, box) => all?.expandToInclude(box) ?? box,
+  );
+  if (all == null) return boxes;
+  final sorted = boxes.entries.toList()
+    ..sort((a, b) {
+      final along = _start(
+        a.value,
+        across: horizontal,
+      ).compareTo(_start(b.value, across: horizontal));
+      if (along != 0) return along;
+      return _start(
+        a.value,
+        across: !horizontal,
+      ).compareTo(_start(b.value, across: !horizontal));
+    });
+  final placed = <K, Rect>{};
+  // The first where it stands: where the group begins that way.
+  double at = _start(all, across: horizontal);
+  for (final MapEntry(:key, value: box) in sorted) {
+    placed[key] = horizontal
+        ? Rect.fromLTWH(
+            at,
+            all.center.dy - box.height / 2,
+            box.width,
+            box.height,
+          )
+        : Rect.fromLTWH(
+            all.center.dx - box.width / 2,
+            at,
+            box.width,
+            box.height,
+          );
+    at += (horizontal ? box.width : box.height) + gap;
+  }
+  return placed;
+}
+
 /// [boxes] as wide ([width]) and/or as high ([height]) as the largest of them —
 /// with both, the size of the one covering most. Those with an aspect in
 /// [aspects] keep their shape: the side asked for decides, and with both the box
