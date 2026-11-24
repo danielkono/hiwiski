@@ -1863,15 +1863,6 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
                   chosen,
                 _ => null,
               };
-              final shown =
-                  selection ??
-                  switch (current) {
-                    final MindmapHit hit =>
-                      hit.isEdge
-                          ? MindmapSelection.edge(hit.id)
-                          : MindmapSelection.node(hit.id),
-                    null => null,
-                  };
               // The conflict being decided — none once it is, here or elsewhere.
               final deciding = _deciding;
               final conflicts = deciding == null
@@ -1967,7 +1958,11 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
                               state: state,
                               camera: _camera,
                               editing: editing,
-                              selection: shown,
+                              selection: selection,
+                              // Marked while nothing is selected — not selected
+                              // itself: a tap on it opened its text, and it took
+                              // the grips of a selection.
+                              current: selection == null ? current?.id : null,
                               found: {for (final hit in hits) hit.id, ?_marked},
                               mine: mine,
                               writing: writing,

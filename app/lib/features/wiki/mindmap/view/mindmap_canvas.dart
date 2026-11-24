@@ -91,6 +91,7 @@ class MindmapCanvas extends StatefulWidget {
     this.onErase,
     this.group = const {},
     this.onGroup,
+    this.current,
   });
 
   final MindmapState state;
@@ -100,6 +101,10 @@ class MindmapCanvas extends StatefulWidget {
 
   /// What the search found, drawn above the rest.
   final Set<String> found;
+
+  /// The search's hit shown now: framed as a selection is, but not selected — a
+  /// tap selects it as any other, and it has no grips.
+  final String? current;
 
   /// A tap selected something, or nothing (`null`).
   final ValueChanged<MindmapSelection?> onSelect;
@@ -964,6 +969,7 @@ class _MindmapCanvasState extends State<MindmapCanvas>
                               interactive: !editing,
                               selected: {
                                 ?selection?.id,
+                                ?widget.current,
                                 ?target?.id,
                                 ...widget.group,
                                 ?_linkFrom,

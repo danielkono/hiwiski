@@ -1507,6 +1507,33 @@ void main() {
     expect(find.text('1 match'), findsOneWidget);
   });
 
+  testWidgets('while searching, the hit shown is marked, not selected', (
+    tester,
+  ) async {
+    await seed(tester);
+    await open(tester);
+    await tester.tap(find.byKey(MindmapKeys.edit));
+    await settle(tester);
+    await tester.tap(find.byKey(MindmapKeys.search));
+    await settle(tester);
+    await tester.enterText(find.byKey(MindmapKeys.searchField), 'Meer');
+    await settle(tester);
+
+    final element = find.byWidgetPredicate(
+      (widget) => widget is MindmapElementView && widget.node.id == meer,
+    );
+    // Framed as it is shown, but without grips to resize or turn it.
+    expect(tester.widget<MindmapElementView>(element).selected, isTrue);
+    expect(find.byKey(ValueKey('$meer-resize')), findsNothing);
+    expect(find.byKey(ValueKey('$meer-rotate')), findsNothing);
+
+    // A tap selects it, as any element; it does not open its text.
+    await tester.tapAt(tester.getCenter(element));
+    await settle(tester);
+    expect(find.byKey(MindmapKeys.textField), findsNothing);
+    expect(find.byKey(ValueKey('$meer-resize')), findsOneWidget);
+  });
+
   testWidgets('on a phone the search takes the whole line and is ended', (
     tester,
   ) async {
