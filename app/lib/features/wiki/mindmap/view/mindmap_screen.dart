@@ -74,7 +74,15 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
   final _keys = FocusNode();
   bool _editing = false;
   bool _searching = false;
+
+  /// The hit shown: where it stands in the list, and which it is — the list changes
+  /// with the map while a search is open, and the hit shown is kept by its id.
   int _hit = 0;
+  String? _hitId;
+
+  /// The search the hits were last found for — what was typed and their order —
+  /// `null` before any: a new one begins at its first hit.
+  (String, MindmapHitOrder, bool)? _hitsFor;
   MindmapSelection? _selection;
 
   /// Marked once the map opens with [MindmapScreen.focus].
@@ -266,19 +274,44 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
   /// ([_hitsChanged]).
   void _query(String text) => _viewModel.search(text);
 
+  /// A new search — typed, or put in another order — shows its first hit. The same
+  /// search over a map that changed meanwhile — an element moved, written, added,
+  /// here or by someone else — keeps the hit shown where it is now in the list, or,
+  /// gone, the one that took its place; the camera stays. Judged by the first hit
+  /// alone, a move of that one went back to it, and a hit added before the one shown
+  /// put another in its place.
   void _hitsChanged(List<MindmapHit>? before, List<MindmapHit>? hits) {
-    if (!_searching || hits == null || hits.isEmpty) return;
-    final first = hits.first;
-    if (before != null && before.isNotEmpty && before.first == first) return;
-    setState(() => _hit = 0);
-    _camera.show(first.bounds);
+    final state = _state;
+    final first = hits?.firstOrNull;
+    if (!_searching || state == null || hits == null || first == null) {
+      _hitsFor = null;
+      return;
+    }
+    final search = (state.query, state.order, state.descending);
+    if (search != _hitsFor) {
+      _hitsFor = search;
+      setState(() {
+        _hit = 0;
+        _hitId = first.id;
+      });
+      _camera.show(first.bounds);
+      return;
+    }
+    final at = hits.indexWhere((hit) => hit.id == _hitId);
+    setState(() {
+      _hit = at >= 0 ? at : _hit.clamp(0, hits.length - 1);
+      _hitId = hits[_hit].id;
+    });
   }
 
   void _showHit(int index) {
     final hits = _state?.hits ?? const [];
     if (hits.isEmpty || !mounted) return;
     final at = index % hits.length;
-    setState(() => _hit = at < 0 ? at + hits.length : at);
+    setState(() {
+      _hit = at < 0 ? at + hits.length : at;
+      _hitId = hits[_hit].id;
+    });
     _camera.show(hits[_hit].bounds);
   }
 
@@ -1876,17 +1909,15 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
                   ? null
                   : MindmapResults(
                       hits: hits,
-                      current: _hit,
+                      current: _hit.clamp(0, hits.length - 1),
                       onTap: _showHit,
                       order: state.order,
                       descending: state.descending,
-                      onOrder: (order, descending) {
-                        setState(() => _hit = 0);
-                        _viewModel.orderHits(
-                          order: order,
-                          descending: descending,
-                        );
-                      },
+                      // In another order the first hit is shown ([_hitsChanged]).
+                      onOrder: (order, descending) => _viewModel.orderHits(
+                        order: order,
+                        descending: descending,
+                      ),
                     );
               // The snippet being written, as large as what is typed so far.
               final writing = switch (_writing) {

@@ -1541,6 +1541,56 @@ void main() {
     expect(shown(), equals(meer));
   });
 
+  testWidgets('the hit shown stays the same while the map changes', (
+    tester,
+  ) async {
+    await seed(tester);
+    await open(tester);
+    await tester.tap(find.byKey(MindmapKeys.search));
+    await settle(tester);
+    await tester.enterText(find.byKey(MindmapKeys.searchField), 'e');
+    await settle(tester);
+    String shown() {
+      final results = tester.widget<MindmapResults>(
+        find.byType(MindmapResults),
+      );
+      return results.hits[results.current].id;
+    }
+
+    await tester.tap(find.byKey(MindmapKeys.searchNext));
+    await settle(tester);
+    expect(shown(), equals(berge));
+    final maps = container.read(mindmapRepositoryProvider);
+
+    // A hit added before it in the list: still "Berge", not the one now in its
+    // place.
+    await tester.runAsync(
+      () => maps.addNode(
+        pageId: pageId,
+        kind: MindmapKinds.plain,
+        x: 180,
+        y: 0,
+        width: 80,
+        height: 40,
+        text: 'See',
+      ),
+    );
+    await settle(tester);
+    expect(shown(), equals(berge));
+
+    // The first hit moved: still "Berge", not back to the first.
+    await tester.runAsync(() async {
+      await maps.changeNode((await maps.node(meer))!, x: 20);
+    });
+    await settle(tester);
+    expect(shown(), equals(berge));
+
+    // A new search begins at its first hit.
+    await tester.enterText(find.byKey(MindmapKeys.searchField), 'er');
+    await settle(tester);
+    expect(shown(), equals(meer));
+  });
+
   testWidgets('while searching, the hit shown is marked, not selected', (
     tester,
   ) async {
