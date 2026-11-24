@@ -291,11 +291,19 @@ class _MindmapCornerState extends State<MindmapCorner>
       }
       return;
     }
-    final same = source == _source && _options != null;
+    final previous = _options;
+    final same = source == _source && previous != null;
     _options = wanted;
     final closing = _closing;
     _closing = false;
     if (same) {
+      // The same place's choices, but others — another element selected after
+      // one: from the first of them. Turned on as far as a longer list went, the
+      // ring stood empty or without its first choices.
+      if (!_sameKeys(previous, wanted)) {
+        _settle.stop();
+        _turned = 0;
+      }
       // Taken back while going: out again from where they are.
       if (closing) unawaited(_out.forward());
       return;
@@ -309,6 +317,18 @@ class _MindmapCornerState extends State<MindmapCorner>
     _turned = 0;
     _settle.stop();
     unawaited(_out.forward(from: 0));
+  }
+
+  /// Whether [a] and [b] are the same choices, by their keys.
+  static bool _sameKeys(
+    List<MindmapCornerOption> a,
+    List<MindmapCornerOption> b,
+  ) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i].key != b[i].key) return false;
+    }
+    return true;
   }
 
   // --- Where everything stands, from the corner ----------------------------------

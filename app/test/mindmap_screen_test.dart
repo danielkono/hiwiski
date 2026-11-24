@@ -817,6 +817,65 @@ void main() {
     expect(find.byKey(MindmapKeys.select), findsNothing);
   });
 
+  testWidgets('the corner shows the first choices of what is selected next', (
+    tester,
+  ) async {
+    List<MindmapCornerOption> choices(String name, int count) => [
+      for (int i = 0; i < count; i++)
+        MindmapCornerOption(
+          key: ValueKey('$name$i'),
+          icon: Icons.edit,
+          label: '$name$i',
+          onTap: () {},
+        ),
+    ];
+    Future<void> show(List<MindmapCornerOption> selection) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: HiwiskiTheme.light(),
+          home: Scaffold(
+            body: Stack(
+              children: [
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: MindmapCorner(
+                    menus: const [],
+                    open: null,
+                    onOpen: (_) {},
+                    compact: false,
+                    backKey: MindmapKeys.closeMenu,
+                    backLabel: 'Back',
+                    onBack: () {},
+                    selection: selection,
+                    onRelease: () {},
+                    releaseKey: MindmapKeys.release,
+                    releaseLabel: 'Release',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await settle(tester);
+    }
+
+    // One with many choices, turned on to its last …
+    await show(choices('note', 12));
+    for (
+      int turn = 0;
+      find.byKey(const ValueKey('note11')).hitTestable().evaluate().isEmpty;
+      turn++
+    ) {
+      if (turn > _turnsAtMost) fail('the last choice is not on the ring');
+      await turnCorner(tester);
+    }
+    // … then one with fewer, of another kind: its first choice is there.
+    await show(choices('stroke', 8));
+    expect(find.byKey(const ValueKey('stroke0')).hitTestable(), findsOneWidget);
+  });
+
   testWidgets('a group is selected with a rectangle and moved as one', (
     tester,
   ) async {
