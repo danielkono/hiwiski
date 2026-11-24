@@ -2475,6 +2475,10 @@ class _SearchField extends StatelessWidget {
               focusNode: focus,
               textInputAction: .search,
               onChanged: onChanged,
+              // Enter goes on to the next hit, and on again: the field keeps its
+              // focus. Left to the field, Enter let go of the focus after the first
+              // step, and the next Enter went nowhere.
+              onEditingComplete: () {},
               onSubmitted: (_) => onNext(),
               decoration: InputDecoration(
                 hintText: l.mindmapSearch,

@@ -28,6 +28,7 @@ import 'package:hiwiski/core/ui/ui_keys.dart';
 import 'package:hiwiski/domain/wiki/mindmap.dart';
 import 'package:hiwiski/features/wiki/mindmap/view/mindmap_corner.dart';
 import 'package:hiwiski/features/wiki/mindmap/view/mindmap_keys.dart';
+import 'package:hiwiski/features/wiki/mindmap/view/mindmap_results.dart';
 import 'package:hiwiski/features/wiki/mindmap/view/mindmap_screen.dart';
 import 'package:hiwiski/features/wiki/page/view/mindmap/mindmap_preview_card.dart';
 import 'package:hiwiski/features/wiki/view/mindmap/mindmap_link.dart';
@@ -1505,6 +1506,39 @@ void main() {
 
     expect(find.byKey(MindmapKeys.hit(meer)), findsOneWidget);
     expect(find.text('1 match'), findsOneWidget);
+  });
+
+  testWidgets('Enter in the search goes from hit to hit, again and again', (
+    tester,
+  ) async {
+    await seed(tester);
+    await open(tester);
+    await tester.tap(find.byKey(MindmapKeys.search));
+    await settle(tester);
+    // "Meer" and "Berge", in that order.
+    await tester.enterText(find.byKey(MindmapKeys.searchField), 'e');
+    await settle(tester);
+    String shown() {
+      final results = tester.widget<MindmapResults>(
+        find.byType(MindmapResults),
+      );
+      return results.hits[results.current].id;
+    }
+
+    expect(shown(), equals(meer));
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await settle(tester);
+    expect(shown(), equals(berge));
+    expect(
+      tester
+          .widget<TextField>(find.byKey(MindmapKeys.searchField))
+          .focusNode
+          ?.hasFocus,
+      isTrue,
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await settle(tester);
+    expect(shown(), equals(meer));
   });
 
   testWidgets('while searching, the hit shown is marked, not selected', (
