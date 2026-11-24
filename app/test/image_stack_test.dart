@@ -15,6 +15,7 @@ import 'package:hiwiski/core/l10n/generated/app_localizations.dart';
 import 'package:hiwiski/core/storage/local_image_store.dart';
 import 'package:hiwiski/core/sync/outbox.dart';
 import 'package:hiwiski/core/theme/hiwiski_theme.dart';
+import 'package:hiwiski/core/ui/flowing_text.dart';
 import 'package:hiwiski/data/media/media_repository.dart';
 
 import 'support/fakes.dart';
@@ -33,7 +34,11 @@ void main() {
 
   late _Media media;
 
-  Future<void> pump(WidgetTester tester, List<String> ids) async {
+  Future<void> pump(
+    WidgetTester tester,
+    List<String> ids, {
+    Widget Function(Widget stack)? around,
+  }) async {
     media = _Media(pixel);
     tester.view.physicalSize = const Size(600, 800);
     tester.view.devicePixelRatio = 1;
@@ -51,12 +56,62 @@ void main() {
           ],
           supportedLocales: L.supportedLocales,
           locale: const Locale('en'),
-          home: Scaffold(body: ImageStack(imageIds: ids)),
+          home: Scaffold(
+            body: (around ?? (stack) => stack)(ImageStack(imageIds: ids)),
+          ),
         ),
       ),
     );
     await tester.pumpAndSettle();
   }
+
+  // Set into a note's lines, a picture stands where they are placed. It took the
+  // whole width and stood at its start inside it, wherever the line stood.
+  testWidgets('a picture in a line stands where the line is placed', (
+    tester,
+  ) async {
+    const box = Size(560, 600);
+    for (final (place, at) in [
+      (AlignmentDirectional.topStart, 0.0),
+      (AlignmentDirectional.topCenter, 0.5),
+      (AlignmentDirectional.topEnd, 1.0),
+    ]) {
+      await pump(
+        tester,
+        ['a'],
+        around: (stack) => Center(
+          child: SizedBox.fromSize(
+            size: box,
+            child: FlowingText(
+              paragraphs: [
+                FlowParagraph(
+                  TextSpan(
+                    children: [WidgetSpan(alignment: .top, child: stack)],
+                  ),
+                ),
+              ],
+              place: place,
+            ),
+          ),
+        ),
+      );
+      final room = tester.getRect(find.byType(FlowingText));
+      final picture = tester.getRect(
+        find
+            .descendant(
+              of: find.byType(ImageStack),
+              matching: find.byType(Stack),
+            )
+            .first,
+      );
+      expect(picture.width, lessThan(room.width));
+      expect(
+        picture.left - room.left,
+        closeTo((room.width - picture.width) * at, 1),
+        reason: '$place',
+      );
+    }
+  });
 
   testWidgets('a click brings the next image to the front', (tester) async {
     await pump(tester, ['a', 'b', 'c']);
