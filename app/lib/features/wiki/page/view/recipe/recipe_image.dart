@@ -8,7 +8,7 @@ import '../../../../../core/theme/hiwiski_symbols.dart';
 import '../../../../../core/theme/hiwiski_tokens.dart';
 import '../../../../../core/ui/bounded_image.dart';
 import '../../../../../core/ui/failure_text.dart';
-import '../../../../../core/ui/pick_files.dart';
+import '../../../../../components/rich_text/view/image_files.dart';
 import '../../../../../domain/wiki/wiki_page.dart';
 import '../../page_view_model.dart';
 
@@ -45,17 +45,15 @@ class _RecipeImageState extends ConsumerState<RecipeImage> {
   Future<void> _pick() async {
     final l = L.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final picked = await pickFiles(type: .image);
-    if (picked.isEmpty || !mounted) return;
-    final file = picked.first;
+    final file = (await pickImageFiles(single: true)).firstOrNull;
+    if (file == null || !mounted) return;
     setState(() => _uploading = true);
     try {
-      final bytes = await file.xFile.readAsBytes();
       // Upload first, then set it via sync: the upload changes no item, and the
       // `imageId` travels like any other field — offline it waits in the outbox.
       await ref
           .read(pageViewModelProvider(widget.page.id).notifier)
-          .uploadImage(widget.page, bytes: bytes, filename: file.name);
+          .uploadImage(widget.page, bytes: file.bytes, filename: file.filename);
     } on HiwiskiFailure catch (failure) {
       if (!mounted) return;
       messenger.showSnackBar(

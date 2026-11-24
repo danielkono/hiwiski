@@ -63,6 +63,12 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
 
 ### Fixed
 
+- **A picture in a format the server does not take is no longer lost.** A HEIC
+  chosen from the files — in the browser, on a Mac, on Android — showed in a page or
+  on a mind map at first, was refused by the server and then given up; in the
+  browser it was gone with the next reload. The app now turns such a picture, and
+  one larger than an upload may be, into a PNG before it is kept. A profile picture
+  and a recipe's picture go the same way and are picked one at a time.
 - Changes made in the same instant — an element and its connections brought back
   together, say — reach the server in the order they were made. Before, a connection
   could arrive ahead of its element and was refused.
