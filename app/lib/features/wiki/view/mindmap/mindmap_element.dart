@@ -12,6 +12,7 @@ import '../../../../components/member_avatar/view/member_avatar.dart';
 import '../../../../components/rich_text/view/rich_image.dart';
 import '../../../../domain/links/link_index.dart';
 import '../../../../domain/wiki/mindmap.dart';
+import '../../../../domain/wiki/mindmap_shapes.dart';
 import 'mindmap_link.dart';
 import 'mindmap_members.dart';
 import 'mindmap_note.dart';
@@ -348,36 +349,8 @@ class MindmapElementView extends StatelessWidget {
     if (node.kind == MindmapKinds.note && MindmapNote.followsShape(node)) {
       return .zero;
     }
-    final width = node.width.toDouble();
-    final height = node.height.toDouble();
-    return switch (node.effectiveShape) {
-      // The largest rectangle inside an ellipse leaves (1 − 1/√2) / 2 of each side
-      // free, about 0.15; a little more keeps the letters off the line.
-      MindmapShapes.ellipse => .symmetric(
-        horizontal: width * _curvedInset,
-        vertical: height * _curvedInset,
-      ),
-      // Inside a diamond a quarter of each side — less, and the lines ran over its
-      // slanted edges.
-      MindmapShapes.diamond => .symmetric(
-        horizontal: width * _diamondInset,
-        vertical: height * _diamondInset,
-      ),
-      // The ends are half circles as wide as the shorter side: the text keeps off
-      // them as it would inside such a circle. A pill as wide as it is high is one,
-      // and its text ran out of it with the fixed room of a long pill.
-      MindmapShapes.pill => .symmetric(
-        horizontal: math.max(
-          HiwiskiMetrics.space20,
-          math.min(width, height) * _curvedInset,
-        ),
-        vertical: math.max(
-          HiwiskiMetrics.space8,
-          math.min(width, height) * _curvedInset,
-        ),
-      ),
-      _ => const .all(HiwiskiMetrics.space12),
-    };
+    return shapeLookOf(node.effectiveShape)
+        .inset(Size(node.width.toDouble(), node.height.toDouble()));
   }
 
   /// The room between a shape and the lines that follow it.
@@ -387,20 +360,70 @@ class MindmapElementView extends StatelessWidget {
   static const _diamondInset = 0.27;
 
   /// The outline of [shape], drawn with [side].
-  static ShapeBorder shapeOf(String shape, BorderSide side) => switch (shape) {
-    MindmapShapes.rectangle => RoundedRectangleBorder(side: side),
-    MindmapShapes.ellipse => OvalBorder(side: side),
-    MindmapShapes.pill => StadiumBorder(side: side),
-    MindmapShapes.diamond => StarBorder.polygon(
-      side: side,
-      sides: 4,
-      squash: 1,
+  static ShapeBorder shapeOf(String shape, BorderSide side) =>
+      shapeLookOf(shape).border(side);
+
+  /// How the outline [shape] is drawn and named; an unknown one is a rounded
+  /// rectangle, as its geometry is ([mindmapShapeOf]).
+  static MindmapShapeLook shapeLookOf(String shape) =>
+      _shapeLooks[shape] ?? _roundedLook;
+
+  /// One entry per outline — next to its geometry ([MindmapShape]); the outlines
+  /// offered are those ([mindmapShapes]).
+  static final Map<String, MindmapShapeLook> _shapeLooks = {
+    MindmapShapes.rounded: _roundedLook,
+    MindmapShapes.rectangle: MindmapShapeLook(
+      name: (l) => l.mindmapShapeRectangle,
+      border: (side) => RoundedRectangleBorder(side: side),
+      inset: (_) => const .all(HiwiskiMetrics.space12),
     ),
-    _ => RoundedRectangleBorder(
+    MindmapShapes.pill: MindmapShapeLook(
+      name: (l) => l.mindmapShapePill,
+      border: (side) => StadiumBorder(side: side),
+      // The ends are half circles as wide as the shorter side: the text keeps off
+      // them as it would inside such a circle. A pill as wide as it is high is one,
+      // and its text ran out of it with the fixed room of a long pill.
+      inset: (size) => .symmetric(
+        horizontal: math.max(
+          HiwiskiMetrics.space20,
+          math.min(size.width, size.height) * _curvedInset,
+        ),
+        vertical: math.max(
+          HiwiskiMetrics.space8,
+          math.min(size.width, size.height) * _curvedInset,
+        ),
+      ),
+    ),
+    MindmapShapes.ellipse: MindmapShapeLook(
+      name: (l) => l.mindmapShapeEllipse,
+      border: (side) => OvalBorder(side: side),
+      // The largest rectangle inside an ellipse leaves (1 − 1/√2) / 2 of each side
+      // free, about 0.15; a little more keeps the letters off the line.
+      inset: (size) => .symmetric(
+        horizontal: size.width * _curvedInset,
+        vertical: size.height * _curvedInset,
+      ),
+    ),
+    MindmapShapes.diamond: MindmapShapeLook(
+      name: (l) => l.mindmapShapeDiamond,
+      border: (side) => StarBorder.polygon(side: side, sides: 4, squash: 1),
+      // Inside a diamond a quarter of each side — less, and the lines ran over its
+      // slanted edges.
+      inset: (size) => .symmetric(
+        horizontal: size.width * _diamondInset,
+        vertical: size.height * _diamondInset,
+      ),
+    ),
+  };
+
+  static final _roundedLook = MindmapShapeLook(
+    name: (l) => l.mindmapShapeRounded,
+    border: (side) => RoundedRectangleBorder(
       side: side,
       borderRadius: const .all(.circular(HiwiskiMetrics.radiusCard)),
     ),
-  };
+    inset: (_) => const .all(HiwiskiMetrics.space12),
+  );
 }
 
 /// How an element of a kind is drawn and named — one entry per kind
@@ -422,6 +445,21 @@ class const MindmapKindLook({
 
   /// The outline a selection follows around it where it has no surface of its own.
   final String frame = MindmapShapes.rounded,
+});
+
+/// How an element's outline is drawn and named — one entry per outline
+/// ([MindmapElementView.shapeLookOf]); its geometry is its [MindmapShape].
+@immutable
+class const MindmapShapeLook({
+  /// Its name for people.
+  required final String Function(L l) name,
+
+  /// The outline, drawn with a side.
+  required final ShapeBorder Function(BorderSide side) border,
+
+  /// The room between the outline of an element of a size and the largest box of
+  /// text inside it — more where the outline curves in, so the text stays inside.
+  required final EdgeInsets Function(Size size) inset,
 });
 
 /// What an element's content is drawn with: the element, the colour of its text,

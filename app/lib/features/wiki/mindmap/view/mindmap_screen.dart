@@ -28,6 +28,7 @@ import '../../../../core/ui/states.dart';
 import '../../../../domain/sync/sync_items.dart';
 import '../../../../domain/transfer/transfer_bundle.dart';
 import '../../../../domain/wiki/mindmap.dart';
+import '../../../../domain/wiki/mindmap_shapes.dart';
 import '../../../../domain/wiki/mindmap_snap.dart';
 import '../../view/mindmap/mindmap_members.dart';
 import '../../view/mindmap/mindmap_picture.dart';
@@ -1261,11 +1262,8 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
               title: l.mindmapShape,
               current: node.shape ?? MindmapShapes.rounded,
               choices: [
-                (MindmapShapes.rounded, l.mindmapShapeRounded),
-                (MindmapShapes.rectangle, l.mindmapShapeRectangle),
-                (MindmapShapes.pill, l.mindmapShapePill),
-                (MindmapShapes.ellipse, l.mindmapShapeEllipse),
-                (MindmapShapes.diamond, l.mindmapShapeDiamond),
+                for (final shape in mindmapShapes)
+                  (shape, MindmapElementView.shapeLookOf(shape).name(l)),
               ],
             );
             if (shape != null) {
@@ -1819,7 +1817,11 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
         ..add(shown);
     });
     unawaited(
-      _viewModel.draw(points, color: _penColor, width: width, shape: shape),
+      _viewModel.draw(
+        points,
+        width: width,
+        look: {WireFields.color: _penColor, WireFields.shape: shape},
+      ),
     );
   }
 

@@ -11,6 +11,7 @@ import '../../../../core/ui/history_field_label.dart';
 import '../../../../domain/sync/conflict_values.dart';
 import '../../../../domain/sync/sync_items.dart';
 import '../../../../domain/wiki/mindmap.dart';
+import '../../view/mindmap/mindmap_element.dart';
 import 'mindmap_keys.dart';
 import 'mindmap_sheets.dart';
 
@@ -261,13 +262,7 @@ class _Value extends StatelessWidget {
     final text = switch (field) {
       WireFields.target when stored != null =>
         targetLabel(stored) ?? l.mindmapLinkGone,
-      WireFields.shape => switch (stored) {
-        MindmapShapes.rectangle => l.mindmapShapeRectangle,
-        MindmapShapes.pill => l.mindmapShapePill,
-        MindmapShapes.ellipse => l.mindmapShapeEllipse,
-        MindmapShapes.diamond => l.mindmapShapeDiamond,
-        _ => l.mindmapShapeRounded,
-      },
+      WireFields.shape => MindmapElementView.shapeLookOf(stored ?? '').name(l),
       WireFields.textSize => switch (stored) {
         MindmapTextSizes.small => l.mindmapTextSmall,
         MindmapTextSizes.large => l.mindmapTextLarge,

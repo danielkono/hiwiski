@@ -87,3 +87,38 @@ A kind that is a view of an item elsewhere in the app — a calendar's agenda, a
 may not need to be a kind at all: a link element points to any item the link index
 knows and shows its content as its preview does (`MindmapLinkContent`). A new kind
 is for what a link's preview cannot show.
+
+## An outline
+
+An element with a surface — a note, a link — is drawn in an outline (`shape`,
+`MindmapShapes`); an unknown one is a rounded rectangle. An outline is described in
+two places:
+
+1. **Its geometry** — `lib/domain/wiki/mindmap_shapes.dart`: its `MindmapShape`, how
+   far a connection reaches from the element's middle towards it, how wide it is at a
+   height (the lines of a note that follows its shape), and the same outline a margin
+   inside it.
+2. **Its look** — `MindmapElementView.shapeLookOf`: its name, its border, and the room
+   between it and the largest box of text inside it.
+
+The outline sheet offers every outline there is (`mindmapShapes`), in that order, and
+a conflict names them by their look; `test/mindmap_kinds_test.dart` checks that each
+is drawn and named as itself. What an outline is drawn with — a border's colour and
+thickness — are fields of the element, read where its border is drawn
+(`MindmapElementView.build`).
+
+## A pen option
+
+The pen draws strokes, elements of the kind `DRAWING`, with what it is set to on the
+map's screen — its colour, its thickness, the shape it draws. A new option is a field
+of the element (above), its setting next to the others on the screen with its choice
+in the pen's menu, and its value in the fields `MindmapViewModel.draw` is given. The
+stroke being drawn and the stroke drawn are both painted by `paintStroke`, so what the
+option changes in the drawing is changed there once.
+
+## The choices and the tools
+
+The corner shows what can be added, drawn and done with a selection; each choice is
+plain data (`MindmapCornerOption`: a key, a symbol, a name, what a tap does), built by
+the screen from what the selection's kind allows. Another way to offer them — a bar,
+a panel — draws the same lists.

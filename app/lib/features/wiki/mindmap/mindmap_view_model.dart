@@ -426,13 +426,14 @@ class MindmapViewModel extends _$MindmapViewModel {
   ) => _changeAll({for (final node in nodes) node: changes});
 
   /// A stroke drawn by hand — [points] in the map's units, as the pen went — goes on
-  /// the map as an element of its own, in [color] and [width] thick; drawn as
-  /// [shape], it may be resized later.
+  /// the map as an element of its own, [width] thick. [look] holds what else the pen
+  /// drew it with, by the fields' names on the wire — its colour, the shape it was
+  /// drawn as, which makes it resizable later: a new option of the pen is a field
+  /// here, nothing more.
   Future<void> draw(
     List<Offset> points, {
-    required String? color,
     required int width,
-    String? shape,
+    Map<String, Object?> look = const {},
   }) async {
     final stroke = strokeOf(points, width.toDouble());
     final maps = ref.read(mindmapRepositoryProvider);
@@ -448,8 +449,7 @@ class MindmapViewModel extends _$MindmapViewModel {
         width: math.max(1, stroke.bounds.width.round()),
         height: math.max(1, stroke.bounds.height.round()),
         look: {
-          WireFields.color: color,
-          WireFields.shape: shape,
+          ...look,
           WireFields.points: stroke.points,
           WireFields.strokeWidth: width,
         },

@@ -200,17 +200,12 @@ void main() {
 
   test('strokes go last first — "Undo" right after drawing too', () async {
     container.listen(mindmapViewModelProvider(pageId), (_, _) {});
-    await viewModel().draw(
-      const [Offset(0, 0), Offset(100, 0)],
-      color: null,
-      width: 4,
-    );
+    await viewModel().draw(const [Offset(0, 0), Offset(100, 0)], width: 4);
     // Not waited for: "Undo" pressed while the stroke is still being written.
-    final drawing = viewModel().draw(
-      const [Offset(0, 200), Offset(100, 200)],
-      color: null,
-      width: 4,
-    );
+    final drawing = viewModel().draw(const [
+      Offset(0, 200),
+      Offset(100, 200),
+    ], width: 4);
     final undoing = viewModel().undo();
     await drawing;
     await undoing;
@@ -241,11 +236,7 @@ void main() {
   test('a swipe of the eraser comes back as one', () async {
     container.listen(mindmapViewModelProvider(pageId), (_, _) {});
     for (final y in [0.0, 100.0, 200.0]) {
-      await viewModel().draw(
-        [Offset(0, y), Offset(100, y)],
-        color: null,
-        width: 4,
-      );
+      await viewModel().draw([Offset(0, y), Offset(100, y)], width: 4);
     }
     final drawn = (await state()).map.nodes;
     await viewModel().erase(drawn.take(2).toList());

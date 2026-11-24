@@ -11,6 +11,7 @@ import '../links/link_index.dart';
 import '../links/link_text.dart';
 import '../sync/sync_items.dart';
 import 'mindmap_kinds.dart';
+import 'mindmap_shapes.dart';
 import 'page_images.dart';
 
 // A mind map is a wiki page of the kind MINDMAP; its elements and connections are items
@@ -264,15 +265,7 @@ class MindmapNode {
   /// The outline it is drawn with: a plain snippet has none by default, the others a
   /// rounded box.
   String get effectiveShape => switch (shape) {
-    final known?
-        when const {
-          MindmapShapes.rectangle,
-          MindmapShapes.rounded,
-          MindmapShapes.ellipse,
-          MindmapShapes.pill,
-          MindmapShapes.diamond,
-        }.contains(known) =>
-      known,
+    final known? when knowsMindmapShape(known) => known,
     _ => MindmapShapes.rounded,
   };
 
@@ -688,22 +681,12 @@ const _smallestStep = 1e-9;
 /// Where the ray from [node]'s centre towards [towards] leaves its outline.
 Offset _exit(MindmapNode node, Offset towards) {
   final center = node.center;
-  final d = towards - center;
-  if (d.distanceSquared == 0) return center;
-  final hw = node.width / 2;
-  final hh = node.height / 2;
-  final double t;
-  switch (node.hasSurface ? node.effectiveShape : MindmapShapes.rectangle) {
-    case MindmapShapes.ellipse:
-      t = 1 / math.sqrt((d.dx * d.dx) / (hw * hw) + (d.dy * d.dy) / (hh * hh));
-    case MindmapShapes.diamond:
-      t = 1 / (d.dx.abs() / hw + d.dy.abs() / hh);
-    default:
-      final tx = d.dx == 0 ? double.infinity : hw / d.dx.abs();
-      final ty = d.dy == 0 ? double.infinity : hh / d.dy.abs();
-      t = math.min(tx, ty);
-  }
-  return center + d * math.min(t, 1);
+  final direction = towards - center;
+  if (direction.distanceSquared == 0) return center;
+  final shape = node.hasSurface ? node.effectiveShape : MindmapShapes.rectangle;
+  final reach = mindmapShapeOf(shape)
+      .reach(direction, Offset(node.width / 2, node.height / 2));
+  return center + direction * math.min(reach, 1);
 }
 
 /// The way a connection is drawn: from [start] through [bend] to [end] — a straight
