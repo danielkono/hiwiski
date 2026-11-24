@@ -33,6 +33,7 @@ class MindmapElementView extends StatelessWidget {
     required this.linkTarget,
     this.interactive = false,
     this.zoom = 1,
+    this.detail,
     this.selected = false,
     this.found = false,
     this.conflict = false,
@@ -50,6 +51,11 @@ class MindmapElementView extends StatelessWidget {
   /// into its large view.
   final bool interactive;
   final double zoom;
+
+  /// How large a unit of the map is on screen, where that is not [zoom]: a scene
+  /// scaled from outside, as the page's preview is. A picture is loaded as sharp as
+  /// it is seen.
+  final double? detail;
   final bool selected;
   final bool found;
   final bool conflict;
@@ -107,6 +113,7 @@ class MindmapElementView extends StatelessWidget {
                   ink: ink,
                   interactive: interactive,
                   linkTarget: linkTarget,
+                  detail: detail ?? zoom,
                 ),
               ),
             },
@@ -347,12 +354,14 @@ class _Content extends StatelessWidget {
     required this.ink,
     required this.interactive,
     required this.linkTarget,
+    required this.detail,
   });
 
   final MindmapNode node;
   final Color ink;
   final bool interactive;
   final MindmapLinkTarget linkTarget;
+  final double detail;
 
   @override
   Widget build(BuildContext context) {
@@ -369,7 +378,7 @@ class _Content extends StatelessWidget {
       case MindmapKinds.note:
         return MindmapNote(node: node, ink: ink);
       case MindmapKinds.image:
-        return _Picture(node: node, interactive: interactive);
+        return _Picture(node: node, interactive: interactive, detail: detail);
       case MindmapKinds.member:
         return _Member(node: node);
       case MindmapKinds.link:
@@ -498,33 +507,130 @@ class _Reach extends StatelessWidget {
 
 /// A picture element: its picture, whole, filling the element — which has the
 /// picture's shape.
-class _Picture extends StatelessWidget {
-  const _Picture({required this.node, required this.interactive});
+///
+/// As sharp as it is seen, and no sharper. The server's preview is shown first: tens
+/// of kilobytes where a phone's photo is megabytes, and enough for a picture up to
+/// the preview's size on screen. Only zoomed in past that, the original is loaded and
+/// laid over the preview, which stays until it is there. A map of photos loaded
+/// every original before — some megabytes each, kept in memory while shown, and
+/// again on every visit in the browser, which keeps no images.
+class _Picture extends StatefulWidget {
+  const _Picture({
+    required this.node,
+    required this.interactive,
+    required this.detail,
+  });
 
   final MindmapNode node;
   final bool interactive;
 
+  /// How large a unit of the map is on screen, zoom included.
+  final double detail;
+
+  @override
+  State<_Picture> createState() => _PictureState();
+}
+
+class _PictureState extends State<_Picture> {
+  /// Whether the original is wanted over the preview. Taken once the picture is shown
+  /// past the preview's size, and let go only well below it again: right at the line,
+  /// a zoom back and forth loaded and dropped it over and over.
+  bool _original = false;
+
+  /// Whether the original has arrived: then the preview under it goes — it is a
+  /// JPEG, and where the picture is see-through it would show white.
+  bool _originalShown = false;
+
+  /// The pixels the picture takes across on screen.
+  double _pixels = 0;
+
+  /// The preview's width: its longest side is [_previewEdge], and the element has the
+  /// picture's shape.
+  double get _previewWidth =>
+      _previewEdge *
+      math.min(1, widget.node.width / math.max(1, widget.node.height));
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _decide();
+  }
+
+  @override
+  void didUpdateWidget(_Picture old) {
+    super.didUpdateWidget(old);
+    if (old.node.imageId != widget.node.imageId) {
+      _original = false;
+      _originalShown = false;
+    }
+    _decide();
+  }
+
+  void _decide() {
+    _pixels =
+        widget.node.width *
+        widget.detail *
+        MediaQuery.devicePixelRatioOf(context);
+    if (_pixels > _previewWidth * _sharper) {
+      _original = true;
+    } else if (_pixels < _previewWidth * _softer) {
+      _original = false;
+      _originalShown = false;
+    }
+  }
+
+  void _arrived(double _) {
+    if (_originalShown || !mounted || !_original) return;
+    setState(() => _originalShown = true);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final id = node.imageId;
+    final id = widget.node.imageId;
     if (id == null) {
       return const Center(
         child: Icon(HiwiskiSymbols.image, size: HiwiskiMetrics.icon48),
       );
     }
-    // Decoded at the element's size, whatever the zoom: once, so it neither flickers
-    // while the map is zoomed nor costs a phone's photo at full size.
-    final picture = RichImage(
-      imageId: id,
-      decodeWidth: _decodeStep(
-        node.width * MediaQuery.devicePixelRatioOf(context),
-      ),
-      radius: const .circular(HiwiskiMetrics.radiusChip),
+    const radius = Radius.circular(HiwiskiMetrics.radiusChip);
+    // Decoded in steps of the size it is seen at: zooming through re-decodes now and
+    // then, not in every frame, and the last one stays until the next is there.
+    final picture = Stack(
+      fit: .expand,
+      children: [
+        if (!_originalShown)
+          RichImage(
+            imageId: id,
+            preview: true,
+            decodeWidth: _decodeStep(math.min(_pixels, _previewWidth)),
+            radius: radius,
+          ),
+        if (_original)
+          RichImage(
+            imageId: id,
+            decodeWidth: _decodeStep(_pixels),
+            radius: radius,
+            // Over the preview: loading and failing show there, not twice.
+            placeholder: false,
+            onAspect: _arrived,
+          ),
+      ],
     );
-    return interactive
-        ? Hero(tag: MindmapElementView.pictureTagOf(node.id), child: picture)
+    return widget.interactive
+        ? Hero(
+            tag: MindmapElementView.pictureTagOf(widget.node.id),
+            child: picture,
+          )
         : picture;
   }
+
+  /// The longest side of the server's preview, in pixels.
+  static const _previewEdge = 640.0;
+
+  /// Past this share of the preview's width on screen the original is loaded; below
+  /// this one it is let go again.
+  static const _sharper = 1.25;
+  static const _softer = 0.8;
 }
 
 /// [pixels] rounded up to the next width a picture is decoded at. The widths go up

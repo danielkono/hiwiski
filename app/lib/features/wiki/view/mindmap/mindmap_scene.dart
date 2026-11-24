@@ -32,6 +32,7 @@ class MindmapScene extends StatelessWidget {
     this.interactive = false,
     this.visible,
     this.zoom = 1,
+    this.detail,
     this.selected = const {},
     this.found = const {},
     this.conflicts = const {},
@@ -67,6 +68,11 @@ class MindmapScene extends StatelessWidget {
 
   /// The scale the scene is shown at — handles and frames keep their size on screen.
   final double zoom;
+
+  /// How large a unit of the map is on screen where that is not [zoom]: a scene
+  /// scaled from outside, as the page's preview is. Pictures are loaded as sharp as
+  /// that.
+  final double? detail;
 
   /// Elements and connections selected for editing.
   final Set<String> selected;
@@ -288,6 +294,7 @@ class MindmapScene extends StatelessWidget {
                       linkTarget: linkTarget,
                       interactive: interactive,
                       zoom: zoom,
+                      detail: detail,
                       selected: selected.contains(node.id),
                       found: found.contains(node.id),
                       conflict: conflicts.contains(node.id),

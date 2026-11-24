@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -51,6 +53,14 @@ class MindmapPreviewCard extends ConsumerWidget {
                   HiwiskiMetrics.mindmapPreviewMinHeight,
                   HiwiskiMetrics.mindmapPreviewMaxHeight,
                 );
+          // The scale the map is fitted at inside the card's padding: its pictures
+          // are loaded as small as they are seen here — the server's previews, not
+          // the photos.
+          const inset = 2 * HiwiskiMetrics.space12;
+          final fitted = math.min(
+            (width - inset) / area.width,
+            (height - inset) / area.height,
+          );
           return Material(
             color: scheme.surfaceContainerLow,
             shape: RoundedRectangleBorder(
@@ -78,6 +88,7 @@ class MindmapPreviewCard extends ConsumerWidget {
                                       child: MindmapScene(
                                         map: map,
                                         area: area,
+                                        detail: fitted,
                                         linkTarget: (target) =>
                                             state.mindmapTargets[target],
                                       ),

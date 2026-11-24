@@ -131,6 +131,119 @@ void main() {
     expect(left, isEmpty);
   });
 
+  /// The picture element shown at [zoom], 200 wide, on a screen of two pixels per
+  /// point — and which of its images are asked for: the preview, the original.
+  Future<({bool preview, bool original})> shownAt(
+    WidgetTester tester, {
+    required double zoom,
+    double? detail,
+    bool scene = false,
+  }) async {
+    final node = picture.map.nodes.single;
+    await tester.pumpWidget(
+      ProviderScope(
+        retry: noRetry,
+        overrides: [mediaRepositoryProvider.overrideWithValue(media)],
+        child: MaterialApp(
+          theme: HiwiskiTheme.light(),
+          localizationsDelegates: L.localizationsDelegates,
+          home: Center(
+            child: scene
+                ? MindmapScene(
+                    map: picture.map,
+                    area: MindmapScene.areaOf(picture.map),
+                    linkTarget: (_) => null,
+                    zoom: zoom,
+                    detail: detail,
+                  )
+                : SizedBox(
+                    width: node.width.toDouble(),
+                    height: node.height.toDouble(),
+                    child: MindmapElementView(
+                      node: node,
+                      linkTarget: (_) => null,
+                      zoom: zoom,
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+    final images = tester.widgetList<RichImage>(find.byType(RichImage));
+    return (
+      preview: images.any((image) => image.preview),
+      original: images.any((image) => !image.preview),
+    );
+  }
+
+  testWidgets('a picture shows its preview until it is seen larger', (
+    tester,
+  ) async {
+    media = _Media(bytes: (await tester.runAsync(_redPng))!);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+
+    // 200 points wide, 400 pixels: the preview, 640 at most, is enough.
+    expect(
+      await shownAt(tester, zoom: 1),
+      equals((preview: true, original: false)),
+    );
+    // Zoomed in to 1600 pixels: the original over the preview, until it is there.
+    expect(
+      await shownAt(tester, zoom: 4),
+      equals((preview: true, original: true)),
+    );
+    // A little back out, still above the preview: kept, not dropped and reloaded.
+    expect((await shownAt(tester, zoom: 1.4)).original, isTrue);
+    // Well below the preview's size: the preview alone again.
+    expect(
+      await shownAt(tester, zoom: 0.5),
+      equals((preview: true, original: false)),
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('once the original is there, the preview under it goes', (
+    tester,
+  ) async {
+    media = _Media(bytes: (await tester.runAsync(_redPng))!);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+
+    // Fetched and decoded for real: neither waits on the test's clock.
+    await tester.runAsync(() async {
+      await shownAt(tester, zoom: 4);
+      for (int i = 0; i < 20; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await tester.pump();
+      }
+    });
+    await tester.pump();
+
+    final images = tester.widgetList<RichImage>(find.byType(RichImage));
+    expect(images.map((image) => image.preview), equals([false]));
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('a map shown smaller than its zoom loads only previews', (
+    tester,
+  ) async {
+    media = _Media(bytes: (await tester.runAsync(_redPng))!);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+
+    // As the page's card fits the map: drawn at its own size, shown at a tenth.
+    expect(
+      await shownAt(tester, zoom: 4, detail: 0.1, scene: true),
+      equals((preview: true, original: false)),
+    );
+    expect((await shownAt(tester, zoom: 4, scene: true)).original, isTrue);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 1));
+  });
+
   testWidgets('a picture resized a little is not decoded anew', (tester) async {
     media = _Media(bytes: (await tester.runAsync(_redPng))!);
     tester.view.devicePixelRatio = 2;
