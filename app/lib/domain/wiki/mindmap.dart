@@ -104,34 +104,10 @@ class MindmapNode {
   double get turn => (rotation ?? 0) * math.pi / _halfTurn;
 
   /// The box it covers on the map as it is turned.
-  Rect get turnedBounds {
-    if (turn == 0) return bounds;
-    final corners = this.corners;
-    double least(double Function(Offset) of) =>
-        corners.map(of).fold(double.infinity, math.min);
-    double most(double Function(Offset) of) =>
-        corners.map(of).fold(double.negativeInfinity, math.max);
-    return .fromLTRB(
-      least((point) => point.dx),
-      least((point) => point.dy),
-      most((point) => point.dx),
-      most((point) => point.dy),
-    );
-  }
+  Rect get turnedBounds => turnedBoxOf(bounds, turn);
 
   /// Its four corners on the map, as it is turned — clockwise from its own top left.
-  List<Offset> get corners {
-    final half = Offset(width / 2, height / 2);
-    return [
-      for (final corner in [
-        Offset(-half.dx, -half.dy),
-        Offset(half.dx, -half.dy),
-        Offset(half.dx, half.dy),
-        Offset(-half.dx, half.dy),
-      ])
-        center + turnOffset(corner, turn),
-    ];
-  }
+  List<Offset> get corners => turnedCornersOf(bounds, turn);
 
   /// Whether it and [other] cover some of the same map, as both are turned.
   ///
@@ -379,6 +355,34 @@ class MindmapNode {
 }
 
 const _halfTurn = 180;
+
+/// The four corners of [box] turned by [turn] about its centre — clockwise from its
+/// own top left.
+List<Offset> turnedCornersOf(Rect box, double turn) => [
+  for (final corner in [
+    box.topLeft,
+    box.topRight,
+    box.bottomRight,
+    box.bottomLeft,
+  ])
+    box.center + turnOffset(corner - box.center, turn),
+];
+
+/// The box [box] covers turned by [turn] about its centre.
+Rect turnedBoxOf(Rect box, double turn) {
+  if (turn == 0) return box;
+  final corners = turnedCornersOf(box, turn);
+  double least(double Function(Offset) of) =>
+      corners.map(of).fold(double.infinity, math.min);
+  double most(double Function(Offset) of) =>
+      corners.map(of).fold(double.negativeInfinity, math.max);
+  return .fromLTRB(
+    least((point) => point.dx),
+    least((point) => point.dy),
+    most((point) => point.dx),
+    most((point) => point.dy),
+  );
+}
 
 /// [degrees] as a node's rotation: whole, 0–359, `null` for none.
 int? rotationOf(double degrees) {
@@ -1211,11 +1215,18 @@ MindmapNode mineOf(MindmapNode node, List<SyncConflict> conflicts) {
 }
 
 /// Where this device's version of [node] is shown beside the map's: where it was
-/// left, or — when only its look differs — just to the right of it, so the two can be
-/// told apart.
+/// left, or — when only its look or its turn differs — just to the right of it, so
+/// the two can be told apart. The box unturned, as an element's [MindmapNode.bounds]
+/// is: [mine] is drawn in it turned about its centre.
+///
+/// Right of each as it is seen: turned, an element reaches beyond its unturned box,
+/// and the two overlapped.
 Rect mineBoundsOf(MindmapNode node, MindmapNode mine, double gap) =>
     mine.bounds == node.bounds
-    ? mine.bounds.translate(node.width + gap, 0)
+    ? mine.bounds.translate(
+        node.turnedBounds.right + gap - mine.turnedBounds.left,
+        0,
+      )
     : mine.bounds;
 
 Object? _mineOf(List<SyncConflict> conflicts, String field) {

@@ -211,6 +211,10 @@ class MindmapScene extends StatelessWidget {
     final ghostBounds = ghost == null || theirs == null
         ? null
         : mineBoundsOf(theirs, ghost, HiwiskiMetrics.mindmapConflictGap);
+    // Each name over the top left corner of what is seen of its version.
+    final ghostSeen = ghost == null || ghostBounds == null
+        ? null
+        : turnedBoxOf(ghostBounds, ghost.turn);
     // Drawn in the map's own units and zoomed by hand: text the system would scale
     // too would not fit the elements another device measured.
     return MediaQuery.withNoTextScaling(
@@ -389,50 +393,58 @@ class MindmapScene extends StatelessWidget {
                   ),
                 ),
               ),
-            if (ghost != null && theirs != null && ghostBounds != null) ...[
+            if (ghost != null &&
+                theirs != null &&
+                ghostBounds != null &&
+                ghostSeen != null) ...[
               Positioned(
                 key: const ValueKey(_mineKey),
                 left: ghostBounds.left - area.left,
                 top: ghostBounds.top - area.top,
                 width: ghostBounds.width,
                 height: ghostBounds.height,
-                child: IgnorePointer(
-                  child: Stack(
-                    fit: .expand,
-                    children: [
-                      Opacity(
-                        opacity: _mineOpacity,
-                        // A copy of the element: its pictures must not fly into
-                        // a large view as the element's own do.
-                        child: HeroMode(
-                          enabled: false,
-                          child: MindmapElementView(
-                            node: ghost,
-                            linkTarget: linkTarget,
-                            zoom: zoom,
+                // Turned as this device left it, as the map's version is: a turn
+                // that lost is seen, not read.
+                child: Transform.rotate(
+                  angle: ghost.turn,
+                  child: IgnorePointer(
+                    child: Stack(
+                      fit: .expand,
+                      children: [
+                        Opacity(
+                          opacity: _mineOpacity,
+                          // A copy of the element: its pictures must not fly into
+                          // a large view as the element's own do.
+                          child: HeroMode(
+                            enabled: false,
+                            child: MindmapElementView(
+                              node: ghost,
+                              linkTarget: linkTarget,
+                              zoom: zoom,
+                            ),
                           ),
                         ),
-                      ),
-                      CustomPaint(
-                        painter: _DashedOutline(
-                          color: scheme.tertiary,
-                          width: HiwiskiMetrics.strokeBold / zoom,
-                          dash: HiwiskiMetrics.space6 / zoom,
+                        CustomPaint(
+                          painter: _DashedOutline(
+                            color: scheme.tertiary,
+                            width: HiwiskiMetrics.strokeBold / zoom,
+                            dash: HiwiskiMetrics.space6 / zoom,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
               if (named != null) ...[
                 _Label(
-                  at: ghostBounds.topLeft - area.topLeft,
+                  at: ghostSeen.topLeft - area.topLeft,
                   zoom: zoom,
                   text: named.mine,
                   strong: true,
                 ),
                 _Label(
-                  at: theirs.bounds.topLeft - area.topLeft,
+                  at: theirs.turnedBounds.topLeft - area.topLeft,
                   zoom: zoom,
                   text: named.theirs,
                   strong: false,

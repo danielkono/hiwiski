@@ -775,12 +775,15 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
     });
     final node = state.map.node(id);
     final conflicts = state.conflicts[id];
-    final bounds = node != null && conflicts != null
-        ? node.bounds.expandToInclude(
-            mineBoundsOf(
-              node,
-              mineOf(node, conflicts),
-              HiwiskiMetrics.mindmapConflictGap,
+    final mine = node != null && conflicts != null
+        ? mineOf(node, conflicts)
+        : null;
+    // Both versions as they are seen, turned.
+    final bounds = node != null && mine != null
+        ? node.turnedBounds.expandToInclude(
+            turnedBoxOf(
+              mineBoundsOf(node, mine, HiwiskiMetrics.mindmapConflictGap),
+              mine.turn,
             ),
           )
         : _boundsOf(state, id);

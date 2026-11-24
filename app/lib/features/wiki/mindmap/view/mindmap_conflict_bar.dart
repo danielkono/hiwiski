@@ -57,6 +57,7 @@ class MindmapConflictBar extends StatelessWidget {
     WireFields.layer,
     WireFields.points,
     WireFields.strokeWidth,
+    WireFields.rotation,
   };
 
   @override
