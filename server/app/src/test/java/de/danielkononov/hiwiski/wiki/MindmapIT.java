@@ -6,10 +6,15 @@ import static de.danielkononov.hiwiski.db.generated.Tables.MINDMAP_NODE;
 import static de.danielkononov.hiwiski.db.generated.Tables.WIKI_PAGE;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import de.danielkononov.hiwiski.api.model.MindmapEdgeFields;
+import de.danielkononov.hiwiski.api.model.MindmapNodeFields;
 import de.danielkononov.hiwiski.support.Family;
 import de.danielkononov.hiwiski.support.FollowUps;
 import de.danielkononov.hiwiski.support.IntegrationTest;
 import de.danielkononov.hiwiski.support.SyncClient;
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.HashMap;
 import java.util.List;
@@ -277,6 +282,55 @@ class MindmapIT {
             var result = phone.push(onMap(NODE, element, null, Map.of("rotation", rotation)));
             assertThat(result.getFirst().get("code")).as(rotation.toString()).isEqualTo("sync.invalid_field");
         }
+    }
+
+    /**
+     * Every field the contract names for an element and for a connection is kept and
+     * handed to the next device. The fields come from the contract's own classes, not
+     * from a list here: one added to the contract and forgotten in
+     * {@code MindmapSyncTypes} or in its table fails here, by its name.
+     */
+    @Test
+    void everyFieldTheContractNamesIsKeptAndHandedOn() {
+        UUID first = node(phone, "Meer");
+        UUID second = node(phone, "Berge");
+        // A field with a form of its own gets a value of that form, any other one of
+        // its type.
+        Map<String, Object> formed = Map.of(
+                "kind", "NOTE",
+                "target", "hiwiski://wiki_page/" + map,
+                "points", "0,0 10000,10000",
+                "textSize", "XL",
+                "fromId", first.toString(),
+                "toId", second.toString());
+        var element = sampled(MindmapNodeFields.class, formed);
+        var connection = sampled(MindmapEdgeFields.class, formed);
+        UUID node = UUID.randomUUID();
+        UUID edge = UUID.randomUUID();
+
+        var result = phone.push(onMap(NODE, node, null, element), onMap(EDGE, edge, null, connection));
+        assertThat(result).allSatisfy(each -> assertThat(each.get("status")).isEqualTo("applied"));
+
+        var changes = laptop.pullAll();
+        assertThat(merged(changes, node)).containsAllEntriesOf(element);
+        assertThat(merged(changes, edge)).containsAllEntriesOf(connection);
+    }
+
+    /** Every field of {@code contract}: its value in {@code formed}, or one of its type. */
+    private static Map<String, Object> sampled(Class<?> contract, Map<String, Object> formed) {
+        Map<String, Object> fields = new LinkedHashMap<>();
+        for (Method getter : contract.getMethods()) {
+            JsonProperty property = getter.getAnnotation(JsonProperty.class);
+            if (property == null || getter.getParameterCount() > 0) {
+                continue;
+            }
+            Class<?> type = getter.getReturnType();
+            Object value = formed.containsKey(property.value())
+                    ? formed.get(property.value())
+                    : Integer.class.equals(type) ? 7 : BigDecimal.class.equals(type) ? 2.5 : "SAMPLE";
+            fields.put(property.value(), value);
+        }
+        return fields;
     }
 
     @Test
