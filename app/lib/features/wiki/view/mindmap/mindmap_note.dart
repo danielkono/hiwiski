@@ -41,11 +41,21 @@ class MindmapNote extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final style = DefaultTextStyle.of(context).style;
+    // Headings grow with the note's text, as much larger than it as at the medium
+    // size: at the theme's own sizes, a heading was smaller than large text.
+    final scale = MindmapElementView.textScaleOf(context, node.textSize);
+    TextStyle? heading(TextStyle? title) => title?.copyWith(
+      color: ink,
+      fontSize: switch (title.fontSize) {
+        final size? => size * scale,
+        null => null,
+      },
+    );
     final sheet = MarkdownStyleSheet.fromTheme(theme).copyWith(
       p: style,
-      h1: theme.textTheme.titleLarge?.copyWith(color: ink),
-      h2: theme.textTheme.titleMedium?.copyWith(color: ink),
-      h3: theme.textTheme.titleSmall?.copyWith(color: ink),
+      h1: heading(theme.textTheme.titleLarge),
+      h2: heading(theme.textTheme.titleMedium),
+      h3: heading(theme.textTheme.titleSmall),
       listBullet: style,
       blockquote: style,
     );

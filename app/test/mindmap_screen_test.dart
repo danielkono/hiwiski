@@ -1538,6 +1538,32 @@ void main() {
     },
   );
 
+  testWidgets('a note\'s heading stays larger than its text at any text '
+      'size', (tester) async {
+    await seed(tester);
+    await tester.runAsync(
+      () => container
+          .read(mindmapRepositoryProvider)
+          .addNode(
+            pageId: pageId,
+            kind: MindmapKinds.note,
+            x: 0,
+            y: 200,
+            width: 480,
+            height: 200,
+            text: '# Packliste\n\nZelt',
+            look: const {WireFields.textSize: MindmapTextSizes.xLarge},
+          ),
+    );
+    await open(tester);
+    final [heading, text] = noteLines(tester);
+    expect(heading.text, equals('Packliste'));
+    expect(text.text, equals('Zelt'));
+    // At the theme's own size, a heading came out smaller than the text below it
+    // once the note's text was made large.
+    expect(heading.rect.height, greaterThan(text.rect.height));
+  });
+
   testWidgets('a note\'s text is placed in its middle, its list too, and back '
       'with Undo', (tester) async {
     await seed(tester);
