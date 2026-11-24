@@ -12,6 +12,12 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
 
 ## Unreleased
 
+### Fixed
+
+- A browser or phone set up with many languages — more than ten, as some Samsung
+  phones send — got an error page instead of Hiwiski, and the apps' every request
+  failed with it. Such a request is now served like any other.
+
 ## 2026.1.15 — 2026-11-20 {#2026.1.15}
 
 ### Changed
