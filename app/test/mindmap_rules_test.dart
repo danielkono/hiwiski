@@ -124,6 +124,36 @@ void main() {
       expect(layerToBack(map, map.node('a')!), isNull);
     });
 
+    test('overlapping is judged as the elements are seen, turned', () {
+      final map = Mindmap(
+        nodes: [
+          // A bar turned upright about its middle (100, 10): seen from x 90 to 110.
+          node('me', width: 200, height: 20, rotation: 90),
+          // Under where it lay before it was turned, clear of where it is seen.
+          node('aside', width: 20, height: 20, layer: 2),
+          // Over where it is seen now.
+          node('over', x: 90, y: 60, width: 20, height: 20, layer: 3),
+          node('top', x: 2000, layer: 4),
+        ],
+        edges: const [],
+      );
+      final layer = layerUp(map, map.node('me')!)!;
+      expect(layer, greaterThan(3));
+      expect(layer, lessThan(4));
+      expect(layerDown(map, map.node('over')!), lessThan(1));
+
+      // A square turned into a diamond, and one in the corner of the box around it:
+      // they do not touch.
+      final diamond = Mindmap(
+        nodes: [
+          node('diamond', width: 100, height: 100, rotation: 45),
+          node('corner', x: -15, y: -15, width: 10, height: 10, layer: 2),
+        ],
+        edges: const [],
+      );
+      expect(layerUp(diamond, diamond.node('diamond')!), isNull);
+    });
+
     test('two elements on the same layer still leave a step', () {
       final map = Mindmap(
         nodes: [node('a', layer: 1), node('b', layer: 2), node('c', layer: 2)],

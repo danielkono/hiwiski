@@ -106,16 +106,7 @@ class MindmapNode {
   /// The box it covers on the map as it is turned.
   Rect get turnedBounds {
     if (turn == 0) return bounds;
-    final half = Offset(width / 2, height / 2);
-    final corners = [
-      for (final corner in [
-        Offset(-half.dx, -half.dy),
-        Offset(half.dx, -half.dy),
-        Offset(half.dx, half.dy),
-        Offset(-half.dx, half.dy),
-      ])
-        center + turnOffset(corner, turn),
-    ];
+    final corners = this.corners;
     double least(double Function(Offset) of) =>
         corners.map(of).fold(double.infinity, math.min);
     double most(double Function(Offset) of) =>
@@ -126,6 +117,50 @@ class MindmapNode {
       most((point) => point.dx),
       most((point) => point.dy),
     );
+  }
+
+  /// Its four corners on the map, as it is turned — clockwise from its own top left.
+  List<Offset> get corners {
+    final half = Offset(width / 2, height / 2);
+    return [
+      for (final corner in [
+        Offset(-half.dx, -half.dy),
+        Offset(half.dx, -half.dy),
+        Offset(half.dx, half.dy),
+        Offset(-half.dx, half.dy),
+      ])
+        center + turnOffset(corner, turn),
+    ];
+  }
+
+  /// Whether it and [other] cover some of the same map, as both are turned.
+  ///
+  /// Not by the boxes around them: a turned element's box reaches far into what lies
+  /// beside it. Two rectangles do not overlap where a line along one of their edges
+  /// has the one wholly on its one side and the other on the other (the separating
+  /// axis theorem).
+  bool overlaps(MindmapNode other) {
+    if (turn == 0 && other.turn == 0) return bounds.overlaps(other.bounds);
+    if (!turnedBounds.overlaps(other.turnedBounds)) return false;
+    final mine = corners;
+    final theirs = other.corners;
+    for (final angle in [
+      turn,
+      turn + math.pi / 2,
+      other.turn,
+      other.turn + math.pi / 2,
+    ]) {
+      final axis = Offset(math.cos(angle), math.sin(angle));
+      double along(Offset point) => point.dx * axis.dx + point.dy * axis.dy;
+      double least(List<Offset> points) =>
+          points.map(along).fold(double.infinity, math.min);
+      double most(List<Offset> points) =>
+          points.map(along).fold(double.negativeInfinity, math.max);
+      if (most(mine) <= least(theirs) || most(theirs) <= least(mine)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /// Whether [point] of the map lies on it, as it is turned.
@@ -505,7 +540,8 @@ class Mindmap {
 // --- Stacking ------------------------------------------------------------------
 
 /// The layer that puts [node] one step up — above the next element *overlapping* it,
-/// below whatever was above that one. `null` when nothing that overlaps it lies above.
+/// as the two are seen ([MindmapNode.overlaps]), below whatever was above that one.
+/// `null` when nothing that overlaps it lies above.
 ///
 /// One step past the next overlapping element, not the next in the whole map: that
 /// one may lie far away, and the step would change nothing anyone can see.
@@ -516,9 +552,7 @@ double? layerUp(Mindmap map, MindmapNode node) {
   ];
   final at = map.nodes.indexWhere((other) => other.id == node.id);
   if (at < 0) return null;
-  final above = map.nodes
-      .skip(at + 1)
-      .where((other) => other.bounds.overlaps(node.bounds));
+  final above = map.nodes.skip(at + 1).where((other) => other.overlaps(node));
   final step = above.firstOrNull;
   if (step == null) return null;
   final after = others.skipWhile((other) => other.id != step.id).skip(1);
@@ -538,7 +572,7 @@ double? layerDown(Mindmap map, MindmapNode node) {
       .take(at)
       .toList()
       .reversed
-      .where((other) => other.bounds.overlaps(node.bounds));
+      .where((other) => other.overlaps(node));
   final step = below.firstOrNull;
   if (step == null) return null;
   final before = others.reversed
