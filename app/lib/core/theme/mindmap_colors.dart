@@ -86,11 +86,15 @@ class MindmapPaint {
   /// The colour a text of [color] (as stored) is drawn in on [background]: the
   /// chosen one, its tone moved only where it would not read there — `null` for none
   /// chosen.
+  ///
+  /// A see-through [background] is measured as it is seen, over the canvas: taken
+  /// whole, a pale see-through fill counted as its strong colour, and a text that
+  /// read on that was lost on what showed.
   static Color? textOf(BuildContext context, String? color, Color background) =>
       switch (MindmapColor.parse(color)) {
         final MindmapColor chosen => readableOn(
           swatchOf(context, chosen),
-          background,
+          Color.alphaBlend(background, Theme.of(context).colorScheme.surface),
           ratio: _textRatio,
         ),
         null => null,

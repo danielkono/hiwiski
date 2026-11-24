@@ -3,12 +3,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hiwiski/core/common/wire.dart';
 import 'package:hiwiski/core/l10n/generated/app_localizations.dart';
 import 'package:hiwiski/core/theme/hiwiski_theme.dart';
+import 'package:hiwiski/core/theme/mindmap_colors.dart';
 import 'package:hiwiski/domain/common/change.dart';
 import 'package:hiwiski/domain/wiki/mindmap.dart';
 import 'package:hiwiski/features/wiki/view/mindmap/mindmap_scene.dart';
 
-/// The scene draws a turned element as it is seen: built while any of it is in
-/// view, and this device's version of it in a conflict turned as it wrote it.
+/// The scene draws an element as it is seen: a turned one built while any of it is
+/// in view, this device's version of it in a conflict turned as it wrote it, and a
+/// text coloured to read on what shows through a see-through surface.
 void main() {
   Future<void> show(
     WidgetTester tester,
@@ -99,5 +101,29 @@ void main() {
     final corner = tester.getTopLeft(ghost) - scene + area.topLeft;
     expect(corner.dx, moreOrLessEquals(174, epsilon: 0.01));
     expect(corner.dy, moreOrLessEquals(-25, epsilon: 0.01));
+  });
+
+  testWidgets('a text colour on a see-through surface reads on what is seen', (
+    tester,
+  ) async {
+    late BuildContext context;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: HiwiskiTheme.light(),
+        home: Builder(
+          builder: (built) {
+            context = built;
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    // Black, nearly see-through: over the light canvas, a pale grey is seen.
+    final fill = MindmapPaint.of(context, '#00000010').fill;
+    final seen = Color.alphaBlend(fill, Theme.of(context).colorScheme.surface);
+
+    // White text: measured on black it read; on the pale grey it would not.
+    final ink = MindmapPaint.textOf(context, '#FFFFFF', fill)!;
+    expect(MindmapPaint.contrast(ink, seen), greaterThanOrEqualTo(4.5));
   });
 }
