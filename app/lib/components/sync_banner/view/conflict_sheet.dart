@@ -64,12 +64,15 @@ class _ConflictBody extends ConsumerWidget {
       json,
       board: board,
     )) {
-      // A link element's target by its title and number, not by its address.
+      // A link element's target by its title and number, a member element's by
+      // their name — not by its address.
       TextValue(:final text)
           when of.field == WireFields.target &&
               of.entityType == EntityTypes.mindmapNode &&
               index != null =>
-        targetLabelOf(text, index) ?? l.mindmapLinkGone,
+        targetLabelOf(text, index) ??
+            state?.members[memberIdOf(text)] ??
+            l.mindmapLinkGone,
       TextValue(:final text) => text,
       ColumnsValue(:final columns) => [
         for (final column in columns)

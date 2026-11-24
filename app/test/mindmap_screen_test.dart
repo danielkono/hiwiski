@@ -2086,6 +2086,52 @@ void main() {
     expect(find.byType(MindmapScreen), findsOneWidget);
     expect(find.text('On the map: Position'), findsOneWidget);
   });
+
+  testWidgets('the banner names whom a member element showed on each side', (
+    tester,
+  ) async {
+    await seed(tester);
+    await tester.runAsync(() async {
+      final member = await container
+          .read(mindmapRepositoryProvider)
+          .addNode(
+            pageId: pageId,
+            kind: MindmapKinds.member,
+            x: 0,
+            y: 200,
+            width: 80,
+            height: 80,
+            target: memberAddressOf('anna'),
+          );
+      await db
+          .into(db.conflicts)
+          .insert(
+            ConflictRow(
+              id: '$member:${WireFields.target}',
+              entityType: EntityTypes.mindmapNode,
+              entityId: member,
+              field: WireFields.target,
+              mine: '"${memberAddressOf('ben')}"',
+              theirs: '"${memberAddressOf('anna')}"',
+              detectedAt: clock.now(),
+            ),
+          );
+    });
+    container.dispose();
+    container = await containerFor(banner: true, family: _Family());
+    await open(tester);
+
+    await tester.tap(find.text('View'));
+    await settle(tester);
+    final values = [
+      for (final widget in tester.widgetList<SelectableText>(
+        find.byType(SelectableText),
+      ))
+        ?widget.textSpan?.toPlainText(),
+    ];
+    // Theirs, then this device's — each marked against the other.
+    expect(values, equals(['BenAnna', 'AnnaBen']));
+  });
 }
 
 /// Taps [option] of [menu] in the corner: the menu opened unless it is — on a phone,

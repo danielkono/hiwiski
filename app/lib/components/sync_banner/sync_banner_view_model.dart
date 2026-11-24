@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../app/link_index.dart';
 import '../../app/repositories.dart';
 import '../../app/stores.dart';
+import '../../core/api/generated/export.dart' show Member;
 import '../../core/common/build_flavor.dart';
 import '../../core/common/wire.dart';
 import '../../core/sync/sync_status.dart';
@@ -42,6 +43,10 @@ class const SyncBannerState({
   /// and height too.
   final Map<String, List<SyncConflict>> partners = const {},
 
+  /// The family's names by member id — for a conflict over whom a mind map's member
+  /// element shows: its address names a member, whom the link index does not know.
+  final Map<String, String> members = const {},
+
   /// The public demo: every page says that nothing is kept.
   final bool demo = false,
 
@@ -60,6 +65,10 @@ Stream<TodoList?> _list(Ref ref, String listId) =>
 @riverpod
 Stream<List<OutboxChange>> _stuck(Ref ref) =>
     ref.watch(syncRepositoryProvider).watchStuck();
+
+@riverpod
+Stream<List<Member>> _members(Ref ref) =>
+    ref.watch(familyRepositoryProvider).watchMembers();
 
 @riverpod
 Stream<List<LeftBehindItem>> _leftBehind(Ref ref) =>
@@ -98,6 +107,21 @@ class SyncBannerViewModel extends _$SyncBannerViewModel {
       final pageId = await maps.pageOf(conflict.entityType, conflict.entityId);
       if (pageId != null) mindmaps[conflict.id] = pageId;
     }
+    // Only for a conflict over an element's target — the banner stands on every
+    // page — and not waited for: the names come from the server, and offline they
+    // may never come.
+    final aboutTargets = conflicts.any(
+      (conflict) =>
+          conflict.entityType == EntityTypes.mindmapNode &&
+          conflict.field == WireFields.target,
+    );
+    final members = aboutTargets
+        ? {
+            for (final member
+                in ref.watch(_membersProvider).value ?? const <Member>[])
+              member.id: member.displayName,
+          }
+        : const <String, String>{};
     return SyncBannerState(
       demo: BuildFlavor.demo,
       status: status,
@@ -110,6 +134,7 @@ class SyncBannerViewModel extends _$SyncBannerViewModel {
         for (final group in groups)
           if (group.length > 1) group.first.id: group.sublist(1),
       },
+      members: members,
       leftBehind: leftBehind,
     );
   }
