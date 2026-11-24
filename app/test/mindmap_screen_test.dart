@@ -950,6 +950,53 @@ void main() {
     );
   });
 
+  testWidgets('a text size chosen while rewriting sizes for the new text', (
+    tester,
+  ) async {
+    await seed(tester);
+    await open(tester);
+    await tester.tap(find.byKey(MindmapKeys.edit));
+    await settle(tester);
+    await tester.tap(find.text('Meer'));
+    await settle(tester);
+    await tester.tap(find.text('Meer'));
+    await settle(tester);
+    const text = 'Meer und Strand und Dünen am Abend';
+    await tester.enterText(find.byKey(MindmapKeys.textField), text);
+    await tester.pump();
+    Future<MindmapNodeRow> row() async => (await tester.runAsync(
+      () => (db.select(
+        db.mindmapNodes,
+      )..where((row) => row.id.equals(meer))).getSingle(),
+    ))!;
+
+    // The sheet takes the field's focus: what is typed is written first.
+    await tester.tap(find.byKey(MindmapKeys.textSize));
+    await settle(tester);
+    final written = await row();
+    expect(written.body, equals(text));
+    await tester.enterText(find.byKey(MindmapKeys.ownNumber), '30');
+    await tester.pump();
+    await tester.tap(find.byKey(MindmapKeys.ownApply));
+    await settle(tester);
+
+    final box = MindmapElementView.plainBoxOf(
+      tester.element(find.byType(MindmapScreen)),
+      text,
+      '30',
+      maxWidth: math.max(
+        written.width.toDouble(),
+        HiwiskiMetrics.mindmapPlainWrap,
+      ),
+    );
+    final sized = await row();
+    expect(sized.body, equals(text));
+    expect((
+      sized.width,
+      sized.height,
+    ), equals((box.width.round(), box.height.round())));
+  });
+
   testWidgets('a map is drawn whole, as a PNG twice as sharp as the map', (
     tester,
   ) async {

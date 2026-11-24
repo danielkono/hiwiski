@@ -1449,16 +1449,23 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
       ),
     );
     if (size == null || !mounted) return;
+    // The element as it is now, not as it was when the sheet was asked for: a
+    // snippet being rewritten was written as the sheet took the field's focus, and
+    // its box was sized for its old text. Held while the map does not have it yet.
+    final current = switch (_held) {
+      final held? when held.id == node.id => held,
+      _ => _state?.map.node(node.id) ?? node,
+    };
     await _viewModel.setTextSize(
-      node,
+      current,
       size,
       // A snippet is as large as its text, at any size of it.
-      box: node.kind == MindmapKinds.plain
+      box: current.kind == MindmapKinds.plain
           ? _plainBox(
-              node.text,
+              current.text,
               size,
               wrap: math.max(
-                node.width.toDouble(),
+                current.width.toDouble(),
                 HiwiskiMetrics.mindmapPlainWrap,
               ),
             )
