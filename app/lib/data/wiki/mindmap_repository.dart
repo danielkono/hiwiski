@@ -249,6 +249,7 @@ class MindmapRepository {
     Change<String?>? textColor,
     Change<int?>? strokeWidth,
     Change<int?>? rotation,
+    Change<String?>? textAlign,
   }) async {
     final row = MindmapNodesCompanion(
       id: Value(node.id),
@@ -270,6 +271,7 @@ class MindmapRepository {
       rotation: rotation == null || rotation.value == node.rotation
           ? const .absent()
           : .new(rotation.value),
+      textAlign: _cleared(textAlign, node.textAlign),
     );
     final fields = <String, dynamic>{
       if (row.x case Value(present: true, :final value)) WireFields.x: value,
@@ -298,6 +300,8 @@ class MindmapRepository {
         WireFields.strokeWidth: value,
       if (row.rotation case Value(present: true, :final value))
         WireFields.rotation: value,
+      if (row.textAlign case Value(present: true, :final value))
+        WireFields.textAlign: value,
     };
     if (fields.isEmpty) return;
     await _writes.run(
@@ -430,6 +434,7 @@ class MindmapRepository {
         WireFields.points: node.points,
         WireFields.strokeWidth: node.strokeWidth,
         WireFields.rotation: node.rotation,
+        WireFields.textAlign: node.textAlign,
       };
       final values = MindmapNodesCompanion(
         id: Value(node.id),
@@ -451,6 +456,7 @@ class MindmapRepository {
         points: Value(node.points),
         strokeWidth: Value(node.strokeWidth),
         rotation: Value(node.rotation),
+        textAlign: Value(node.textAlign),
         deletedAt: const Value(null),
       );
       if (row == null) {
@@ -710,6 +716,7 @@ extension on MindmapNodeRow {
     points: points,
     strokeWidth: strokeWidth,
     rotation: rotation,
+    textAlign: textAlign,
   );
 }
 

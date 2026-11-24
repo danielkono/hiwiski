@@ -33,6 +33,7 @@ import 'package:hiwiski/features/wiki/mindmap/view/mindmap_results.dart';
 import 'package:hiwiski/features/wiki/mindmap/view/mindmap_screen.dart';
 import 'package:hiwiski/features/wiki/page/view/mindmap/mindmap_preview_card.dart';
 import 'package:hiwiski/features/wiki/view/mindmap/mindmap_link.dart';
+import 'package:hiwiski/features/wiki/view/mindmap/mindmap_note.dart';
 import 'package:hiwiski/features/wiki/view/mindmap/mindmap_picture.dart';
 import 'package:hiwiski/features/wiki/view/mindmap/mindmap_scene.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -1506,6 +1507,65 @@ void main() {
       await tester.pump(const Duration(minutes: 10));
     },
   );
+
+  testWidgets('a note\'s text is placed in its middle, and back with Undo', (
+    tester,
+  ) async {
+    await seed(tester);
+    final note = (await tester.runAsync(
+      () => container
+          .read(mindmapRepositoryProvider)
+          .addNode(
+            pageId: pageId,
+            kind: MindmapKinds.note,
+            x: 0,
+            y: 200,
+            width: 240,
+            height: 160,
+            text: 'Packliste',
+          ),
+    ))!;
+    await open(tester);
+    await tester.tap(find.byKey(MindmapKeys.edit));
+    await settle(tester);
+    await tester.tap(find.text('Packliste'));
+    await settle(tester);
+    for (
+      int turn = 0;
+      find.byKey(MindmapKeys.textAlign).hitTestable().evaluate().isEmpty;
+      turn++
+    ) {
+      if (turn > 5) fail('no text placement in the corner');
+      await turnCorner(tester);
+    }
+    await tester.tap(find.byKey(MindmapKeys.textAlign));
+    await settle(tester);
+    await tester.tap(
+      find.byKey(MindmapKeys.textAlignOf(MindmapTextAligns.center)),
+    );
+    await settle(tester);
+
+    Future<String?> stored() async => (await tester.runAsync(
+      () => (db.select(
+        db.mindmapNodes,
+      )..where((row) => row.id.equals(note))).getSingle(),
+    ))!.textAlign;
+    expect(await stored(), equals(MindmapTextAligns.center));
+    // Drawn in the note's middle: its text stands in the middle of its room.
+    final column = tester.widget<Column>(
+      find
+          .descendant(
+            of: find.byType(MindmapNote),
+            matching: find.byType(Column),
+          )
+          .first,
+    );
+    expect(column.mainAxisAlignment, equals(MainAxisAlignment.center));
+
+    await tester.tap(find.byKey(MindmapKeys.undo));
+    await settle(tester);
+    expect(await stored(), isNull);
+  });
 
   testWidgets('a new link shows what it points to', (tester) async {
     await seed(tester);

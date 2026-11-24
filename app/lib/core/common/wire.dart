@@ -129,6 +129,7 @@ abstract final class WireFields {
   static const strokeWidth = 'strokeWidth';
   static const line = 'line';
   static const rotation = 'rotation';
+  static const textAlign = 'textAlign';
   static const arrows = 'arrows';
   static const fromId = 'fromId';
   static const toId = 'toId';
@@ -286,6 +287,32 @@ abstract final class MindmapArrows {
   static const end = 'END';
   static const start = 'START';
   static const both = 'BOTH';
+}
+
+/// Where a note's text stands inside it. An unknown one is top left.
+abstract final class MindmapTextAligns {
+  static const topLeft = 'TOP_LEFT';
+  static const topCenter = 'TOP_CENTER';
+  static const topRight = 'TOP_RIGHT';
+  static const middleLeft = 'MIDDLE_LEFT';
+  static const center = 'CENTER';
+  static const middleRight = 'MIDDLE_RIGHT';
+  static const bottomLeft = 'BOTTOM_LEFT';
+  static const bottomCenter = 'BOTTOM_CENTER';
+  static const bottomRight = 'BOTTOM_RIGHT';
+
+  /// Row by row, from the top left.
+  static const all = [
+    topLeft,
+    topCenter,
+    topRight,
+    middleLeft,
+    center,
+    middleRight,
+    bottomLeft,
+    bottomCenter,
+    bottomRight,
+  ];
 }
 
 /// The size of an element's text.

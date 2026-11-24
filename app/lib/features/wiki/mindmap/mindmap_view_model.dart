@@ -527,6 +527,10 @@ class MindmapViewModel extends _$MindmapViewModel {
   Future<void> setRotation(MindmapNode node, int? rotation) =>
       _change(node, node.styled(rotation: Change(rotation)));
 
+  /// Where a note's text stands inside it ([MindmapTextAligns]) — `null`: top left.
+  Future<void> setTextAlign(MindmapNode node, String? align) =>
+      _change(node, node.styled(textAlign: Change(align)));
+
   /// A stroke drawn by hand — [points] in the map's units, as the pen went — goes on
   /// the map as an element of its own, in [color] and [width] thick; drawn as
   /// [shape], it may be resized later.
@@ -648,6 +652,7 @@ class MindmapViewModel extends _$MindmapViewModel {
       textColor: change(WireFields.textColor, to.textColor),
       strokeWidth: change(WireFields.strokeWidth, to.strokeWidth),
       rotation: change(WireFields.rotation, to.rotation),
+      textAlign: change(WireFields.textAlign, to.textAlign),
     );
   }
 

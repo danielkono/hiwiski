@@ -12,6 +12,7 @@ import '../../../../domain/sync/conflict_values.dart';
 import '../../../../domain/sync/sync_items.dart';
 import '../../../../domain/wiki/mindmap.dart';
 import 'mindmap_keys.dart';
+import 'mindmap_sheets.dart';
 
 /// An element's or a connection's conflict, decided on the map — no sheet over it.
 ///
@@ -280,6 +281,7 @@ class _Value extends StatelessWidget {
         MindmapLinkViews.content => l.mindmapLinkContent,
         _ => l.mindmapLinkTitle,
       },
+      WireFields.textAlign => MindmapSheetText.alignNameOf(l, stored),
       WireFields.text => plainOfMarkdown(raw),
       _ => raw,
     };

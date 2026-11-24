@@ -41,6 +41,7 @@ class MindmapNode {
     this.points,
     this.strokeWidth,
     this.rotation,
+    this.textAlign,
   });
 
   final String id;
@@ -99,6 +100,9 @@ class MindmapNode {
   /// How far it is turned clockwise about its centre, in whole degrees 0–359;
   /// `null`: not turned.
   final int? rotation;
+
+  /// Where a note's text stands inside it ([MindmapTextAligns]); `null`: top left.
+  final String? textAlign;
 
   /// [rotation] in radians, 0 for none.
   double get turn => (rotation ?? 0) * math.pi / _halfTurn;
@@ -252,6 +256,7 @@ class MindmapNode {
     points: points ?? this.points,
     strokeWidth: strokeWidth,
     rotation: rotation,
+    textAlign: textAlign,
   );
 
   /// The fields [other] holds otherwise, by their names on the wire — what a change
@@ -271,6 +276,7 @@ class MindmapNode {
     if (other.textColor != textColor) WireFields.textColor,
     if (other.strokeWidth != strokeWidth) WireFields.strokeWidth,
     if (other.rotation != rotation) WireFields.rotation,
+    if (other.textAlign != textAlign) WireFields.textAlign,
   };
 
   /// The same element with another look or target — `Change(null)` clears one.
@@ -283,6 +289,7 @@ class MindmapNode {
     Change<String?>? textColor,
     Change<int?>? strokeWidth,
     Change<int?>? rotation,
+    Change<String?>? textAlign,
   }) => .new(
     id: id,
     ownerId: ownerId,
@@ -304,6 +311,7 @@ class MindmapNode {
     points: points,
     strokeWidth: strokeWidth == null ? this.strokeWidth : strokeWidth.value,
     rotation: rotation == null ? this.rotation : rotation.value,
+    textAlign: textAlign == null ? this.textAlign : textAlign.value,
   );
 
   @override
@@ -329,7 +337,8 @@ class MindmapNode {
           other.textColor == textColor &&
           other.points == points &&
           other.strokeWidth == strokeWidth &&
-          other.rotation == rotation;
+          other.rotation == rotation &&
+          other.textAlign == textAlign;
 
   @override
   int get hashCode => Object.hash(
@@ -351,6 +360,7 @@ class MindmapNode {
     points,
     strokeWidth,
     rotation,
+    textAlign,
   );
 }
 
@@ -1233,6 +1243,7 @@ MindmapNode mineOf(MindmapNode node, List<SyncConflict> conflicts) {
         textColor: text(WireFields.textColor),
         strokeWidth: number(WireFields.strokeWidth),
         rotation: number(WireFields.rotation),
+        textAlign: text(WireFields.textAlign),
       );
 }
 

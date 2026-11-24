@@ -118,6 +118,48 @@ void paintShapeGlyph(
   );
 }
 
+/// Where a note's text stands, in a choice's circle: three short lines at that place
+/// of a square.
+void paintTextAlignGlyph(Canvas canvas, Size size, Color color, String? align) {
+  final box = (Offset.zero & size).deflate(_glyphInset);
+  final paint = Paint()
+    ..color = color
+    ..strokeCap = .round
+    ..strokeWidth = _glyphLine;
+  final across = switch (align) {
+    MindmapTextAligns.topCenter ||
+    MindmapTextAligns.center ||
+    MindmapTextAligns.bottomCenter => 0.5,
+    MindmapTextAligns.topRight ||
+    MindmapTextAligns.middleRight ||
+    MindmapTextAligns.bottomRight => 1.0,
+    _ => 0.0,
+  };
+  final upDown = switch (align) {
+    MindmapTextAligns.middleLeft ||
+    MindmapTextAligns.center ||
+    MindmapTextAligns.middleRight => 0.5,
+    MindmapTextAligns.bottomLeft ||
+    MindmapTextAligns.bottomCenter ||
+    MindmapTextAligns.bottomRight => 1.0,
+    _ => 0.0,
+  };
+  final gap = box.height * _alignLineGap;
+  final block = gap * (_alignLines.length - 1);
+  final top = box.top + (box.height - block) * upDown;
+  for (final (index, share) in _alignLines.indexed) {
+    final length = box.width * share;
+    final left = box.left + (box.width - length) * across;
+    final y = top + index * gap;
+    canvas.drawLine(Offset(left, y), Offset(left + length, y), paint);
+  }
+}
+
+/// The three lines of [paintTextAlignGlyph], as shares of the square, and the room
+/// between them.
+const _alignLines = [0.7, 0.45, 0.6];
+const _alignLineGap = 0.22;
+
 Offset _unit(Offset vector, {required Offset fallback}) {
   final use = vector.distance == 0 ? fallback : vector;
   return use.distance == 0 ? Offset.zero : use / use.distance;

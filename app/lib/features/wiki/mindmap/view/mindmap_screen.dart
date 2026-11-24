@@ -1170,6 +1170,27 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
           label: l.mindmapTextSize,
           onTap: () => unawaited(_chooseTextSize(node)),
         ),
+      // A note has room around its text; a snippet is just as large as its words.
+      if (node != null && kind == MindmapKinds.note)
+        MindmapCornerOption(
+          key: MindmapKeys.textAlign,
+          icon: HiwiskiSymbols.formatSize,
+          label: l.mindmapTextAlign,
+          glyph: (canvas, size, color) =>
+              paintTextAlignGlyph(canvas, size, color, node.textAlign),
+          onTap: () async {
+            final align = await showMindmapAlignSheet(
+              context,
+              current: node.textAlign ?? MindmapTextAligns.topLeft,
+            );
+            if (align == null) return;
+            // The top left is where a note's text stands without a place of its own.
+            await viewModel.setTextAlign(
+              node,
+              align == MindmapTextAligns.topLeft ? null : align,
+            );
+          },
+        ),
       // Only what has a surface has an outline.
       if (kind == MindmapKinds.note || kind == MindmapKinds.link)
         MindmapCornerOption(

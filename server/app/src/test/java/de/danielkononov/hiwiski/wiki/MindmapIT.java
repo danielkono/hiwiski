@@ -280,6 +280,19 @@ class MindmapIT {
     }
 
     @Test
+    void aNotesTextStandsWhereItIsPlacedNamedInCapitals() {
+        UUID note = node(phone, "Meer");
+        for (var align : List.of("CENTER", "BOTTOM_RIGHT", "SOMEWHERE_NEW")) {
+            var result = phone.push(onMap(NODE, note, null, Map.of("textAlign", align)));
+            assertThat(result.getFirst().get("status")).as(align).isEqualTo("applied");
+        }
+        for (var align : List.of("center", "top-left")) {
+            var result = phone.push(onMap(NODE, note, null, Map.of("textAlign", align)));
+            assertThat(result.getFirst().get("code")).as(align).isEqualTo("sync.invalid_field");
+        }
+    }
+
+    @Test
     void aConnectionIsDrawnWithALineAndArrowHeadsNamedInCapitals() {
         UUID first = node(phone, "Meer");
         UUID second = node(phone, "Berge");

@@ -145,6 +145,108 @@ Future<MindmapNode?> showMindmapConnectSheet(
   );
 }
 
+/// Where a note's text is to stand — one of [MindmapTextAligns.all], picked from a
+/// square of nine as they lie. `null` when it was closed without a choice.
+Future<String?> showMindmapAlignSheet(
+  BuildContext context, {
+  required String current,
+}) {
+  final l = L.of(context);
+  return showHiwiskiSheet<String>(
+    context: context,
+    title: l.mindmapTextAlign,
+    builder: (context) => Center(
+      child: Column(
+        mainAxisSize: .min,
+        children: [
+          for (int row = 0; row < _alignRows; row++)
+            Row(
+              mainAxisSize: .min,
+              children: [
+                for (final align in MindmapTextAligns.all.sublist(
+                  row * _alignRows,
+                  row * _alignRows + _alignRows,
+                ))
+                  _AlignChoice(align: align, on: align == current),
+              ],
+            ),
+        ],
+      ),
+    ),
+  );
+}
+
+const _alignRows = 3;
+
+/// One place in the square of nine.
+class _AlignChoice extends StatelessWidget {
+  const _AlignChoice({required this.align, required this.on});
+
+  final String align;
+  final bool on;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final label = MindmapSheetText.alignNameOf(L.of(context), align);
+    return Padding(
+      padding: const .all(HiwiskiMetrics.space4),
+      child: Tooltip(
+        message: label,
+        child: Semantics(
+          button: true,
+          selected: on,
+          label: label,
+          excludeSemantics: true,
+          child: Material(
+            color: on ? scheme.secondaryContainer : scheme.surfaceContainerHigh,
+            shape: RoundedRectangleBorder(
+              borderRadius: const .all(.circular(HiwiskiMetrics.radiusChip)),
+              side: BorderSide(
+                color: on ? scheme.primary : scheme.outlineVariant,
+              ),
+            ),
+            child: InkWell(
+              key: MindmapKeys.textAlignOf(align),
+              customBorder: const RoundedRectangleBorder(
+                borderRadius: .all(.circular(HiwiskiMetrics.radiusChip)),
+              ),
+              onTap: () => Navigator.of(context).pop(align),
+              child: SizedBox.square(
+                dimension: HiwiskiMetrics.minTapTarget * 1.5,
+                child: Padding(
+                  padding: const .all(HiwiskiMetrics.space12),
+                  child: CustomPaint(
+                    painter: _AlignGlyph(
+                      align,
+                      on ? scheme.onSecondaryContainer : scheme.onSurface,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AlignGlyph extends CustomPainter {
+  const _AlignGlyph(this.align, this.color);
+
+  final String align;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) =>
+      paintTextAlignGlyph(canvas, size, color, align);
+
+  @override
+  bool shouldRepaint(_AlignGlyph oldDelegate) =>
+      oldDelegate.align != align || oldDelegate.color != color;
+}
+
 /// How an element is named in a list: its text, or what it shows.
 abstract final class MindmapSheetText {
   /// The name of [node] — `null` for one nothing tells apart from another: a stroke,
@@ -171,6 +273,20 @@ abstract final class MindmapSheetText {
   }
 
   static IconData iconOf(String kind) => MindmapElementView.iconOfKind(kind);
+
+  /// Where a note's text stands, in words; an unknown place, or none, is the top
+  /// left.
+  static String alignNameOf(L l, String? align) => switch (align) {
+    MindmapTextAligns.topCenter => l.mindmapAlignTopCenter,
+    MindmapTextAligns.topRight => l.mindmapAlignTopRight,
+    MindmapTextAligns.middleLeft => l.mindmapAlignMiddleLeft,
+    MindmapTextAligns.center => l.mindmapAlignCenter,
+    MindmapTextAligns.middleRight => l.mindmapAlignMiddleRight,
+    MindmapTextAligns.bottomLeft => l.mindmapAlignBottomLeft,
+    MindmapTextAligns.bottomCenter => l.mindmapAlignBottomCenter,
+    MindmapTextAligns.bottomRight => l.mindmapAlignBottomRight,
+    _ => l.mindmapAlignTopLeft,
+  };
 }
 
 /// The member a member element shows: the family, each with their picture. `null`

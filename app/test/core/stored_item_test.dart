@@ -173,6 +173,7 @@ void main() {
         WireFields.points: '0,0 5000,10000 10000,0',
         WireFields.strokeWidth: 4,
         WireFields.rotation: 30,
+        WireFields.textAlign: MindmapTextAligns.bottomCenter,
       },
     ),
     EntityTypes.mindmapEdge: (

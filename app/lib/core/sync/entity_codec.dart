@@ -1727,6 +1727,11 @@ class MindmapNodeCodec extends EntityCodec {
         WireFields.rotation,
         (value) => (value as num?)?.round(),
       ),
+      textAlign: EntityCodec.optional(
+        fields,
+        WireFields.textAlign,
+        (value) => value as String?,
+      ),
       deletedAt: const Value(null),
     );
     // Update first, then insert: a change carries only what changed, and Drift does
@@ -1801,6 +1806,7 @@ class MindmapNodeCodec extends EntityCodec {
         WireFields.points: row.points,
         WireFields.strokeWidth: row.strokeWidth,
         WireFields.rotation: row.rotation,
+        WireFields.textAlign: row.textAlign,
       },
     );
   }

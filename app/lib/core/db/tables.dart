@@ -587,6 +587,9 @@ class MindmapNodes extends Table with SyncedItem {
 
   /// Turned clockwise about its centre, in whole degrees 0–359; `null`: not turned.
   IntColumn get rotation => integer().nullable()();
+
+  /// Where a note's text stands inside it ([MindmapTextAligns]); `null`: top left.
+  TextColumn get textAlign => text().nullable()();
 }
 
 /// A connection between two elements of the same mind map, drawn from centre to centre.

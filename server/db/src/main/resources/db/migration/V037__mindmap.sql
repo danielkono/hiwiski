@@ -53,7 +53,10 @@ CREATE TABLE mindmap_node (
     stroke_width integer,
     -- Turned clockwise about its centre, in whole degrees from 0 to 359; empty: not
     -- turned.
-    rotation integer
+    rotation integer,
+    -- Where its text stands inside it: TOP_LEFT, TOP_CENTER, TOP_RIGHT, MIDDLE_LEFT,
+    -- CENTER, MIDDLE_RIGHT, BOTTOM_LEFT, BOTTOM_CENTER or BOTTOM_RIGHT; empty: top left.
+    text_align text
 );
 
 CREATE TABLE mindmap_edge (

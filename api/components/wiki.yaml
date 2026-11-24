@@ -228,6 +228,13 @@ MindmapNodeFields:
       description: |
         How far the element is turned clockwise about its centre, in whole degrees.
         Empty: not turned. Connections still meet its unturned outline.
+    textAlign:
+      type: string
+      description: |
+        Where a note's text stands inside it: `TOP_LEFT`, `TOP_CENTER`, `TOP_RIGHT`,
+        `MIDDLE_LEFT`, `CENTER`, `MIDDLE_RIGHT`, `BOTTOM_LEFT`, `BOTTOM_CENTER` or
+        `BOTTOM_RIGHT`. Empty: top left. Other names in capitals are taken and shown
+        top left by an app that does not know them.
 
 MindmapEdgeFields:
   type: object
