@@ -82,11 +82,13 @@ class _ConflictBody extends ConsumerWidget {
       StatusValue(:final done) => done ? l.conflictTicked : l.conflictUnticked,
     };
 
-    // An element's position or size: both of its values, as one.
+    // An element's position or size: both of its values, as one — a size width by
+    // height, whichever of its two conflicts was found first.
     final group = inReadingOrder([conflict, ...?state?.partners[conflict.id]]);
+    final size = mindmapConflictGroup(conflict.field) == WireFields.width;
     String side(String? Function(SyncConflict conflict) of) =>
         [for (final each in group) text(each, of(each))]
-            .join(conflict.field == WireFields.width ? _by : _and);
+            .join(size ? _by : _and);
 
     final mindmap = state?.mindmaps[conflict.id];
     final base = conflict.base == null ? null : side((each) => each.base);

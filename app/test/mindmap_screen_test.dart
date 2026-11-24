@@ -2087,6 +2087,51 @@ void main() {
     expect(find.text('On the map: Position'), findsOneWidget);
   });
 
+  testWidgets(
+    'the banner reads a size as width by height, whichever came first',
+    (tester) async {
+      await seed(tester);
+      await tester.runAsync(() async {
+        // The height's conflict found before the width's.
+        for (final (field, mine, theirs, at) in [
+          (WireFields.height, '90', '40', DateTime(2026, 11, 20)),
+          (WireFields.width, '200', '160', DateTime(2026, 11, 21)),
+        ]) {
+          await db
+              .into(db.conflicts)
+              .insert(
+                ConflictRow(
+                  id: '$meer:$field',
+                  entityType: EntityTypes.mindmapNode,
+                  entityId: meer,
+                  field: field,
+                  mine: mine,
+                  theirs: theirs,
+                  detectedAt: at,
+                ),
+              );
+        }
+      });
+      container.dispose();
+      container = await containerFor(banner: true);
+      await open(tester);
+
+      await tester.tap(find.text('View'));
+      await settle(tester);
+      final values = [
+        for (final widget in tester.widgetList<SelectableText>(
+          find.byType(SelectableText),
+        ))
+          ?widget.textSpan?.toPlainText(),
+      ];
+      expect(values, hasLength(2));
+      for (final value in values) {
+        expect(value, contains(' × '));
+        expect(value, isNot(contains(', ')));
+      }
+    },
+  );
+
   testWidgets('the banner names whom a member element showed on each side', (
     tester,
   ) async {
