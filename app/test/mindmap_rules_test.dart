@@ -19,6 +19,7 @@ MindmapNode node(
   String text = '',
   String? target,
   String? shape,
+  int? rotation,
 }) => .new(
   id: id,
   ownerId: 'anna',
@@ -33,6 +34,7 @@ MindmapNode node(
   text: text,
   target: target,
   shape: shape,
+  rotation: rotation,
 );
 
 MindmapEdge edge(String id, String from, String to, {String text = ''}) => .new(
@@ -468,6 +470,23 @@ void main() {
 
       expect(erased, equals({across.id}));
     });
+
+    test('the eraser takes a turned stroke where it is seen', () {
+      // Drawn across, turned upright about its middle (100, 50).
+      final upright = drawingOf(
+        strokeOf(const [Offset(0, 50), Offset(200, 50)], 4),
+        rotation: 90,
+      );
+      final map = Mindmap(nodes: [upright], edges: const []);
+
+      // Across where it is seen now, upright through x = 100.
+      expect(
+        erasedBy(const [Offset(60, 120), Offset(140, 120)], map, 12),
+        equals({upright.id}),
+      );
+      // Along where it lay before it was turned, clear of where it is seen.
+      expect(erasedBy(const [Offset(0, 50), Offset(40, 50)], map, 12), isEmpty);
+    });
   });
 
   test('a lasso goes round what it encloses, a rectangle what lies in it', () {
@@ -619,6 +638,7 @@ void main() {
 MindmapNode drawingOf(
   ({Rect bounds, String points}) stroke, {
   String id = 'stroke',
+  int? rotation,
 }) => .new(
   id: id,
   ownerId: 'anna',
@@ -633,4 +653,5 @@ MindmapNode drawingOf(
   text: '',
   points: stroke.points,
   strokeWidth: 4,
+  rotation: rotation,
 );

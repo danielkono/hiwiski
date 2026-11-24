@@ -129,8 +129,13 @@ class MindmapNode {
   }
 
   /// Whether [point] of the map lies on it, as it is turned.
-  bool covers(Offset point) =>
-      bounds.contains(center + turnOffset(point - center, -turn));
+  bool covers(Offset point) => bounds.contains(unturned(point));
+
+  /// Where [point] of the map lies on it as it would be unturned: its content — a
+  /// stroke's points too — is laid out unturned and turned with it, so what is seen
+  /// at [point] is there.
+  Offset unturned(Offset point) =>
+      turn == 0 ? point : center + turnOffset(point - center, -turn);
 
   /// The element at [width] × [height]. Turned, its top left corner — as it is seen
   /// — stays where it is: grown from the unturned corner, the element slid away
@@ -1364,16 +1369,17 @@ Set<String> erasedBy(List<Offset> path, Mindmap map, double reach) {
     }
     along.add(path[i]);
   }
+  // A turned stroke is met where it is seen: the swipe is followed in the stroke's
+  // own unturned frame, where its points lie.
+  bool touches(MindmapNode node) => along.any((point) {
+    final at = node.unturned(point);
+    return node.bounds.inflate(reach).contains(at) &&
+        distanceToStroke(at, strokePointsOf(node)) <=
+            reach + (node.strokeWidth ?? 1) / 2;
+  });
   return {
     for (final node in map.nodes)
-      if (node.kind == MindmapKinds.drawing)
-        if (along.any(
-          (at) =>
-              node.bounds.inflate(reach).contains(at) &&
-              distanceToStroke(at, strokePointsOf(node)) <=
-                  reach + (node.strokeWidth ?? 1) / 2,
-        ))
-          node.id,
+      if (node.kind == MindmapKinds.drawing && touches(node)) node.id,
   };
 }
 
