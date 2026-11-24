@@ -41,10 +41,15 @@ class MindmapElementView extends StatelessWidget {
     this.wrap,
     this.reach = .zero,
     this.editor,
+    this.onToggleTask,
   });
 
   final MindmapNode node;
   final MindmapLinkTarget linkTarget;
+
+  /// Ticks or unticks a checkbox of an element's text — given where the map is read
+  /// and may be changed; `null`: boxes are shown, not tappable.
+  final void Function(MindmapNode node, int task)? onToggleTask;
 
   /// Whether what is on the element takes taps and swipes — a note's pictures turned,
   /// a link chip followed, a target's content scrolled. Not while editing, where a
@@ -105,6 +110,10 @@ class MindmapElementView extends StatelessWidget {
       linkTarget: linkTarget,
       detail: detail ?? zoom,
       zoom: zoom,
+      onToggleTask: switch (onToggleTask) {
+        final toggle? => (int task) => toggle(node, task),
+        null => null,
+      },
     ));
     final content = DefaultTextStyle.merge(
       style: style,
@@ -213,7 +222,11 @@ class MindmapElementView extends StatelessWidget {
     MindmapKinds.note: MindmapKindLook(
       icon: HiwiskiSymbols.stickyNote2,
       name: (_, node) => plainOfMarkdown(node.text),
-      content: (content) => MindmapNote(node: content.node, ink: content.ink),
+      content: (content) => MindmapNote(
+        node: content.node,
+        ink: content.ink,
+        onToggleTask: content.onToggleTask,
+      ),
     ),
     MindmapKinds.image: MindmapKindLook(
       icon: HiwiskiSymbols.image,
@@ -463,8 +476,9 @@ class const MindmapShapeLook({
 });
 
 /// What an element's content is drawn with: the element, the colour of its text,
-/// whether it takes taps, how its targets read, and how large a unit of the map is
-/// on screen ([MindmapElementView.detail], [MindmapElementView.zoom]).
+/// whether it takes taps, how its targets read, how large a unit of the map is on
+/// screen ([MindmapElementView.detail], [MindmapElementView.zoom]), and what ticks a
+/// checkbox of its text (`null`: not tappable).
 typedef MindmapContent = ({
   MindmapNode node,
   Color ink,
@@ -472,6 +486,7 @@ typedef MindmapContent = ({
   MindmapLinkTarget linkTarget,
   double detail,
   double zoom,
+  ValueChanged<int>? onToggleTask,
 });
 
 /// A snippet: as large as its text, the element measured to it ([plainBoxOf]).

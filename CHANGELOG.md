@@ -29,7 +29,8 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
   **Redo** take changes back and do them again. A snippet of text is written right
   on the canvas and is just as large as its words; a picture keeps its own shape; a
   member shows as their picture in a circle; a link shows its target's title or its
-  content, as its preview does. A **pen** draws on the map in a colour and thickness
+  content, as its preview does; a note's checklist is ticked off with a tap where the
+  map is read, as a page's is. A **pen** draws on the map in a colour and thickness
   of your choice — freehand or as a rectangle, ellipse, triangle, diamond, line or
   arrow, which can be resized afterwards — and the **eraser** takes away every stroke it is swiped over; one tap
   hides the drawings to see what lies under them. A **lasso** or a **rectangle**

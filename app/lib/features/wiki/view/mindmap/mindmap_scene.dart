@@ -49,6 +49,7 @@ class MindmapScene extends StatelessWidget {
     this.writing,
     this.hand,
     this.guides,
+    this.onToggleTask,
   });
 
   final Mindmap map;
@@ -61,6 +62,9 @@ class MindmapScene extends StatelessWidget {
 
   /// Whether the elements' content takes taps and swipes ([MindmapElementView]).
   final bool interactive;
+
+  /// Ticks or unticks a checkbox of an element's text ([MindmapElementView]).
+  final void Function(MindmapNode node, int task)? onToggleTask;
 
   /// The part to build, in the map's units — the canvas passes what is in view and a
   /// screen's worth around it. `null`: everything (the preview).
@@ -301,6 +305,7 @@ class MindmapScene extends StatelessWidget {
                       wrap: wrap,
                       reach: _reachOf(node, wrap, grip),
                       editor: writing?.id == node.id ? writing?.field : null,
+                      onToggleTask: onToggleTask,
                     ),
                   ),
                 ),

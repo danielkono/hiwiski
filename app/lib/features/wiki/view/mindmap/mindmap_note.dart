@@ -21,12 +21,21 @@ import 'mindmap_outline.dart';
 /// room. A text taller than the note starts at its top: what is cut is its end, not
 /// its beginning.
 class MindmapNote extends ConsumerWidget {
-  const MindmapNote({super.key, required this.node, required this.ink});
+  const MindmapNote({
+    super.key,
+    required this.node,
+    required this.ink,
+    this.onToggleTask,
+  });
 
   final MindmapNode node;
 
   /// The text colour on the note's surface.
   final Color ink;
+
+  /// Ticks or unticks the n-th checkbox of its text — where the map is read and may
+  /// be changed, as a page's boxes are; `null`: shown, not tappable.
+  final ValueChanged<int>? onToggleTask;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -51,6 +60,7 @@ class MindmapNote extends ConsumerWidget {
           : const FlowBox(),
       place: placeOf(node.textAlign),
       onOpen: (target) => openLinkTarget(context, ref, target),
+      onToggleTask: onToggleTask,
     );
   }
 

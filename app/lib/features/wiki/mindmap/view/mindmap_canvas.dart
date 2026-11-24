@@ -68,6 +68,7 @@ class MindmapCanvas extends StatefulWidget {
     required this.found,
     required this.onSelect,
     required this.onOpen,
+    this.onToggleTask,
     required this.onMove,
     required this.onResize,
     required this.onRotate,
@@ -111,6 +112,11 @@ class MindmapCanvas extends StatefulWidget {
   /// An element is opened: its target followed, its picture shown — or, while
   /// editing, its content edited.
   final ValueChanged<MindmapNode> onOpen;
+
+  /// Ticks or unticks a checkbox of an element's text — offered where the map is
+  /// read and may be changed, as a page's boxes are; while editing, a tap on an
+  /// element selects it.
+  final void Function(MindmapNode node, int task)? onToggleTask;
 
   /// Elements moved together — one, or a group — each to its new corner.
   final ValueChanged<Map<MindmapNode, ({int x, int y})>> onMove;
@@ -968,6 +974,9 @@ class _MindmapCanvasState extends State<MindmapCanvas>
                               // Read, what is on an element is used — pictures
                               // turned, a chip followed; edited, a drag moves it.
                               interactive: !editing,
+                              onToggleTask: !editing && state.writable
+                                  ? widget.onToggleTask
+                                  : null,
                               selected: {
                                 ?selection?.id,
                                 ?widget.current,

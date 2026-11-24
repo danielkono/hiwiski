@@ -27,6 +27,7 @@ import '../../../../core/ui/page_header.dart';
 import '../../../../core/ui/states.dart';
 import '../../../../domain/sync/sync_items.dart';
 import '../../../../domain/transfer/transfer_bundle.dart';
+import '../../../../domain/wiki/markdown_editing.dart';
 import '../../../../domain/wiki/mindmap.dart';
 import '../../../../domain/wiki/mindmap_shapes.dart';
 import '../../../../domain/wiki/mindmap_snap.dart';
@@ -2108,6 +2109,12 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
                                     ),
                               onSelect: _select,
                               onOpen: (node) => unawaited(_open(node)),
+                              onToggleTask: (node, task) => unawaited(
+                                _viewModel.setText(
+                                  node,
+                                  toggleTask(node.text, task),
+                                ),
+                              ),
                               onMove: (moves) =>
                                   unawaited(_viewModel.move(moves)),
                               group: {

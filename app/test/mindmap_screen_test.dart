@@ -17,6 +17,7 @@ import 'package:hiwiski/data/family/family_repository.dart';
 import 'package:hiwiski/core/common/wire.dart';
 import 'package:hiwiski/core/db/hiwiski_database.dart';
 import 'package:hiwiski/core/theme/hiwiski_metrics.dart';
+import 'package:hiwiski/core/theme/hiwiski_symbols.dart';
 import 'package:hiwiski/core/l10n/generated/app_localizations.dart';
 import 'package:hiwiski/core/storage/local_settings.dart';
 import 'package:hiwiski/core/sync/local_writes.dart';
@@ -1631,6 +1632,50 @@ void main() {
     expect((await stored()).textAlign, isNull);
     expect((await stored()).textFlow, isNull);
   });
+
+  // As on a page, and as a link chip is followed: a packing list is worked through
+  // where it is read. While editing, a tap on a note selects it.
+  testWidgets(
+    'a note\'s box is ticked with a tap where the map is read, not while editing',
+    (tester) async {
+      await seed(tester);
+      final note = (await tester.runAsync(
+        () => container
+            .read(mindmapRepositoryProvider)
+            .addNode(
+              pageId: pageId,
+              kind: MindmapKinds.note,
+              x: 0,
+              y: 200,
+              width: 240,
+              height: 160,
+              text: 'Packliste\n\n- [ ] Zelt\n- [ ] Kocher',
+            ),
+      ))!;
+      await open(tester);
+      Future<String> stored() async => (await tester.runAsync(
+        () => (db.select(
+          db.mindmapNodes,
+        )..where((row) => row.id.equals(note))).getSingle(),
+      ))!.body;
+      Finder unticked() => find.descendant(
+        of: find.byType(MindmapNote),
+        matching: find.byIcon(HiwiskiSymbols.checkBoxOutlineBlank),
+      );
+      expect(unticked(), findsNWidgets(2));
+
+      await tester.tap(unticked().last);
+      await settle(tester);
+      expect(await stored(), equals('Packliste\n\n- [ ] Zelt\n- [x] Kocher'));
+      expect(unticked(), findsOneWidget);
+
+      await tester.tap(find.byKey(MindmapKeys.edit));
+      await settle(tester);
+      await tester.tap(unticked(), warnIfMissed: false);
+      await settle(tester);
+      expect(await stored(), equals('Packliste\n\n- [ ] Zelt\n- [x] Kocher'));
+    },
+  );
 
   // A kind described for the rules and drawn, but forgotten on the "Add" menu,
   // could only come from another device.
