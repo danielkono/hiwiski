@@ -1415,18 +1415,22 @@ Set<String> erasedBy(List<Offset> path, Mindmap map, double reach) {
     }
     along.add(path[i]);
   }
-  // A turned stroke is met where it is seen: the swipe is followed in the stroke's
-  // own unturned frame, where its points lie.
-  bool touches(MindmapNode node) => along.any((point) {
-    final at = node.unturned(point);
-    return node.bounds.inflate(reach).contains(at) &&
-        distanceToStroke(at, strokePointsOf(node)) <=
-            reach + (node.strokeWidth ?? 1) / 2;
-  });
   return {
     for (final node in map.nodes)
-      if (node.kind == MindmapKinds.drawing && touches(node)) node.id,
+      if (node.kind == MindmapKinds.drawing &&
+          along.any((at) => nearStroke(node, at, reach)))
+        node.id,
   };
+}
+
+/// Whether [at], a point of the map, lies within [reach] of the stroke of [node] — a
+/// drawing element — its thickness counted. A turned stroke is met where it is seen:
+/// [at] is followed into the stroke's own unturned frame, where its points lie.
+bool nearStroke(MindmapNode node, Offset at, double reach) {
+  final on = node.unturned(at);
+  return node.bounds.inflate(reach).contains(on) &&
+      distanceToStroke(on, strokePointsOf(node)) <=
+          reach + (node.strokeWidth ?? 1) / 2;
 }
 
 // --- Sizes of one's own ------------------------------------------------------------

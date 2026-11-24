@@ -1097,6 +1097,75 @@ void main() {
     expect(find.byKey(MindmapKeys.delete), findsOneWidget);
   });
 
+  testWidgets('a stroke is taken on its line alone, not across its box', (
+    tester,
+  ) async {
+    await seed(tester);
+    // A line along the top of a box that holds "Berge" and the canvas below it.
+    await tester.runAsync(
+      () => container
+          .read(mindmapRepositoryProvider)
+          .addNode(
+            pageId: pageId,
+            kind: MindmapKinds.drawing,
+            x: 280,
+            y: -20,
+            width: 200,
+            height: 300,
+            points: '0,0 10000,0',
+            strokeWidth: 4,
+          ),
+    );
+    await open(tester);
+    double zoom() =>
+        tester.widget<MindmapScene>(find.byType(MindmapScene)).zoom;
+    Rect rectOf(String text) => tester.getRect(
+      find
+          .ancestor(
+            of: find.text(text),
+            matching: find.byType(MindmapElementView),
+          )
+          .first,
+    );
+
+    // Two taps and a drag on the canvas inside the stroke's box, below "Berge":
+    // the map zooms.
+    final before = zoom();
+    final bergeAt = rectOf('Berge');
+    // 160 below it on the map, at the zoom it is shown at.
+    final below = bergeAt.bottomCenter + Offset(0, bergeAt.width);
+    await tester.tapAt(below);
+    await tester.pump(const Duration(milliseconds: 100));
+    final gesture = await tester.startGesture(below);
+    for (int step = 1; step <= 10; step++) {
+      await gesture.moveTo(below + Offset(0, step * 10));
+      await tester.pump();
+    }
+    await gesture.up();
+    await settle(tester);
+    expect(zoom(), greaterThan(before * 1.5));
+
+    // Connecting to "Berge" under the stroke's box connects "Berge".
+    await tester.tap(find.byKey(MindmapKeys.fit));
+    await settle(tester);
+    await tester.tap(find.byKey(MindmapKeys.edit));
+    await settle(tester);
+    await pick(tester, MindmapKeys.addMenu, MindmapKeys.edgeTool);
+    await settle(tester);
+    await tester.tap(find.byKey(MindmapKeys.edgeStyleOf(1)));
+    await settle(tester);
+    await tester.dragFrom(
+      rectOf('Meer').center,
+      rectOf('Berge').center - rectOf('Meer').center,
+    );
+    await settle(tester);
+
+    final edges = await tester.runAsync(() => db.select(db.mindmapEdges).get());
+    expect([
+      for (final edge in edges!) (edge.fromId, edge.toId),
+    ], equals([(meer, berge)]));
+  });
+
   testWidgets('a connection\'s colour and thickness are chosen before', (
     tester,
   ) async {

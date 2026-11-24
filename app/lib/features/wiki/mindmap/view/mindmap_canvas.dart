@@ -836,34 +836,53 @@ class _MindmapCanvasState extends State<MindmapCanvas>
           finger + HiwiskiMetrics.mindmapRotateReach / _camera.scale,
         ) ??
         .zero;
+    // A stroke only near its line, as it takes a finger: the box around a stroke
+    // across the map is mostly bare canvas.
     return _nodeAt(at) == null &&
         !widget.state.map.nodes.any(
-          (node) => node.turnedBounds.inflate(finger / 2).contains(at),
+          (node) =>
+              !_hidden(node) &&
+              (node.kind == MindmapKinds.drawing
+                  ? nearStroke(node, at, finger / 2)
+                  : node.turnedBounds.inflate(finger / 2).contains(at)),
         ) &&
         !grips.contains(at);
   }
 
-  /// [map] as it is seen: without what the eraser took, gone from sight before it
-  /// is gone from the map — and without every stroke, while they are hidden.
+  /// Whether [node] is out of sight: taken by the eraser and not gone from the map
+  /// yet, or a stroke while they are hidden.
+  bool _hidden(MindmapNode node) =>
+      _erased.contains(node.id) ||
+      (widget.hideDrawings && node.kind == MindmapKinds.drawing);
+
+  /// [map] as it is seen ([_hidden]).
   Mindmap _withoutHidden(Mindmap map) => _erased.isEmpty && !widget.hideDrawings
       ? map
       : .new(
           nodes: [
             for (final node in map.nodes)
-              if (!_erased.contains(node.id) &&
-                  !(widget.hideDrawings && node.kind == MindmapKinds.drawing))
-                node,
+              if (!_hidden(node)) node,
           ],
           edges: map.edges,
         );
 
-  /// The topmost element at [at], a point of the map.
+  /// The topmost element seen at [at], a point of the map — a stroke only near its
+  /// line, where it takes a tap too: by its box, a stroke drawn over an element took
+  /// the connection meant for the element.
   MindmapNode? _nodeAt(Offset at, {String? except}) {
     for (final node in widget.state.map.nodes.reversed) {
-      if (node.id != except && node.covers(at)) return node;
+      if (node.id == except || _hidden(node)) continue;
+      final hit = node.kind == MindmapKinds.drawing
+          ? nearStroke(node, at, _strokeReach)
+          : node.covers(at);
+      if (hit) return node;
     }
     return null;
   }
+
+  /// How far from its line a stroke takes a finger, in the map's units — as far as
+  /// its element takes a tap ([StrokePainter]).
+  double get _strokeReach => HiwiskiMetrics.minTapTarget / 4 / _camera.scale;
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
