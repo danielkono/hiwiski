@@ -282,6 +282,7 @@ class _Value extends StatelessWidget {
         _ => l.mindmapLinkTitle,
       },
       WireFields.textAlign => MindmapSheetText.alignNameOf(l, stored),
+      WireFields.textFlow => MindmapSheetText.flowNameOf(l, stored),
       WireFields.text => plainOfMarkdown(raw),
       _ => raw,
     };

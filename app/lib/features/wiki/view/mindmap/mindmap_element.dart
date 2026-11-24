@@ -315,6 +315,10 @@ class MindmapElementView extends StatelessWidget {
   /// curves in, so the text stays inside an ellipse or a diamond.
   static EdgeInsets insetOf(MindmapNode node) {
     if (!node.hasSurface) return .zero;
+    // Its lines follow the shape itself: the outline keeps them [shapePad] inside.
+    if (node.kind == MindmapKinds.note && MindmapNote.followsShape(node)) {
+      return .zero;
+    }
     final width = node.width.toDouble();
     final height = node.height.toDouble();
     return switch (node.effectiveShape) {
@@ -346,6 +350,9 @@ class MindmapElementView extends StatelessWidget {
       _ => const .all(HiwiskiMetrics.space12),
     };
   }
+
+  /// The room between a shape and the lines that follow it.
+  static const shapePad = HiwiskiMetrics.space12;
 
   static const _curvedInset = 0.18;
   static const _diamondInset = 0.27;

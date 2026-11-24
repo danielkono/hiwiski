@@ -235,6 +235,14 @@ MindmapNodeFields:
         `MIDDLE_LEFT`, `CENTER`, `MIDDLE_RIGHT`, `BOTTOM_LEFT`, `BOTTOM_CENTER` or
         `BOTTOM_RIGHT`. Empty: top left. Other names in capitals are taken and shown
         top left by an app that does not know them.
+    textFlow:
+      type: string
+      description: |
+        What a note's lines fill: `BOX`, the largest box inside its shape, every line
+        as wide as it; or `SHAPE`, the shape itself, each line as wide as the shape is
+        at its height — round in an ellipse, pointed in a diamond. Empty: `BOX`. Other
+        names in capitals are taken and shown as `BOX` by an app that does not know
+        them.
 
 MindmapEdgeFields:
   type: object

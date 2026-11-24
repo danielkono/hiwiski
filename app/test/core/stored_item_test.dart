@@ -174,6 +174,7 @@ void main() {
         WireFields.strokeWidth: 4,
         WireFields.rotation: 30,
         WireFields.textAlign: MindmapTextAligns.bottomCenter,
+        WireFields.textFlow: MindmapTextFlows.shape,
       },
     ),
     EntityTypes.mindmapEdge: (

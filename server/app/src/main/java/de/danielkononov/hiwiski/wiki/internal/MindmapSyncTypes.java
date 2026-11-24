@@ -50,6 +50,7 @@ class MindmapSyncTypes {
     private static final String STROKE_WIDTH = "strokeWidth";
     private static final String ROTATION = "rotation";
     private static final String TEXT_ALIGN = "textAlign";
+    private static final String TEXT_FLOW = "textFlow";
     private static final String TARGET = "target";
     private static final String LINK_VIEW = "linkView";
     private static final String WIDTH = "width";
@@ -146,7 +147,8 @@ class MindmapSyncTypes {
                         SyncField.text(POINTS, MINDMAP_NODE.POINTS),
                         SyncField.integer(STROKE_WIDTH, MINDMAP_NODE.STROKE_WIDTH),
                         SyncField.integer(ROTATION, MINDMAP_NODE.ROTATION),
-                        SyncField.text(TEXT_ALIGN, MINDMAP_NODE.TEXT_ALIGN));
+                        SyncField.text(TEXT_ALIGN, MINDMAP_NODE.TEXT_ALIGN),
+                        SyncField.text(TEXT_FLOW, MINDMAP_NODE.TEXT_FLOW));
             }
 
             @Override
@@ -168,7 +170,7 @@ class MindmapSyncTypes {
                         || !fitsStroke(changes)
                         || !fitsTextSize(changes)
                         || !fitsRotation(changes)
-                        || !fitsTextAlign(changes)) {
+                        || !fitsTextPlace(changes)) {
                     return Optional.of(SyncField.INVALID_FIELD);
                 }
                 return Optional.empty();
@@ -320,10 +322,13 @@ class MindmapSyncTypes {
                         && number.longValue() < FULL_TURN);
     }
 
-    /** A place for the text named in capitals, as a connection's line is. */
-    private static boolean fitsTextAlign(Map<String, Object> changes) {
-        Object align = changes.get(TEXT_ALIGN);
-        return align == null || EDGE_STYLE_VALUE.matcher(align.toString()).matches();
+    /**
+     * A place for the text and what its lines fill, named in capitals as a connection's
+     * line is.
+     */
+    private static boolean fitsTextPlace(Map<String, Object> changes) {
+        return Stream.of(TEXT_ALIGN, TEXT_FLOW).map(changes::get)
+                .allMatch(name -> name == null || EDGE_STYLE_VALUE.matcher(name.toString()).matches());
     }
 
     private static boolean fitsEdgeStyle(Map<String, Object> changes) {

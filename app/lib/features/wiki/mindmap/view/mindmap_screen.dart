@@ -1182,11 +1182,21 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
             final align = await showMindmapAlignSheet(
               context,
               current: node.textAlign ?? MindmapTextAligns.topLeft,
+              // In a rectangle, the box inside the shape is the shape.
+              follows: node.effectiveShape == MindmapShapes.rectangle
+                  ? null
+                  : node.textFlow == MindmapTextFlows.shape,
+              // The box inside the shape is what a note's lines fill without a
+              // choice of their own.
+              onFollow: (follows) => viewModel.setTextFlow(
+                node,
+                follows ? MindmapTextFlows.shape : null,
+              ),
             );
             if (align == null) return;
             // The top left is where a note's text stands without a place of its own.
             await viewModel.setTextAlign(
-              node,
+              _state?.map.node(node.id) ?? node,
               align == MindmapTextAligns.topLeft ? null : align,
             );
           },

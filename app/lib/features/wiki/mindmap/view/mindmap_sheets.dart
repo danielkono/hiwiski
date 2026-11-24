@@ -147,33 +147,80 @@ Future<MindmapNode?> showMindmapConnectSheet(
 
 /// Where a note's text is to stand — one of [MindmapTextAligns.all], picked from a
 /// square of nine as they lie. `null` when it was closed without a choice.
+///
+/// With [follows] given, a switch below lets the lines follow the shape itself:
+/// [onFollow] changes the note at once, behind the sheet, and the sheet stays open
+/// for a place to be picked as well. The switch waits for each change before it
+/// takes the next.
 Future<String?> showMindmapAlignSheet(
   BuildContext context, {
   required String current,
+  bool? follows,
+  Future<void> Function(bool follows)? onFollow,
 }) {
   final l = L.of(context);
   return showHiwiskiSheet<String>(
     context: context,
     title: l.mindmapTextAlign,
-    builder: (context) => Center(
-      child: Column(
-        mainAxisSize: .min,
-        children: [
-          for (int row = 0; row < _alignRows; row++)
-            Row(
-              mainAxisSize: .min,
-              children: [
-                for (final align in MindmapTextAligns.all.sublist(
-                  row * _alignRows,
-                  row * _alignRows + _alignRows,
-                ))
-                  _AlignChoice(align: align, on: align == current),
-              ],
-            ),
-        ],
-      ),
+    builder: (context) => Column(
+      mainAxisSize: .min,
+      children: [
+        for (int row = 0; row < _alignRows; row++)
+          Row(
+            mainAxisSize: .min,
+            children: [
+              for (final align in MindmapTextAligns.all.sublist(
+                row * _alignRows,
+                row * _alignRows + _alignRows,
+              ))
+                _AlignChoice(align: align, on: align == current),
+            ],
+          ),
+        if (follows != null && onFollow != null)
+          _FollowSwitch(follows: follows, onFollow: onFollow),
+      ],
     ),
   );
+}
+
+/// Whether a note's lines follow its shape — switched at once.
+class _FollowSwitch extends StatefulWidget {
+  const _FollowSwitch({required this.follows, required this.onFollow});
+
+  final bool follows;
+  final Future<void> Function(bool follows) onFollow;
+
+  @override
+  State<_FollowSwitch> createState() => _FollowSwitchState();
+}
+
+class _FollowSwitchState extends State<_FollowSwitch> {
+  late bool _follows = widget.follows;
+  bool _writing = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    return Padding(
+      padding: const .only(top: HiwiskiMetrics.space8),
+      child: SwitchListTile(
+        key: MindmapKeys.textFlow,
+        title: Text(l.mindmapTextFlow),
+        subtitle: Text(l.mindmapTextFlowHint),
+        value: _follows,
+        onChanged: _writing
+            ? null
+            : (follows) async {
+                setState(() {
+                  _follows = follows;
+                  _writing = true;
+                });
+                await widget.onFollow(follows);
+                if (mounted) setState(() => _writing = false);
+              },
+      ),
+    );
+  }
 }
 
 const _alignRows = 3;
@@ -276,6 +323,13 @@ abstract final class MindmapSheetText {
 
   /// Where a note's text stands, in words; an unknown place, or none, is the top
   /// left.
+  /// What a note's lines fill, named — [MindmapTextFlows]; unknown and none are the
+  /// box inside its shape.
+  static String flowNameOf(L l, String? flow) => switch (flow) {
+    MindmapTextFlows.shape => l.mindmapTextFlowShape,
+    _ => l.mindmapTextFlowBox,
+  };
+
   static String alignNameOf(L l, String? align) => switch (align) {
     MindmapTextAligns.topCenter => l.mindmapAlignTopCenter,
     MindmapTextAligns.topRight => l.mindmapAlignTopRight,

@@ -22,7 +22,9 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
   or dotted line in a colour and thickness chosen beforehand, from one element to
   the next and on from there — give them a colour of the eight or of your own — see-through too — a text
   colour, a shape and a text size — one of four or a number of your own —, a note
-  also the place of its text — top, middle or bottom, left, centre or right — and bring
+  also the place of its text — top, middle or bottom, left, centre or right — and
+  lines that fill the box inside its shape or follow the shape itself, round in an
+  ellipse, pointed in a diamond — and bring
   them forward or send them back; a line can be as thick as you like. **Undo** and
   **Redo** take changes back and do them again. A snippet of text is written right
   on the canvas and is just as large as its words; a picture keeps its own shape; a

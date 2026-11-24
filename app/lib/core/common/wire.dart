@@ -130,6 +130,7 @@ abstract final class WireFields {
   static const line = 'line';
   static const rotation = 'rotation';
   static const textAlign = 'textAlign';
+  static const textFlow = 'textFlow';
   static const arrows = 'arrows';
   static const fromId = 'fromId';
   static const toId = 'toId';
@@ -313,6 +314,15 @@ abstract final class MindmapTextAligns {
     bottomCenter,
     bottomRight,
   ];
+}
+
+/// What a note's lines fill. An unknown one is [box].
+abstract final class MindmapTextFlows {
+  /// The largest box inside the note's shape: every line as wide as it.
+  static const box = 'BOX';
+
+  /// The shape itself: each line as wide as the shape is at its height.
+  static const shape = 'SHAPE';
 }
 
 /// The size of an element's text.

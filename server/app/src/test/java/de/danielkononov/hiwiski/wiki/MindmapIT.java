@@ -293,6 +293,17 @@ class MindmapIT {
     }
 
     @Test
+    void aNotesLinesFillItsBoxOrItsShapeNamedInCapitals() {
+        UUID note = node(phone, "Meer");
+        for (var flow : List.of("SHAPE", "BOX", "SOMETHING_NEW")) {
+            var result = phone.push(onMap(NODE, note, null, Map.of("textFlow", flow)));
+            assertThat(result.getFirst().get("status")).as(flow).isEqualTo("applied");
+        }
+        var result = phone.push(onMap(NODE, note, null, Map.of("textFlow", "shape")));
+        assertThat(result.getFirst().get("code")).isEqualTo("sync.invalid_field");
+    }
+
+    @Test
     void aConnectionIsDrawnWithALineAndArrowHeadsNamedInCapitals() {
         UUID first = node(phone, "Meer");
         UUID second = node(phone, "Berge");

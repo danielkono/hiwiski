@@ -590,6 +590,9 @@ class MindmapNodes extends Table with SyncedItem {
 
   /// Where a note's text stands inside it ([MindmapTextAligns]); `null`: top left.
   TextColumn get textAlign => text().nullable()();
+
+  /// What a note's lines fill ([MindmapTextFlows]); `null`: the box inside its shape.
+  TextColumn get textFlow => text().nullable()();
 }
 
 /// A connection between two elements of the same mind map, drawn from centre to centre.

@@ -56,7 +56,10 @@ CREATE TABLE mindmap_node (
     rotation integer,
     -- Where its text stands inside it: TOP_LEFT, TOP_CENTER, TOP_RIGHT, MIDDLE_LEFT,
     -- CENTER, MIDDLE_RIGHT, BOTTOM_LEFT, BOTTOM_CENTER or BOTTOM_RIGHT; empty: top left.
-    text_align text
+    text_align text,
+    -- What its lines fill: BOX, the largest box inside its shape, or SHAPE, the shape
+    -- itself; empty: BOX.
+    text_flow text
 );
 
 CREATE TABLE mindmap_edge (

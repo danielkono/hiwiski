@@ -42,6 +42,7 @@ class MindmapNode {
     this.strokeWidth,
     this.rotation,
     this.textAlign,
+    this.textFlow,
   });
 
   final String id;
@@ -103,6 +104,9 @@ class MindmapNode {
 
   /// Where a note's text stands inside it ([MindmapTextAligns]); `null`: top left.
   final String? textAlign;
+
+  /// What a note's lines fill ([MindmapTextFlows]); `null`: the box inside its shape.
+  final String? textFlow;
 
   /// [rotation] in radians, 0 for none.
   double get turn => (rotation ?? 0) * math.pi / _halfTurn;
@@ -257,6 +261,7 @@ class MindmapNode {
     strokeWidth: strokeWidth,
     rotation: rotation,
     textAlign: textAlign,
+    textFlow: textFlow,
   );
 
   /// The fields [other] holds otherwise, by their names on the wire — what a change
@@ -277,6 +282,7 @@ class MindmapNode {
     if (other.strokeWidth != strokeWidth) WireFields.strokeWidth,
     if (other.rotation != rotation) WireFields.rotation,
     if (other.textAlign != textAlign) WireFields.textAlign,
+    if (other.textFlow != textFlow) WireFields.textFlow,
   };
 
   /// The same element with another look or target — `Change(null)` clears one.
@@ -290,6 +296,7 @@ class MindmapNode {
     Change<int?>? strokeWidth,
     Change<int?>? rotation,
     Change<String?>? textAlign,
+    Change<String?>? textFlow,
   }) => .new(
     id: id,
     ownerId: ownerId,
@@ -312,6 +319,7 @@ class MindmapNode {
     strokeWidth: strokeWidth == null ? this.strokeWidth : strokeWidth.value,
     rotation: rotation == null ? this.rotation : rotation.value,
     textAlign: textAlign == null ? this.textAlign : textAlign.value,
+    textFlow: textFlow == null ? this.textFlow : textFlow.value,
   );
 
   @override
@@ -338,7 +346,8 @@ class MindmapNode {
           other.points == points &&
           other.strokeWidth == strokeWidth &&
           other.rotation == rotation &&
-          other.textAlign == textAlign;
+          other.textAlign == textAlign &&
+          other.textFlow == textFlow;
 
   @override
   int get hashCode => Object.hash(
@@ -361,6 +370,7 @@ class MindmapNode {
     strokeWidth,
     rotation,
     textAlign,
+    textFlow,
   );
 }
 
@@ -1244,6 +1254,7 @@ MindmapNode mineOf(MindmapNode node, List<SyncConflict> conflicts) {
         strokeWidth: number(WireFields.strokeWidth),
         rotation: number(WireFields.rotation),
         textAlign: text(WireFields.textAlign),
+        textFlow: text(WireFields.textFlow),
       );
 }
 

@@ -55,8 +55,9 @@ void main() {
       25: ['mindmap_edges.line', 'mindmap_edges.arrows'],
       26: ['mindmap_nodes.rotation'],
       27: ['mindmap_nodes.text_align'],
+      28: ['mindmap_nodes.text_flow'],
     };
-    for (int from = 20; from < 27; from++) {
+    for (int from = 20; from < 28; from++) {
       final dir = await Directory.systemTemp.createTemp('hiwiski_schema');
       addTearDown(() => dir.delete(recursive: true));
       final file = File('${dir.path}/hiwiski.sqlite');

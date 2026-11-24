@@ -24,6 +24,7 @@ import 'package:hiwiski/core/sync/outbox.dart';
 import 'package:hiwiski/core/sync/sync_engine.dart';
 import 'package:hiwiski/core/sync/sync_status.dart';
 import 'package:hiwiski/core/theme/hiwiski_theme.dart';
+import 'package:hiwiski/core/ui/flowing_text.dart';
 import 'package:hiwiski/core/ui/ui_keys.dart';
 import 'package:hiwiski/domain/wiki/mindmap.dart';
 import 'package:hiwiski/features/wiki/mindmap/view/mindmap_conflict_bar.dart';
@@ -43,6 +44,32 @@ import 'support/fakes.dart';
 /// The mind map full screen: read and searched by everyone who sees the page,
 /// edited with "Edit" — each change written at once — and a conflict decided for the
 /// one element it is about.
+/// What shows [text]: a `Text`, or a note saying it — a note's lines are drawn one
+/// by one, not as a `Text`.
+Finder showing(String text) => find.byWidgetPredicate(
+  (widget) => switch (widget) {
+    MindmapNote(:final node) => node.text == text,
+    Text(:final data, :final textSpan) =>
+      (data ?? textSpan?.toPlainText()) == text,
+    _ => false,
+  },
+);
+
+/// The lines of the note on the map, where they stand on the screen.
+List<({Rect rect, String text})> noteLines(WidgetTester tester) {
+  final render = tester.renderObject<RenderFlowingText>(
+    find.descendant(
+      of: find.byType(MindmapNote),
+      matching: find.byType(FlowingText),
+    ),
+  );
+  final toScreen = render.getTransformTo(null);
+  return [
+    for (final line in render.lines)
+      (rect: MatrixUtils.transformRect(toScreen, line.rect), text: line.text),
+  ];
+}
+
 void main() {
   late HiwiskiDatabase db;
   late ProviderContainer container;
@@ -458,7 +485,7 @@ void main() {
     await open(tester);
     await tester.tap(find.byKey(MindmapKeys.edit));
     await settle(tester);
-    await tester.tap(find.text('Steppe'));
+    await tester.tap(showing('Steppe'));
     await settle(tester);
     final zoom = tester.widget<MindmapScene>(find.byType(MindmapScene)).zoom;
 
@@ -527,7 +554,7 @@ void main() {
     Rect around(String text) => tester.getRect(
       find
           .ancestor(
-            of: find.text(text),
+            of: showing(text),
             matching: find.byType(MindmapElementView),
           )
           .first,
@@ -1508,9 +1535,8 @@ void main() {
     },
   );
 
-  testWidgets('a note\'s text is placed in its middle, and back with Undo', (
-    tester,
-  ) async {
+  testWidgets('a note\'s text is placed in its middle, its list too, and back '
+      'with Undo', (tester) async {
     await seed(tester);
     final note = (await tester.runAsync(
       () => container
@@ -1522,21 +1548,32 @@ void main() {
             y: 200,
             width: 240,
             height: 160,
-            text: 'Packliste',
+            text: 'Packliste\n\n- Zelt\n- Kocher',
           ),
     ))!;
     await open(tester);
     await tester.tap(find.byKey(MindmapKeys.edit));
     await settle(tester);
-    final words = find.descendant(
-      of: find.byType(MindmapNote),
-      matching: find.text('Packliste'),
-    );
     final room = tester.getRect(find.byType(MindmapNote));
-    // At the top left at first: a short line stands at the note's start.
-    expect(tester.getRect(words).left, closeTo(room.left, 1));
-    expect(tester.getRect(words).top, closeTo(room.top, 1));
-    await tester.tap(words);
+    // At the top left at first: each line at the note's start, the list's marker
+    // leading its line.
+    final before = noteLines(tester);
+    expect(
+      before.map((line) => line.text),
+      equals(['Packliste', '•\u00A0Zelt', '•\u00A0Kocher']),
+    );
+    for (final line in before) {
+      expect(line.rect.left, closeTo(room.left, 1), reason: line.text);
+    }
+    expect(before.first.rect.top, closeTo(room.top, 1));
+    await tester.tap(
+      find
+          .ancestor(
+            of: find.byType(MindmapNote),
+            matching: find.byType(MindmapElementView),
+          )
+          .first,
+    );
     await settle(tester);
     for (
       int turn = 0;
@@ -1553,23 +1590,44 @@ void main() {
     );
     await settle(tester);
 
-    Future<String?> stored() async => (await tester.runAsync(
+    Future<MindmapNodeRow> stored() async => (await tester.runAsync(
       () => (db.select(
         db.mindmapNodes,
       )..where((row) => row.id.equals(note))).getSingle(),
-    ))!.textAlign;
-    expect(await stored(), equals(MindmapTextAligns.center));
-    // Drawn in the note's middle, across and up and down — a short line too, not
-    // only one that wraps.
-    final placed = tester.getRect(words);
+    ))!;
+    expect((await stored()).textAlign, equals(MindmapTextAligns.center));
+    // Drawn in the note's middle, across and up and down — each short line, the
+    // list's too.
     final middle = tester.getRect(find.byType(MindmapNote)).center;
-    expect(placed.width, lessThan(room.width * 0.75));
-    expect(placed.center.dx, closeTo(middle.dx, 1));
-    expect(placed.center.dy, closeTo(middle.dy, 1));
+    final placed = noteLines(tester);
+    for (final line in placed) {
+      expect(line.rect.width, lessThan(room.width * 0.75), reason: line.text);
+      expect(line.rect.center.dx, closeTo(middle.dx, 1), reason: line.text);
+    }
+    final text = placed
+        .map((line) => line.rect)
+        .reduce((all, line) => all.expandToInclude(line));
+    expect(text.center.dy, closeTo(middle.dy, 1));
 
-    await tester.tap(find.byKey(MindmapKeys.undo));
+    // Switched to follow the shape and back in the same sheet: both are
+    // written, the second on what the first left.
+    await tester.tap(find.byKey(MindmapKeys.textAlign));
     await settle(tester);
-    expect(await stored(), isNull);
+    await tester.tap(find.byKey(MindmapKeys.textFlow));
+    await settle(tester);
+    expect((await stored()).textFlow, equals(MindmapTextFlows.shape));
+    await tester.tap(find.byKey(MindmapKeys.textFlow));
+    await settle(tester);
+    expect((await stored()).textFlow, isNull);
+    await tester.tapAt(const Offset(20, 20));
+    await settle(tester);
+
+    for (int step = 0; step < 3; step++) {
+      await tester.tap(find.byKey(MindmapKeys.undo));
+      await settle(tester);
+    }
+    expect((await stored()).textAlign, isNull);
+    expect((await stored()).textFlow, isNull);
   });
 
   testWidgets('a new link shows what it points to', (tester) async {
@@ -1996,7 +2054,7 @@ void main() {
     await settle(tester);
     final element = find
         .ancestor(
-          of: find.text('Notiz'),
+          of: showing('Notiz'),
           matching: find.byType(MindmapElementView),
         )
         .first;

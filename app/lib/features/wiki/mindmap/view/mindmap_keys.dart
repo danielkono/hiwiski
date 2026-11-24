@@ -49,6 +49,7 @@ abstract final class MindmapKeys {
   static const shape = ValueKey('mindmap-shape');
   static const textSize = ValueKey('mindmap-text-size');
   static const textAlign = ValueKey('mindmap-text-align');
+  static const textFlow = ValueKey('mindmap-text-flow');
   static const _textAlign = 'mindmap-text-align-';
   static ValueKey<String> textAlignOf(String align) =>
       .new('$_textAlign$align');

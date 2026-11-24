@@ -61,9 +61,9 @@ class HiwiskiDatabase extends _$HiwiskiDatabase {
   /// 20: a mind map's elements and connections. 21: what a link element shows. 22: the
   /// colour of an element's text. 23: strokes drawn by hand. 24: how thick a connection
   /// is. 25: a connection's kind of line and its arrowheads. 26: how far an element is
-  /// turned. 27: where a note's text stands inside it.
+  /// turned. 27: where a note's text stands inside it. 28: what a note's lines fill.
   @override
-  int get schemaVersion => 27;
+  int get schemaVersion => 28;
 
   /// Adds [column] to [table] unless it is there already. A step can be half done:
   /// the column added but the new version not yet written — the background sync
@@ -127,6 +127,9 @@ class HiwiskiDatabase extends _$HiwiskiDatabase {
         }
         if (from < 27) {
           await _addColumnOnce(m, mindmapNodes, mindmapNodes.textAlign);
+        }
+        if (from < 28) {
+          await _addColumnOnce(m, mindmapNodes, mindmapNodes.textFlow);
         }
       }
       await requestSnapshot();

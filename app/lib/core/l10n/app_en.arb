@@ -1910,6 +1910,22 @@
   "mindmapAlignBottomLeft": "Bottom left",
   "mindmapAlignBottomCenter": "Bottom centre",
   "mindmapAlignBottomRight": "Bottom right",
+  "mindmapTextFlow": "Follow the shape",
+  "@mindmapTextFlow": {
+    "description": "A switch beside the text placement: a note's lines fill its shape itself — round in an ellipse, pointed in a diamond — instead of the largest box inside it."
+  },
+  "mindmapTextFlowHint": "Each line as wide as the shape at its height",
+  "@mindmapTextFlowHint": {
+    "description": "Below the switch that lets a note's lines follow its shape."
+  },
+  "mindmapTextFlowBox": "Box inside the shape",
+  "@mindmapTextFlowBox": {
+    "description": "In a conflict: a note's lines fill the largest box inside its shape."
+  },
+  "mindmapTextFlowShape": "The shape itself",
+  "@mindmapTextFlowShape": {
+    "description": "In a conflict: a note's lines follow its shape."
+  },
   "mindmapCanvas": "Mind map canvas",
   "mindmapUndo": "Undo",
   "mindmapRedo": "Redo",

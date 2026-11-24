@@ -531,6 +531,16 @@ class MindmapViewModel extends _$MindmapViewModel {
   Future<void> setTextAlign(MindmapNode node, String? align) =>
       _change(node, node.styled(textAlign: Change(align)));
 
+  /// What a note's lines fill ([MindmapTextFlows]) — `null`: the box inside its
+  /// shape. On the element as it is stored now: switched on and off again in one
+  /// sheet, it is no longer what the sheet was opened over, and the change back
+  /// compared with that would write nothing.
+  Future<void> setTextFlow(MindmapNode node, String? flow) async {
+    final now = await ref.read(mindmapRepositoryProvider).node(node.id);
+    if (now == null) return;
+    await _change(now, now.styled(textFlow: Change(flow)));
+  }
+
   /// A stroke drawn by hand — [points] in the map's units, as the pen went — goes on
   /// the map as an element of its own, in [color] and [width] thick; drawn as
   /// [shape], it may be resized later.
@@ -653,6 +663,7 @@ class MindmapViewModel extends _$MindmapViewModel {
       strokeWidth: change(WireFields.strokeWidth, to.strokeWidth),
       rotation: change(WireFields.rotation, to.rotation),
       textAlign: change(WireFields.textAlign, to.textAlign),
+      textFlow: change(WireFields.textFlow, to.textFlow),
     );
   }
 
