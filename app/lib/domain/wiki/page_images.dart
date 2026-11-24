@@ -57,8 +57,12 @@ final _imageLine = RegExp(
 );
 final _fence = RegExp(r'^\s*(```|~~~)');
 
-/// One image as Markdown.
-String imageMarkdown(String id) => '![](${UriSchemes.hiwiskiImage}:$id)';
+/// One image as Markdown — with [name], what a screen reader says for it.
+String imageMarkdown(String id, {String name = ''}) =>
+    '![${name.replaceAll(_nameEnd, '')}](${UriSchemes.hiwiskiImage}:$id)';
+
+/// What would end an image's name early — taken out of it.
+final _nameEnd = RegExp(r'[\[\]]');
 
 /// [markdown] cut into text and image groups, in order. Image lines inside a code
 /// block stay text.

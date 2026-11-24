@@ -14,6 +14,7 @@ import 'package:hiwiski/core/storage/local_settings.dart';
 import 'package:hiwiski/domain/calendar/occurrence.dart';
 import 'package:hiwiski/domain/common/calendar_days.dart';
 import 'package:hiwiski/domain/session/session_state.dart';
+import 'package:hiwiski/domain/wiki/mindmap.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 
@@ -43,7 +44,8 @@ void main() {
           'description' ||
           'me' ||
           'label' ||
-          'location' => '',
+          'location' ||
+          'text' => '',
           'unit' => value == null ? null : '',
           _ => shape(value),
         },
@@ -198,11 +200,76 @@ void main() {
     final widgets = await db.select(db.widgets).get();
     expect(widgets, hasLength((data['start'] as List).length));
 
-    // Reset: the same again, nothing twice.
+    // The mind map: every element and connection; its pictures kept on the device,
+    // its links and members pointing where a link picker would have them point.
+    List<Map<String, dynamic>> flat(Object? entries) => [
+      for (final page
+          in (entries as List? ?? const []).cast<Map<String, dynamic>>()) ...[
+        page,
+        ...flat(page['children']),
+      ],
+    ];
+    final sampled = flat(data['pages'])
+        .singleWhere((page) => page['mindmap'] != null);
+    final mindmap = sampled['mindmap'] as Map<String, dynamic>;
+    final sampledNodes = (mindmap['nodes'] as List)
+        .cast<Map<String, dynamic>>();
+    final mapPage = rows.singleWhere((row) => row.kind == PageKinds.mindmap);
+    expect(mapPage.title, equals(sampled['title']));
+    Future<List<MindmapNodeRow>> nodes() => (db.select(
+      db.mindmapNodes,
+    )..where((node) => node.pageId.equals(mapPage.id))).get();
+    final placed = await nodes();
+    expect(placed, hasLength(sampledNodes.length));
+    expect(
+      await (db.select(
+        db.mindmapEdges,
+      )..where((edge) => edge.pageId.equals(mapPage.id))).get(),
+      hasLength((mindmap['edges'] as List).length),
+    );
+    final kept = await db.select(db.localImages).get();
+    expect(
+      kept,
+      hasLength(sampledNodes.where((node) => node['image'] != null).length),
+    );
+    final memberIds = {
+      for (final member in await db.select(db.members).get()) member.id,
+    };
+    for (final node in placed) {
+      switch (node.kind) {
+        case MindmapKinds.image:
+          // Named, for a screen reader; kept here, for the demo has no server.
+          expect(pictureNameOf(node.body), isNotNull, reason: node.body);
+          expect(
+            kept.where((image) => node.body.contains(':${image.id})')),
+            hasLength(1),
+            reason: node.body,
+          );
+        case MindmapKinds.link:
+          expect(node.target, startsWith('hiwiski://wiki_page/'));
+        case MindmapKinds.member:
+          expect(memberIds, contains(memberIdOf(node.target)));
+        case MindmapKinds.drawing:
+          expect(node.points, isNotEmpty);
+      }
+    }
+    expect(
+      placed.where((node) => node.shape == MindmapShapes.arrow),
+      hasLength(sampledNodes.where((node) => node['pen'] != null).length),
+    );
+
+    // Reset: the same again, nothing twice — and the pictures in memory gone with
+    // the media repository, which the map's pictures were kept through.
+    final media = container.read(mediaRepositoryProvider);
     await container.read(demoProvider).reset();
+    expect(container.read(mediaRepositoryProvider), isNot(same(media)));
     expect(
       await db.select(db.todoLists).get(),
       hasLength((data['lists'] as List).length),
+    );
+    expect(
+      await db.select(db.mindmapNodes).get(),
+      hasLength(sampledNodes.length),
     );
   });
 }

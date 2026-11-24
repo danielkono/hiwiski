@@ -358,9 +358,9 @@ class _MindmapCanvasState extends State<MindmapCanvas>
         widget.penShape,
         color: pen?.color ?? Colors.transparent,
         width: width,
-        head: math.max(
-          width * _headPerWidth,
-          HiwiskiMetrics.mindmapArrowHead * 2 / _camera.scale,
+        head: penArrowHead(
+          width,
+          least: HiwiskiMetrics.mindmapArrowHead * 2 / _camera.scale,
         ),
       );
       return;
@@ -568,9 +568,6 @@ class _MindmapCanvasState extends State<MindmapCanvas>
 
   /// How far around the finger the eraser takes a stroke, on screen.
   static const _eraserReach = HiwiskiMetrics.mindmapEraser;
-
-  /// An arrow's head drawn with the pen, by the pen's width.
-  static const _headPerWidth = 4.0;
 
   /// How far a finger drags, tapped twice, for the map to zoom e-fold.
   static const _zoomDrag = 150.0;

@@ -117,8 +117,11 @@ SessionStore sessionStoreFor(Ref ref, {SessionState? initial}) => _owned(
     repository: ref.watch(sessionRepositoryProvider),
     preferences: ref.watch(preferencesStoreProvider),
     sync: _SyncForSession(ref),
-    // The images in memory go with the media repository.
-    dropImages: () => ref.invalidate(mediaRepositoryProvider),
+    // The images in memory go with the media repository. Through the container:
+    // the repository watches the session, and a debug build took the session
+    // marking it stale for a dependency loop and threw — after a sign-out or the
+    // demo's reset had cleared the device, before the session was remembered again.
+    dropImages: () => ref.container.invalidate(mediaRepositoryProvider),
     initial: initial,
   ),
 );

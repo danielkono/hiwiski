@@ -148,8 +148,10 @@ flutter:
     # The catalogue a device without a server starts from -- the server's own seed,
     # kept identical by test/catalog_seed_test.dart.
     - assets/catalog/
-    # The demo's sample data, one file per language.
+    # The demo's sample data, one file per language, and the pictures on its mind
+    # map -- a family's own photos, without their location and camera data.
     - assets/demo/
+    - assets/demo/images/
     # The app icon for the logo on the sign-in and setup screens.
     - assets/brand/
 

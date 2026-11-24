@@ -122,3 +122,15 @@ The corner shows what can be added, drawn and done with a selection; each choice
 plain data (`MindmapCornerOption`: a key, a symbol, a name, what a tap does), built by
 the screen from what the selection's kind allows. Another way to offer them — a bar,
 a panel — draws the same lists.
+
+## The demo's map
+
+The demo has a mind map (`app/assets/demo/demo-<lang>.json`, the page whose entry has
+`mindmap`): its elements in the order they lie on each other, each with its kind, box,
+`text` and `look` — fields by their names on the wire — and its connections by the
+`key`s of their ends. What an element shows is named in the sample data's own words:
+`image` a picture in `app/assets/demo/images/` (without its location and camera data),
+`target` a page or list by `page:<key>` or `list:<key>`, `member` a member by their
+place in the family, `points` a stroke on the map — with `pen`, the two corners of a
+shape the pen draws. `Demo` places them as the map's screen does; a new kind or field
+can be shown there, and `demo_seed_test.dart` checks that every element arrives.

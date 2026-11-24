@@ -1,15 +1,20 @@
 import 'dart:convert';
-import 'dart:ui' show PlatformDispatcher;
+import 'dart:math' as math;
+import 'dart:ui' show Offset, PlatformDispatcher;
 
 import 'package:clock/clock.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/api/image_client.dart';
 import '../core/common/wire.dart';
+import '../core/theme/hiwiski_metrics.dart';
 import '../domain/board/widget_kinds.dart';
 import '../domain/calendar/event_draft.dart';
 import '../domain/links/link_text.dart';
 import '../domain/todo/kanban.dart';
+import '../domain/wiki/mindmap.dart';
+import '../domain/wiki/page_images.dart';
 import '../domain/wiki/wiki_models.dart';
 import 'repositories.dart';
 import 'stores.dart';
@@ -79,6 +84,24 @@ class Demo {
   static const _linkKey = 'key';
   static const _pageLink = 'page:';
   static const _listLink = 'list:';
+  static const _mindmap = 'mindmap';
+  static const _nodes = 'nodes';
+  static const _edges = 'edges';
+  static const _x = 'x';
+  static const _y = 'y';
+  static const _width = 'width';
+  static const _height = 'height';
+  static const _words = 'text';
+  static const _look = 'look';
+  static const _image = 'image';
+  static const _target = 'target';
+  static const _member = 'member';
+  static const _points = 'points';
+  static const _pen = 'pen';
+  static const _from = 'from';
+  static const _to = 'to';
+  static const _images = 'assets/demo/images/';
+  static const _imageExtension = '.jpg';
 
   /// `{{page:recipes}}`, `{{list:shopping}}`: a link to what the sample data
   /// names by that key — written as the link picker writes it, once the target
@@ -149,7 +172,7 @@ class Demo {
 
     await _seedLists(data, members, tags);
     await _seedCalendars(data, members, tags);
-    await _seedPages(data, tags);
+    await _seedPages(data, members, tags);
     await _seedStartBoard(data);
   }
 
@@ -262,9 +285,11 @@ class Demo {
     }
   }
 
-  /// All pages first, then their texts: a text links to pages further down.
+  /// All pages first, then their texts and mind maps: a text links to pages further
+  /// down.
   Future<void> _seedPages(
     Map<String, dynamic> data,
+    List<String> Function(Object?) members,
     List<String> Function(Object?) tags,
   ) async {
     final created = <(String, Map<String, dynamic>)>[];
@@ -294,6 +319,108 @@ class Demo {
                 Ingredient.fromJson(item).toJson(),
             ],
         },
+      );
+      if (entry[_mindmap] case final Map<String, dynamic> map) {
+        await _seedMindmap(id, map, members);
+      }
+    }
+  }
+
+  /// The elements of a mind map, in the order they lie on each other, and then their
+  /// connections — placed as the map's screen places them. An element names what it
+  /// shows by the sample data's own words: a picture by its file in
+  /// `assets/demo/images/`, a link by `page:<key>` or `list:<key>`, a member by their
+  /// place in the family; a stroke by its points on the map, or a shape the pen draws
+  /// by its two corners.
+  Future<void> _seedMindmap(
+    String pageId,
+    Map<String, dynamic> map,
+    List<String> Function(Object?) members,
+  ) async {
+    final maps = _ref.read(mindmapRepositoryProvider);
+    final media = _ref.read(mediaRepositoryProvider);
+    final ids = <String, String>{};
+    for (final node in _list(map[_nodes])) {
+      final kind = _text(node, _kind);
+      final look = <String, Object?>{...?node[_look] as Map<String, dynamic>?};
+      String text = _text(node, _words);
+      int x = node[_x] as int? ?? 0, y = node[_y] as int? ?? 0;
+      int width = node[_width] as int? ?? 0,
+          height = node[_height] as int? ?? 0;
+      if (node[_image] case final String file) {
+        final bytes = await rootBundle.load('$_images$file$_imageExtension');
+        // Kept on the device, as a picture placed on the map is: the demo has no
+        // server to take it.
+        final imageId = await media.keep(
+          ownerType: ImageOwnerTypes.wikiPage,
+          ownerItemId: pageId,
+          bytes: bytes.buffer.asUint8List(),
+          filename: '$file$_imageExtension',
+        );
+        text = imageMarkdown(imageId, name: text);
+      }
+      if (_targets[node[_target]] case final target?) {
+        look[WireFields.target] = linkAddressOf(
+          UriReference.markdown(target.type, target.id, target.title),
+        );
+      }
+      if (node[_member] case final int index) {
+        if (members([index]).firstOrNull case final member?) {
+          look[WireFields.target] = memberAddressOf(member);
+        }
+      }
+      if (node[_points] case final List<dynamic> given) {
+        final strokeWidth = look[WireFields.strokeWidth] as int? ?? 1;
+        final points = [
+          for (final point in given.cast<List<dynamic>>())
+            Offset((point[0] as num).toDouble(), (point[1] as num).toDouble()),
+        ];
+        final pen = MindmapPenShape.values
+            .where((shape) => penShapeName(shape) == node[_pen])
+            .firstOrNull;
+        // As the pen draws it: a shape along its outline, as thick as on the screen.
+        final stroke = strokeOf(
+          pen == null || points.length < 2
+              ? points
+              : penShapeOutline(
+                  pen,
+                  points.first,
+                  points.last,
+                  head: penArrowHead(
+                    strokeWidth.toDouble(),
+                    least: HiwiskiMetrics.mindmapArrowHead * 2,
+                  ),
+                ),
+          strokeWidth.toDouble(),
+        );
+        x = stroke.bounds.left.round();
+        y = stroke.bounds.top.round();
+        width = math.max(1, stroke.bounds.width.round());
+        height = math.max(1, stroke.bounds.height.round());
+        look[WireFields.points] = stroke.points;
+        look[WireFields.shape] = pen == null ? null : penShapeName(pen);
+      }
+      final id = await maps.addNode(
+        pageId: pageId,
+        kind: kind,
+        x: x,
+        y: y,
+        width: width,
+        height: height,
+        text: text,
+        look: look,
+      );
+      if (node[_linkKey] case final String key) ids[key] = id;
+    }
+    for (final edge in _list(map[_edges])) {
+      final from = await maps.node(ids[edge[_from]] ?? '');
+      final to = await maps.node(ids[edge[_to]] ?? '');
+      if (from == null || to == null) continue;
+      await maps.connect(
+        from,
+        to,
+        text: _text(edge, _words),
+        look: {...?edge[_look] as Map<String, dynamic>?},
       );
     }
   }

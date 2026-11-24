@@ -54,7 +54,7 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
   its own, so a conflict names the one element two people changed and is decided for
   it alone — on the map, your version drawn beside the one everyone sees. Links on a
   map count as links from its page, and the search finds a page by the words on its
-  map.
+  map. The demo has one to try: the sample family's ideas for a summer on Sardinia.
 
   *Upgrade notes:* update the server before the apps. An older app shows a mind map as
   an ordinary page and leaves its canvas alone; an older server refuses the elements

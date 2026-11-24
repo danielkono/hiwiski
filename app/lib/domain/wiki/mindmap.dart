@@ -1146,6 +1146,13 @@ List<Offset> penShapeOutline(
   }
 }
 
+/// How long the head of an arrow drawn with the pen is: by its line's [width], and
+/// no shorter than [least].
+double penArrowHead(double width, {required double least}) =>
+    math.max(width * _headPerWidth, least);
+
+const _headPerWidth = 4.0;
+
 /// How a drawn shape is named in an element's `shape`.
 String penShapeName(MindmapPenShape shape) => switch (shape) {
   .rectangle => MindmapShapes.rectangle,
