@@ -422,6 +422,23 @@ void main() {
       expect(mine.width, equals(100));
     });
 
+    test('this device\'s version is turned and drawn as it wrote it', () {
+      final theirs = node('a', rotation: 90);
+
+      final mine = mineOf(theirs, [
+        lost(WireFields.rotation, 'null'),
+        lost(WireFields.points, '"0,0 10000,10000"'),
+      ]);
+      expect(mine.rotation, isNull);
+      expect(mine.points, equals('0,0 10000,10000'));
+      expect(
+        mineOf(node('a'), [lost(WireFields.rotation, '45')]).rotation,
+        equals(45),
+      );
+      // What did not lose stays as the map has it.
+      expect(mineOf(theirs, [lost(WireFields.x, '30')]).rotation, equals(90));
+    });
+
     test('a version differing only in its look stands beside the other', () {
       final theirs = node('a', x: 10, y: 20);
       final recoloured = theirs.styled(color: const Change('TEAL'));

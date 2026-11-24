@@ -254,6 +254,7 @@ class MindmapNode {
     int? height,
     double? layer,
     String? text,
+    String? points,
   }) => .new(
     id: id,
     ownerId: ownerId,
@@ -272,7 +273,7 @@ class MindmapNode {
     shape: shape,
     textSize: textSize,
     textColor: textColor,
-    points: points,
+    points: points ?? this.points,
     strokeWidth: strokeWidth,
     rotation: rotation,
   );
@@ -1171,16 +1172,19 @@ List<List<SyncConflict>> groupConflicts(List<SyncConflict> conflicts) {
 
 /// [node] as this device wrote it: each field of [conflicts] — lost against someone
 /// else's change, and on the map now as they wrote it — back at this device's value.
+/// Every field an element is drawn by counts, its turn and a stroke's points too:
+/// left out, this device's version was drawn as the map has it.
 MindmapNode mineOf(MindmapNode node, List<SyncConflict> conflicts) {
   int? whole(String field) => switch (_mineOf(conflicts, field)) {
     final num value => value.round(),
     _ => null,
   };
+  bool lost(String field) =>
+      conflicts.any((conflict) => conflict.field == field);
   // A look that lost may have been cleared on this device: `null` is a value then.
   Change<String?>? text(String field) =>
-      conflicts.any((conflict) => conflict.field == field)
-      ? .new(_mineOf(conflicts, field)?.toString())
-      : null;
+      lost(field) ? .new(_mineOf(conflicts, field)?.toString()) : null;
+  Change<int?>? number(String field) => lost(field) ? .new(whole(field)) : null;
   return node
       .changed(
         x: whole(WireFields.x),
@@ -1192,6 +1196,7 @@ MindmapNode mineOf(MindmapNode node, List<SyncConflict> conflicts) {
           _ => null,
         },
         text: _mineOf(conflicts, WireFields.text)?.toString(),
+        points: _mineOf(conflicts, WireFields.points)?.toString(),
       )
       .styled(
         target: text(WireFields.target),
@@ -1200,12 +1205,8 @@ MindmapNode mineOf(MindmapNode node, List<SyncConflict> conflicts) {
         shape: text(WireFields.shape),
         textSize: text(WireFields.textSize),
         textColor: text(WireFields.textColor),
-        strokeWidth:
-            conflicts.any(
-              (conflict) => conflict.field == WireFields.strokeWidth,
-            )
-            ? Change(whole(WireFields.strokeWidth))
-            : null,
+        strokeWidth: number(WireFields.strokeWidth),
+        rotation: number(WireFields.rotation),
       );
 }
 
