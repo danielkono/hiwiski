@@ -659,7 +659,17 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
   }
 
   /// Starts writing [node] on the canvas — [isNew]: one not on the map yet.
+  ///
+  /// A snippet still written is finished first, or — when it is [node] itself — goes
+  /// on as typed. On a phone a tap in the corner leaves the field its focus, so the
+  /// field was never left: the text typed into it was replaced unseen and lost.
   void _write(MindmapNode node, {bool isNew = false}) {
+    final current = _writing;
+    if (current != null && !isNew && current.node.id == node.id) {
+      _typing.requestFocus();
+      return;
+    }
+    if (current != null) unawaited(_finishWriting());
     _typed
       ..text = node.text
       ..selection = TextSelection.collapsed(offset: node.text.length);
@@ -728,7 +738,9 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
   void _placedWritten(String id) {
     setState(() => _heldAs = id);
     _arrived(_state?.map);
-    _select(.node(id));
+    // Another snippet begun meanwhile keeps the selection and the field: selecting
+    // this one took the focus from it, and it was left empty.
+    if (_writing == null) _select(.node(id));
   }
 
   /// What is held until the map has it — strokes just drawn, a snippet just written

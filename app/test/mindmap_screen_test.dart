@@ -258,6 +258,67 @@ void main() {
     expect(left?.deletedAt, isNotNull);
   });
 
+  testWidgets('on a phone, what is typed is kept when another snippet starts', (
+    tester,
+  ) async {
+    await seed(tester);
+    await open(tester, size: const Size(390, 844));
+    await tester.tap(find.byKey(MindmapKeys.edit));
+    await settle(tester);
+    Future<List<String>> texts() async => [
+      for (final row in (await tester.runAsync(
+        () => db.select(db.mindmapNodes).get(),
+      ))!)
+        if (row.deletedAt == null) row.body,
+    ];
+
+    // One there rewritten, and — the field still in hand, as on a phone, where a
+    // tap in the corner leaves the keyboard up — "Edit content" tapped for it: what
+    // is typed stays in the field.
+    await tester.tap(find.text('Meer'));
+    await settle(tester);
+    await tester.tap(find.text('Meer'));
+    await settle(tester);
+    await tester.enterText(
+      find.byKey(MindmapKeys.textField),
+      'Meer und Strand',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(MindmapKeys.editContent));
+    await settle(tester);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(MindmapKeys.textField))
+          .controller
+          ?.text,
+      equals('Meer und Strand'),
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await settle(tester);
+    expect(await texts(), contains('Meer und Strand'));
+
+    // A new snippet written, and another one begun, the field still in hand.
+    await pick(
+      tester,
+      MindmapKeys.addMenu,
+      MindmapKeys.tool(MindmapKinds.plain),
+    );
+    await settle(tester);
+    await tester.enterText(find.byKey(MindmapKeys.textField), 'Hallo');
+    await tester.pump();
+    await pick(
+      tester,
+      MindmapKeys.addMenu,
+      MindmapKeys.tool(MindmapKinds.plain),
+    );
+    await settle(tester);
+    await tester.enterText(find.byKey(MindmapKeys.textField), 'Welt');
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await settle(tester);
+    expect(await texts(), containsAll(['Hallo', 'Welt']));
+  });
+
   testWidgets('a member of the family is placed by their picture', (
     tester,
   ) async {
