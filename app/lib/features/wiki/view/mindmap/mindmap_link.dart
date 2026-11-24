@@ -27,20 +27,46 @@ class MindmapLinkContent extends ConsumerWidget {
       context.getInheritedWidgetOfExactType<_WithinContent>() != null;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => MediaQuery(
-    data: MediaQuery.of(context).copyWith(textScaler: .linear(textScale)),
-    child: SingleChildScrollView(
-      child: LinkPreview(
-        target: item,
-        body: _WithinContent(
-          child: ItemPreview(itemType: item.itemType, itemId: item.itemId),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final content = MediaQuery(
+      // Scaled by the element's text size alone, as before; the device's own
+      // setting does not double it.
+      data: MediaQuery.of(context).copyWith(textScaler: .noScaling),
+      child: SingleChildScrollView(
+        child: LinkPreview(
+          target: item,
+          body: _WithinContent(
+            child: ItemPreview(itemType: item.itemType, itemId: item.itemId),
+          ),
+          inline: true,
+          // A sheet over the map, not yet a way off it: nothing to wait for.
+          onOpenFull: () => unawaited(openLinkTarget(context, ref, item)),
         ),
-        inline: true,
-        // A sheet over the map, not yet a way off it: nothing to wait for.
-        onOpenFull: () => unawaited(openLinkTarget(context, ref, item)),
       ),
-    ),
-  );
+    );
+    if (textScale == 1) return content;
+    // The whole content scaled, not its text alone: laid out in a box as much
+    // smaller and drawn as much larger, its checkboxes, pictures and the room between
+    // them grow with its words. Its text scaled alone outgrew the boxes of a list,
+    // drawn at their own size, and squeezed a recipe's picture beside it.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (!constraints.hasBoundedWidth || !constraints.hasBoundedHeight) {
+          return content;
+        }
+        return FittedBox(
+          fit: .fill,
+          alignment: .topLeft,
+          clipBehavior: .hardEdge,
+          child: SizedBox(
+            width: constraints.maxWidth / textScale,
+            height: constraints.maxHeight / textScale,
+            child: content,
+          ),
+        );
+      },
+    );
+  }
 }
 
 /// Marks a target's content shown on a map ([MindmapLinkContent.within]).

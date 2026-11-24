@@ -1677,6 +1677,65 @@ void main() {
     },
   );
 
+  // Text, boxes and pictures grow together with the element's text size: its text
+  // scaled alone outgrew a list's boxes and squeezed a recipe's picture beside it.
+  testWidgets('a link\'s content grows as a whole with its text size', (
+    tester,
+  ) async {
+    await seed(tester);
+    final link = (await tester.runAsync(() async {
+      final wiki = container.read(wikiRepositoryProvider);
+      final packing = await wiki.createPage(title: 'Packen');
+      await wiki.updatePage(
+        (await wiki.watchPage(packing).first)!,
+        content: '- [ ] Zelt',
+      );
+      return container
+          .read(mindmapRepositoryProvider)
+          .addNode(
+            pageId: pageId,
+            kind: MindmapKinds.link,
+            x: 0,
+            y: 200,
+            width: 360,
+            height: 300,
+            look: {
+              WireFields.target: 'hiwiski://wiki_page/$packing',
+              WireFields.linkView: MindmapLinkViews.content,
+            },
+          );
+    }))!;
+    await open(tester);
+    Finder inContent(Finder finder) =>
+        find.descendant(of: find.byType(MindmapLinkContent), matching: finder);
+    double boxToWords() {
+      final box = tester.getRect(
+        inContent(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is Icon &&
+                (widget.icon == HiwiskiSymbols.checkBoxOutlineBlank ||
+                    widget.icon == Icons.check_box_outline_blank),
+          ),
+        ).first,
+      );
+      final words = tester.getRect(
+        inContent(find.textContaining('Zelt', findRichText: true)).first,
+      );
+      return box.height / words.height;
+    }
+
+    final medium = boxToWords();
+    await tester.runAsync(() async {
+      final maps = container.read(mindmapRepositoryProvider);
+      await maps.changeNode((await maps.node(link))!, {
+        WireFields.textSize: MindmapTextSizes.xLarge,
+      });
+    });
+    await settle(tester);
+    expect(boxToWords(), closeTo(medium, 0.01));
+  });
+
   // A kind described for the rules and drawn, but forgotten on the "Add" menu,
   // could only come from another device.
   testWidgets('every kind but a stroke is on the "Add" menu', (tester) async {
