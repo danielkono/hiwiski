@@ -74,6 +74,9 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
   app had been restarted reaches the server complete once the app connects to one.
   Before, a page, list, task or event arrived without its title or kind and was
   refused, and the tasks of a list brought back stayed behind.
+- A browser or phone set up with many languages — more than ten, as some Samsung
+  phones send — got an error page instead of Hiwiski, and the apps' every request
+  failed with it. Such a request is now served like any other.
 
 ## 2026.1.15 — 2026-11-20 {#2026.1.15}
 
