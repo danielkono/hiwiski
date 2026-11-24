@@ -1528,7 +1528,15 @@ void main() {
     await open(tester);
     await tester.tap(find.byKey(MindmapKeys.edit));
     await settle(tester);
-    await tester.tap(find.text('Packliste'));
+    final words = find.descendant(
+      of: find.byType(MindmapNote),
+      matching: find.text('Packliste'),
+    );
+    final room = tester.getRect(find.byType(MindmapNote));
+    // At the top left at first: a short line stands at the note's start.
+    expect(tester.getRect(words).left, closeTo(room.left, 1));
+    expect(tester.getRect(words).top, closeTo(room.top, 1));
+    await tester.tap(words);
     await settle(tester);
     for (
       int turn = 0;
@@ -1551,16 +1559,13 @@ void main() {
       )..where((row) => row.id.equals(note))).getSingle(),
     ))!.textAlign;
     expect(await stored(), equals(MindmapTextAligns.center));
-    // Drawn in the note's middle: its text stands in the middle of its room.
-    final column = tester.widget<Column>(
-      find
-          .descendant(
-            of: find.byType(MindmapNote),
-            matching: find.byType(Column),
-          )
-          .first,
-    );
-    expect(column.mainAxisAlignment, equals(MainAxisAlignment.center));
+    // Drawn in the note's middle, across and up and down — a short line too, not
+    // only one that wraps.
+    final placed = tester.getRect(words);
+    final middle = tester.getRect(find.byType(MindmapNote)).center;
+    expect(placed.width, lessThan(room.width * 0.75));
+    expect(placed.center.dx, closeTo(middle.dx, 1));
+    expect(placed.center.dy, closeTo(middle.dy, 1));
 
     await tester.tap(find.byKey(MindmapKeys.undo));
     await settle(tester);

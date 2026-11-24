@@ -48,10 +48,21 @@ class MindmapNote extends ConsumerWidget {
     final parts = <Widget>[
       for (final segment in pageSegments(node.text))
         switch (segment) {
-          ImageGroup(:final imageIds) => ImageStack(imageIds: imageIds),
+          // A picture is narrower than a wide note: it stands where the lines do.
+          ImageGroup(:final imageIds) => Align(
+            alignment: switch (across) {
+              .center => Alignment.topCenter,
+              .end => AlignmentDirectional.topEnd,
+              _ => AlignmentDirectional.topStart,
+            },
+            child: ImageStack(imageIds: imageIds),
+          ),
           TextSegment(:final markdown) => LinkedMarkdown(
             data: markdown,
             selectable: false,
+            // As wide as the note, or a short line would stand at its left
+            // whatever its place.
+            fitContent: false,
             styleSheet: sheet,
             onOpen: (target) => openLinkTarget(context, ref, target),
           ),

@@ -31,6 +31,7 @@ class LinkedMarkdown extends ConsumerWidget {
     required this.data,
     this.styleSheet,
     this.selectable = true,
+    this.fitContent = true,
     this.onOpen,
     this.onToggleTask,
   });
@@ -38,6 +39,11 @@ class LinkedMarkdown extends ConsumerWidget {
   final String data;
   final MarkdownStyleSheet? styleSheet;
   final bool selectable;
+
+  /// Whether each paragraph is only as wide as its text, standing at the start. A
+  /// text placed in the middle or at the end needs `false`: its paragraphs then
+  /// span the whole width and their lines stand where [styleSheet] places them.
+  final bool fitContent;
   final ValueChanged<LinkItem>? onOpen;
 
   /// Ticks the n-th checkbox of the text — a packing list is worked through on the
@@ -52,6 +58,11 @@ class LinkedMarkdown extends ConsumerWidget {
       final plain = Text(
         data,
         style: styleSheet?.p ?? Theme.of(context).textTheme.bodyMedium,
+        textAlign: switch (styleSheet?.textAlign) {
+          .center => TextAlign.center,
+          .end => TextAlign.end,
+          _ => TextAlign.start,
+        },
       );
       return selectable ? SelectionArea(child: plain) : plain;
     }
@@ -70,6 +81,7 @@ class LinkedMarkdown extends ConsumerWidget {
       // any linked item parsed the page again and cleared a selection in progress.
       key: ValueKey(_shownTargets(index, data)),
       data: data,
+      fitContent: fitContent,
       styleSheet: total == 0 ? styleSheet : _withTaskColumn(context),
       checkboxBuilder: onToggleTask == null || total == 0
           ? null
