@@ -8,7 +8,6 @@ import 'package:flutter/services.dart';
 import '../../../../core/common/wire.dart';
 import '../../../../core/l10n/generated/app_localizations.dart';
 import '../../../../core/theme/hiwiski_metrics.dart';
-import '../../../../domain/common/change.dart';
 import '../../../../domain/wiki/mindmap.dart';
 import '../../../../domain/wiki/mindmap_snap.dart';
 import '../../view/mindmap/mindmap_scene.dart';
@@ -786,7 +785,9 @@ class _MindmapCanvasState extends State<MindmapCanvas>
         ? step
         : degrees;
     setState(() {
-      _moving[node.id] = node.styled(rotation: Change(rotationOf(snapped)));
+      _moving[node.id] = node.withFields({
+        WireFields.rotation: rotationOf(snapped),
+      });
     });
   }
 

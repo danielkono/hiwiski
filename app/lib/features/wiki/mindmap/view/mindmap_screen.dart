@@ -472,12 +472,14 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
         final markdown = await showLinkPicker(context);
         final target = markdown == null ? null : linkAddressOf(markdown);
         if (target != null && mounted) {
-          await _viewModel.setTarget(node, target);
+          await _viewModel.setFields(node, {WireFields.target: target});
         }
       case MindmapKinds.member:
         final member = await _pickMember(current: memberIdOf(node.target));
         if (member != null && mounted) {
-          await _viewModel.setTarget(node, memberAddressOf(member.id));
+          await _viewModel.setFields(node, {
+            WireFields.target: memberAddressOf(member.id),
+          });
         }
     }
   }
@@ -597,8 +599,7 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
               height: math.max(1, size.height.round()),
             ),
             text: text,
-            target: target,
-            linkView: linkView,
+            look: {WireFields.target: target, WireFields.linkView: linkView},
           ),
     );
     if (mounted) _select(.node(id));
@@ -1062,7 +1063,9 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
                 title: L.of(context).mindmapEdgeText,
                 text: edge.text,
               );
-              if (text != null) await viewModel.setEdgeText(edge, text);
+              if (text != null) {
+                await viewModel.setEdgeFields(edge, {WireFields.text: text});
+              }
             }
           },
         ),
@@ -1079,8 +1082,9 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
               recent: state.ownColors,
             );
             if (chosen == null) return;
-            if (node != null) await viewModel.setColor(node, chosen.color);
-            if (edge != null) await viewModel.setEdgeColor(edge, chosen.color);
+            final color = {WireFields.color: chosen.color};
+            if (node != null) await viewModel.setFields(node, color);
+            if (edge != null) await viewModel.setEdgeFields(edge, color);
           },
         ),
       // Early on the arc: in reach without turning it.
@@ -1110,11 +1114,10 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
               ],
             );
             if (style != null) {
-              await viewModel.setEdgeStyle(
-                edge,
-                line: style.line,
-                arrows: style.arrows,
-              );
+              await viewModel.setEdgeFields(edge, {
+                WireFields.line: style.line,
+                WireFields.arrows: style.arrows,
+              });
             }
           },
         ),
@@ -1129,7 +1132,11 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
               current: edge.strokeWidth,
               withOwn: true,
             );
-            if (width != null) await viewModel.setEdgeWidth(edge, width.value);
+            if (width != null) {
+              await viewModel.setEdgeFields(edge, {
+                WireFields.strokeWidth: width.value,
+              });
+            }
           },
         ),
       if (node != null && drawing)
@@ -1143,7 +1150,9 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
               current: node.strokeWidth,
               withOwn: false,
             ))?.value;
-            if (width != null) await viewModel.setStrokeWidth(node, width);
+            if (width != null) {
+              await viewModel.setFields(node, {WireFields.strokeWidth: width});
+            }
           },
         ),
       if (texted)
@@ -1159,7 +1168,9 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
               text: (surface: node.hasSurface, fill: node.color),
             );
             if (chosen != null) {
-              await viewModel.setTextColor(node, chosen.color);
+              await viewModel.setFields(node, {
+                WireFields.textColor: chosen.color,
+              });
             }
           },
         ),
@@ -1188,17 +1199,17 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
                   : node.textFlow == MindmapTextFlows.shape,
               // The box inside the shape is what a note's lines fill without a
               // choice of their own.
-              onFollow: (follows) => viewModel.setTextFlow(
-                node,
-                follows ? MindmapTextFlows.shape : null,
-              ),
+              onFollow: (follows) => viewModel.setFields(node, {
+                WireFields.textFlow: follows ? MindmapTextFlows.shape : null,
+              }),
             );
             if (align == null) return;
             // The top left is where a note's text stands without a place of its own.
-            await viewModel.setTextAlign(
-              _state?.map.node(node.id) ?? node,
-              align == MindmapTextAligns.topLeft ? null : align,
-            );
+            await viewModel.setFields(node, {
+              WireFields.textAlign: align == MindmapTextAligns.topLeft
+                  ? null
+                  : align,
+            });
           },
         ),
       // Only what has a surface has an outline.
@@ -1221,7 +1232,7 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
               ],
             );
             if (shape != null && node != null) {
-              await viewModel.setShape(node, shape);
+              await viewModel.setFields(node, {WireFields.shape: shape});
             }
           },
         ),
@@ -1315,7 +1326,9 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
             recent: state.ownColors,
           );
           if (chosen != null) {
-            await _viewModel.setColors(group, chosen.color);
+            await _viewModel.setFieldsOfAll(group, {
+              WireFields.color: chosen.color,
+            });
           }
         },
       ),
@@ -2066,7 +2079,9 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
                               onGroup: _grouped,
                               onResize: _resize,
                               onRotate: (node, rotation) => unawaited(
-                                _viewModel.setRotation(node, rotation),
+                                _viewModel.setFields(node, {
+                                  WireFields.rotation: rotation,
+                                }),
                               ),
                               onConnect: (from, to) => unawaited(
                                 _viewModel.connect(

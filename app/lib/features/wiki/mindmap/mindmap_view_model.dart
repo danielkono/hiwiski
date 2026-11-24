@@ -18,7 +18,6 @@ import '../../../core/common/wire.dart';
 import '../../../data/media/media_repository.dart' show ImageOwnerTypes;
 import '../../../data/wiki/mindmap_repository.dart' show MindmapRepository;
 import '../../../domain/access/access_rules.dart';
-import '../../../domain/common/change.dart';
 import '../../../domain/common/item_ref.dart';
 import '../../../domain/links/link_index.dart';
 import '../../../domain/preferences/preferences.dart';
@@ -258,15 +257,15 @@ class MindmapViewModel extends _$MindmapViewModel {
   }
 
   /// Places a new element at [at] — its top left corner, in the map's units — and
-  /// returns its id.
+  /// returns its id. [look] holds its other fields by their names on the wire
+  /// ([MindmapNode.fields]).
   @command
   Future<String> addNode({
     required String kind,
     required ({int x, int y}) at,
     required ({int width, int height}) size,
     String text = '',
-    String? target,
-    String? linkView,
+    Map<String, Object?> look = const {},
   }) async {
     final maps = ref.read(mindmapRepositoryProvider);
     final id = newId();
@@ -282,8 +281,7 @@ class MindmapViewModel extends _$MindmapViewModel {
         width: size.width,
         height: size.height,
         text: text,
-        target: target,
-        linkView: linkView,
+        look: look,
       ),
     );
     return id;
@@ -334,43 +332,10 @@ class MindmapViewModel extends _$MindmapViewModel {
   }
 
   /// Moves elements dragged together, each to its new top left corner.
-  Future<void> move(Map<MindmapNode, ({int x, int y})> moves) async {
-    final maps = ref.read(mindmapRepositoryProvider);
-    final steps = [
-      for (final MapEntry(key: node, value: to) in moves.entries)
-        (from: node, to: node.changed(x: to.x, y: to.y)),
-    ];
-    _remember(
-      undo: () => _place(maps, [
-        for (final step in steps) (from: step.to, to: step.from),
-      ]),
-      redo: () => _place(maps, steps),
-    );
-    // The repository taken now, not when its turn comes: the screen may be closed
-    // by then, and its ViewModel with it — a read then failed, and the move was lost.
-    await _inTurn(() => maps.moveNodes(moves));
-  }
-
-  /// Puts each element of [steps] where `to` has it — in the place and size it
-  /// differs from `from` in, and nothing else: what someone else moved or resized
-  /// meanwhile along another axis stays as they left it.
-  static Future<void> _place(
-    MindmapRepository maps,
-    List<({MindmapNode from, MindmapNode to})> steps,
-  ) async {
-    final places = <MindmapNode, ({int x, int y, int width, int height})>{};
-    for (final (:from, :to) in steps) {
-      final current = await maps.node(to.id);
-      if (current == null) continue;
-      places[current] = (
-        x: to.x != from.x ? to.x : current.x,
-        y: to.y != from.y ? to.y : current.y,
-        width: to.width != from.width ? to.width : current.width,
-        height: to.height != from.height ? to.height : current.height,
-      );
-    }
-    await maps.arrangeNodes(places);
-  }
+  Future<void> move(Map<MindmapNode, ({int x, int y})> moves) => _changeAll({
+    for (final MapEntry(key: node, value: to) in moves.entries)
+      node: {WireFields.x: to.x, WireFields.y: to.y},
+  });
 
   Future<void> resize(
     MindmapNode node, {
@@ -378,7 +343,7 @@ class MindmapViewModel extends _$MindmapViewModel {
     required int height,
   }) {
     _sized(node.kind, width, height);
-    return _change(node, node.resizedTo(width, height));
+    return _change(node, node.changesTo(node.resizedTo(width, height)));
   }
 
   /// Moves and resizes several elements as one step — a group aligned, spread out
@@ -386,35 +351,16 @@ class MindmapViewModel extends _$MindmapViewModel {
   Future<void> arrange(Map<MindmapNode, MindmapNode> places) async {
     final changed = {
       for (final MapEntry(key: node, value: to) in places.entries)
-        if (to.x != node.x ||
-            to.y != node.y ||
-            to.width != node.width ||
-            to.height != node.height)
-          node: to,
+        if (node.changesTo(to) case final changes when changes.isNotEmpty)
+          node: changes,
     };
     if (changed.isEmpty) return;
-    final maps = ref.read(mindmapRepositoryProvider);
-    final steps = [
-      for (final MapEntry(key: node, value: to) in changed.entries)
-        (from: node, to: to),
-    ];
-    _remember(
-      undo: () => _place(maps, [
-        for (final step in steps) (from: step.to, to: step.from),
-      ]),
-      redo: () => _place(maps, steps),
-    );
-    for (final MapEntry(key: node, value: to) in changed.entries) {
+    for (final MapEntry(key: node, value: to) in places.entries) {
       if (to.width != node.width || to.height != node.height) {
         _sized(to.kind, to.width, to.height);
       }
     }
-    await _inTurn(
-      () => maps.arrangeNodes({
-        for (final MapEntry(key: node, value: to) in changed.entries)
-          node: (x: to.x, y: to.y, width: to.width, height: to.height),
-      }),
-    );
+    await _changeAll(changed);
   }
 
   /// Whether what is moved or resized snaps to other elements, on this device.
@@ -431,13 +377,11 @@ class MindmapViewModel extends _$MindmapViewModel {
     MindmapNode node,
     String text, {
     ({int width, int height})? box,
-  }) => _change(
-    node,
-    node.changed(text: text, width: box?.width, height: box?.height),
-  );
-
-  Future<void> setTarget(MindmapNode node, String target) =>
-      _change(node, node.styled(target: Change(target)));
+  }) => _change(node, {
+    WireFields.text: text,
+    WireFields.width: ?box?.width,
+    WireFields.height: ?box?.height,
+  });
 
   /// What a link element shows of its target — showing the content, it grows to at
   /// least [room], where the preview can be read.
@@ -447,61 +391,12 @@ class MindmapViewModel extends _$MindmapViewModel {
     required ({int width, int height}) room,
   }) {
     final content = view == MindmapLinkViews.content;
-    return _change(
-      node,
-      node
-          .styled(linkView: Change(view))
-          .changed(
-            width: content ? math.max(node.width, room.width) : null,
-            height: content ? math.max(node.height, room.height) : null,
-          ),
-    );
-  }
-
-  Future<void> setColor(MindmapNode node, String? color) =>
-      _change(node, node.styled(color: Change(color)));
-
-  /// One colour for a group: one step for "Undo".
-  ///
-  /// The colour and nothing else: [nodes] are the elements as the corner showed
-  /// them, and written whole they put back what anyone had changed since in any
-  /// other field. "Undo" gives each the colour it had when this was written.
-  Future<void> setColors(List<MindmapNode> nodes, String? color) async {
-    final maps = ref.read(mindmapRepositoryProvider);
-    const fields = {WireFields.color};
-    // Known once written: "Undo" runs only after that ([_inTurn]).
-    final before = <String, String?>{};
-    Future<void> paint(String? Function(String id) colorOf) async {
-      for (final id in before.keys) {
-        if (await maps.node(id) case final current?) {
-          await _write(
-            maps,
-            current,
-            current.styled(color: Change(colorOf(id))),
-            fields,
-          );
-        }
-      }
-    }
-
-    _remember(
-      undo: () => paint((id) => before[id]),
-      redo: () => paint((_) => color),
-    );
-    await _inTurn(() async {
-      for (final node in nodes) {
-        final current = await maps.node(node.id);
-        if (current == null) continue;
-        before[node.id] = current.color;
-        // On the version the corner showed: a colour someone else chose meanwhile
-        // is a conflict, not silently painted over.
-        await _write(maps, node, node.styled(color: Change(color)), fields);
-      }
+    return _change(node, {
+      WireFields.linkView: view,
+      if (content) WireFields.width: math.max(node.width, room.width),
+      if (content) WireFields.height: math.max(node.height, room.height),
     });
   }
-
-  Future<void> setShape(MindmapNode node, String? shape) =>
-      _change(node, node.styled(shape: Change(shape)));
 
   /// A text size; [box] is the room the text needs at it, where the element is as
   /// large as its text.
@@ -509,37 +404,24 @@ class MindmapViewModel extends _$MindmapViewModel {
     MindmapNode node,
     String? size, {
     ({int width, int height})? box,
-  }) => _change(
-    node,
-    node
-        .styled(textSize: Change(size))
-        .changed(width: box?.width, height: box?.height),
-  );
+  }) => _change(node, {
+    WireFields.textSize: size,
+    WireFields.width: ?box?.width,
+    WireFields.height: ?box?.height,
+  });
 
-  Future<void> setTextColor(MindmapNode node, String? color) =>
-      _change(node, node.styled(textColor: Change(color)));
+  /// Gives [node] the fields in [changes] — by their names on the wire
+  /// ([MindmapNode.fields]), `null` clearing one — as one step for "Undo". A field
+  /// of an element's look needs nothing more here.
+  Future<void> setFields(MindmapNode node, Map<String, Object?> changes) =>
+      _change(node, changes);
 
-  Future<void> setStrokeWidth(MindmapNode node, int width) =>
-      _change(node, node.styled(strokeWidth: Change(width)));
-
-  /// Turns [node] to [rotation] whole degrees clockwise — `null`: not turned — as one
-  /// step for "Undo", however long the grip was turned.
-  Future<void> setRotation(MindmapNode node, int? rotation) =>
-      _change(node, node.styled(rotation: Change(rotation)));
-
-  /// Where a note's text stands inside it ([MindmapTextAligns]) — `null`: top left.
-  Future<void> setTextAlign(MindmapNode node, String? align) =>
-      _change(node, node.styled(textAlign: Change(align)));
-
-  /// What a note's lines fill ([MindmapTextFlows]) — `null`: the box inside its
-  /// shape. On the element as it is stored now: switched on and off again in one
-  /// sheet, it is no longer what the sheet was opened over, and the change back
-  /// compared with that would write nothing.
-  Future<void> setTextFlow(MindmapNode node, String? flow) async {
-    final now = await ref.read(mindmapRepositoryProvider).node(node.id);
-    if (now == null) return;
-    await _change(now, now.styled(textFlow: Change(flow)));
-  }
+  /// The same [changes] for a group: one step for "Undo", and each element given
+  /// those fields and nothing else.
+  Future<void> setFieldsOfAll(
+    List<MindmapNode> nodes,
+    Map<String, Object?> changes,
+  ) => _changeAll({for (final node in nodes) node: changes});
 
   /// A stroke drawn by hand — [points] in the map's units, as the pen went — goes on
   /// the map as an element of its own, in [color] and [width] thick; drawn as
@@ -563,10 +445,12 @@ class MindmapViewModel extends _$MindmapViewModel {
         y: stroke.bounds.top.round(),
         width: math.max(1, stroke.bounds.width.round()),
         height: math.max(1, stroke.bounds.height.round()),
-        color: color,
-        shape: shape,
-        points: stroke.points,
-        strokeWidth: width,
+        look: {
+          WireFields.color: color,
+          WireFields.shape: shape,
+          WireFields.points: stroke.points,
+          WireFields.strokeWidth: width,
+        },
       ),
     );
   }
@@ -610,61 +494,58 @@ class MindmapViewModel extends _$MindmapViewModel {
   ) async {
     final layer = rule(_now, node);
     if (layer == null) return;
-    await _change(node, node.changed(layer: layer));
+    await _change(node, {WireFields.layer: layer});
   }
 
-  /// Writes [after] over [before] and remembers the way back — in the fields the
-  /// change makes, and only those.
-  Future<void> _change(MindmapNode before, MindmapNode after) async {
+  Future<void> _change(MindmapNode node, Map<String, Object?> changes) =>
+      _changeAll({node: changes});
+
+  /// Gives each element its changes — fields by their names on the wire — and
+  /// remembers the way back, all as one step.
+  ///
+  /// Of each, only the fields that differ from the element as stored when its turn
+  /// comes are written, and only those "Undo" sets back — to what they were then:
+  /// what someone else changed meanwhile in another field, or along another axis,
+  /// stays as they left it. Compared there and not with the element as the screen
+  /// showed it, a switch turned on and off again in a sheet that stays open writes
+  /// both times, and "Undo" takes each back. Each goes out on the version the screen
+  /// showed: a field someone else changed meanwhile is a conflict, not painted over.
+  Future<void> _changeAll(
+    Map<MindmapNode, Map<String, Object?>> changes,
+  ) async {
+    // The repository taken now, not when its turn comes: the screen may be closed
+    // by then, and its ViewModel with it — a read then failed, and the change was
+    // lost.
     final maps = ref.read(mindmapRepositoryProvider);
-    final fields = before.fieldsChangedTo(after);
-    _remember(
-      undo: () async {
-        if (await maps.node(before.id) case final node?) {
-          await _write(maps, node, before, fields);
+    // Known once written: "Undo" and "Redo" run only after that ([_inTurn]).
+    final before = <String, Map<String, Object?>>{};
+    final after = <String, Map<String, Object?>>{};
+    Future<void> write(Map<String, Map<String, Object?>> fields) async {
+      for (final MapEntry(key: id, value: changes) in fields.entries) {
+        if (await maps.node(id) case final current?) {
+          await maps.changeNodes({current: changes});
         }
-      },
-      redo: () async {
-        if (await maps.node(after.id) case final node?) {
-          await _write(maps, node, after, fields);
-        }
-      },
-    );
-    await _inTurn(() => _write(maps, before, after, fields));
-  }
+      }
+    }
 
-  /// Changes [node] to look as [to] does in [fields] — of those, only what differs
-  /// goes out. "Undo" and "Redo" write on the element as it is now, on its latest
-  /// version: written whole, they put back what someone else had changed meanwhile
-  /// in a field the step never touched, and without a conflict.
-  static Future<void> _write(
-    MindmapRepository maps,
-    MindmapNode node,
-    MindmapNode to,
-    Set<String> fields,
-  ) {
-    T? only<T>(String field, T value) => fields.contains(field) ? value : null;
-    Change<T>? change<T>(String field, T value) =>
-        fields.contains(field) ? .new(value) : null;
-    return maps.changeNode(
-      node,
-      x: only(WireFields.x, to.x),
-      y: only(WireFields.y, to.y),
-      width: only(WireFields.width, to.width),
-      height: only(WireFields.height, to.height),
-      layer: only(WireFields.layer, to.layer),
-      text: only(WireFields.text, to.text),
-      target: only<String?>(WireFields.target, to.target),
-      linkView: change(WireFields.linkView, to.linkView),
-      color: change(WireFields.color, to.color),
-      shape: change(WireFields.shape, to.shape),
-      textSize: change(WireFields.textSize, to.textSize),
-      textColor: change(WireFields.textColor, to.textColor),
-      strokeWidth: change(WireFields.strokeWidth, to.strokeWidth),
-      rotation: change(WireFields.rotation, to.rotation),
-      textAlign: change(WireFields.textAlign, to.textAlign),
-      textFlow: change(WireFields.textFlow, to.textFlow),
-    );
+    _remember(undo: () => write(before), redo: () => write(after));
+    await _inTurn(() async {
+      final written = <MindmapNode, Map<String, Object?>>{};
+      for (final MapEntry(key: node, value: wanted) in changes.entries) {
+        final stored = (await maps.node(node.id))?.fields ?? node.fields;
+        final differing = {
+          for (final MapEntry(key: field, :value) in wanted.entries)
+            if (stored[field] != value) field: value,
+        };
+        if (differing.isEmpty) continue;
+        before[node.id] = {
+          for (final field in differing.keys) field: stored[field],
+        };
+        after[node.id] = differing;
+        written[node] = differing;
+      }
+      await maps.changeNodes(written);
+    });
   }
 
   /// Takes the element away, and its connections with it.
@@ -715,72 +596,38 @@ class MindmapViewModel extends _$MindmapViewModel {
       },
       redo: () => maps.restore(edges: [made]),
     );
-    await _inTurn(
-      () => maps.connect(
-        from,
-        to,
-        id: id,
-        line: line,
-        arrows: arrows,
-        color: color,
-        strokeWidth: strokeWidth,
-      ),
-    );
+    await _inTurn(() => maps.connect(from, to, id: id, look: made.fields));
   }
 
-  Future<void> setEdgeText(MindmapEdge edge, String text) =>
-      _changeEdge(edge, _lookOf(edge).withText(text));
-
-  Future<void> setEdgeColor(MindmapEdge edge, String? color) =>
-      _changeEdge(edge, _lookOf(edge).withColor(color));
-
-  /// How thick a connection is drawn, in the map's units; `null`: the app's own.
-  Future<void> setEdgeWidth(MindmapEdge edge, int? width) =>
-      _changeEdge(edge, _lookOf(edge).withWidth(width));
-
-  /// How a connection is drawn: its line and its arrow heads, as one step.
-  Future<void> setEdgeStyle(
-    MindmapEdge edge, {
-    required String? line,
-    required String? arrows,
-  }) => _changeEdge(edge, _lookOf(edge).withStyle(line, arrows));
-
-  static _EdgeLook _lookOf(MindmapEdge edge) => (
-    text: edge.text,
-    color: edge.color,
-    width: edge.strokeWidth,
-    line: edge.line,
-    arrows: edge.arrows,
-  );
-
-  /// Gives [edge] the [look] and remembers the way back — in what the change makes,
-  /// and only that: a label someone else wrote meanwhile stays when the colour is
-  /// taken back.
-  Future<void> _changeEdge(MindmapEdge edge, _EdgeLook look) async {
+  /// Gives [edge] the fields in [changes] — its label, colour, thickness, line or
+  /// arrow heads, by their names on the wire ([MindmapEdge.fields]) — as one step
+  /// for "Undo", as [setFields] changes an element.
+  Future<void> setEdgeFields(
+    MindmapEdge edge,
+    Map<String, Object?> changes,
+  ) async {
     final maps = ref.read(mindmapRepositoryProvider);
-    final before = _lookOf(edge);
-    final text = look.text != before.text;
-    final color = look.color != before.color;
-    final width = look.width != before.width;
-    final line = look.line != before.line;
-    final arrows = look.arrows != before.arrows;
-    Future<void> set(MindmapEdge? current, _EdgeLook look) async {
-      if (current == null) return;
-      await maps.changeEdge(
-        current,
-        text: text ? look.text : null,
-        color: color ? Change(look.color) : null,
-        strokeWidth: width ? Change(look.width) : null,
-        line: line ? Change(look.line) : null,
-        arrows: arrows ? Change(look.arrows) : null,
-      );
+    // Known once written: "Undo" and "Redo" run only after that ([_inTurn]).
+    Map<String, Object?> before = {};
+    Map<String, Object?> after = {};
+    Future<void> write(Map<String, Object?> fields) async {
+      if (fields.isEmpty) return;
+      if (await maps.edge(edge.id) case final current?) {
+        await maps.changeEdge(current, fields);
+      }
     }
 
-    _remember(
-      undo: () async => set(await maps.edge(edge.id), before),
-      redo: () async => set(await maps.edge(edge.id), look),
-    );
-    await _inTurn(() => set(edge, look));
+    _remember(undo: () => write(before), redo: () => write(after));
+    await _inTurn(() async {
+      final stored = (await maps.edge(edge.id))?.fields ?? edge.fields;
+      after = {
+        for (final MapEntry(key: field, :value) in changes.entries)
+          if (stored[field] != value) field: value,
+      };
+      before = {for (final field in after.keys) field: stored[field]};
+      if (after.isEmpty) return;
+      await maps.changeEdge(edge, after);
+    });
   }
 
   Future<void> deleteEdge(MindmapEdge edge) async {
@@ -907,24 +754,4 @@ class MindmapImageViewModel extends _$MindmapImageViewModel {
   @override
   Future<Uint8List> build(String imageId, bool preview) =>
       ref.watch(_imageProvider(imageId, preview).future);
-}
-
-/// What a connection looks like — all a change to it sets, and an undo sets back.
-typedef _EdgeLook = ({
-  String text,
-  String? color,
-  int? width,
-  String? line,
-  String? arrows,
-});
-
-extension on _EdgeLook {
-  _EdgeLook withText(String text) =>
-      (text: text, color: color, width: width, line: line, arrows: arrows);
-  _EdgeLook withColor(String? color) =>
-      (text: text, color: color, width: width, line: line, arrows: arrows);
-  _EdgeLook withWidth(int? width) =>
-      (text: text, color: color, width: width, line: line, arrows: arrows);
-  _EdgeLook withStyle(String? line, String? arrows) =>
-      (text: text, color: color, width: width, line: line, arrows: arrows);
 }

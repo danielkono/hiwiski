@@ -977,8 +977,10 @@ void main() {
             y: 0,
             width: 100,
             height: 40,
-            points: '0,5000 10000,5000',
-            strokeWidth: 4,
+            look: {
+              WireFields.points: '0,5000 10000,5000',
+              WireFields.strokeWidth: 4,
+            },
           ),
     ))!;
     await open(tester);
@@ -1309,8 +1311,7 @@ void main() {
             y: -20,
             width: 200,
             height: 300,
-            points: '0,0 10000,0',
-            strokeWidth: 4,
+            look: {WireFields.points: '0,0 10000,0', WireFields.strokeWidth: 4},
           ),
     );
     await open(tester);
@@ -1829,7 +1830,7 @@ void main() {
 
     // The first hit moved: still "Berge", not back to the first.
     await tester.runAsync(() async {
-      await maps.changeNode((await maps.node(meer))!, x: 20);
+      await maps.changeNode((await maps.node(meer))!, {WireFields.x: 20});
     });
     await settle(tester);
     expect(shown(), equals(berge));
@@ -2103,8 +2104,10 @@ void main() {
             y: 200,
             width: 360,
             height: 420,
-            target: 'hiwiski://wiki_page/$pageId',
-            linkView: MindmapLinkViews.content,
+            look: {
+              WireFields.target: 'hiwiski://wiki_page/$pageId',
+              WireFields.linkView: MindmapLinkViews.content,
+            },
           ),
     );
     await open(tester);
@@ -2335,7 +2338,7 @@ void main() {
             y: 200,
             width: 80,
             height: 80,
-            target: memberAddressOf('anna'),
+            look: {WireFields.target: memberAddressOf('anna')},
           );
       await db
           .into(db.conflicts)

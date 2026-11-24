@@ -173,7 +173,7 @@ class A11yWorld {
         width: 220,
         height: 120,
         text: '## Sea\nSun cream, towels',
-        color: ColorTokens.teal,
+        look: {WireFields.color: ColorTokens.teal},
       );
       final hills = await maps.addNode(
         pageId: ids['mindmap']!,

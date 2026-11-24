@@ -7,7 +7,6 @@ import '../../core/api/generated/export.dart' show Member;
 
 import '../../core/common/app_names.dart';
 import '../../core/common/wire.dart';
-import '../common/change.dart';
 import '../links/link_index.dart';
 import '../links/link_text.dart';
 import '../sync/sync_items.dart';
@@ -19,8 +18,15 @@ import 'page_images.dart';
 // ViewModel decides with them.
 
 /// An element on the canvas.
+///
+/// Its synced fields are in [fields], every one by its name on the wire, and all
+/// that goes over every field goes over that map: telling two versions apart, what a
+/// change writes, bringing an element back, this device's version in a conflict. A
+/// new field gets its property, its line in [fields] and its line in
+/// [MindmapNode.fromFields] — next to each other here — and its column
+/// (docs/development/mindmap.md).
 class MindmapNode {
-  const MindmapNode({
+  MindmapNode({
     required this.id,
     required this.ownerId,
     required this.version,
@@ -44,6 +50,68 @@ class MindmapNode {
     this.textAlign,
     this.textFlow,
   });
+
+  /// An element with [fields] — read from its row, or [base] with some of them
+  /// changed ([withFields]). A field not given is empty; one that cannot be empty
+  /// is [base]'s, or else what a new element has.
+  MindmapNode.fromFields({
+    required this.id,
+    required this.ownerId,
+    required this.version,
+    required this.pageId,
+    required Map<String, Object?> fields,
+    MindmapNode? base,
+  }) : kind =
+           _textOf(fields[WireFields.kind]) ?? base?.kind ?? MindmapKinds.plain,
+       x = _wholeOf(fields[WireFields.x]) ?? base?.x ?? 0,
+       y = _wholeOf(fields[WireFields.y]) ?? base?.y ?? 0,
+       width = _wholeOf(fields[WireFields.width]) ?? base?.width ?? 1,
+       height = _wholeOf(fields[WireFields.height]) ?? base?.height ?? 1,
+       layer = _fractionOf(fields[WireFields.layer]) ?? base?.layer ?? 0,
+       text = _textOf(fields[WireFields.text]) ?? base?.text ?? '',
+       target = _textOf(fields[WireFields.target]),
+       linkView = _textOf(fields[WireFields.linkView]),
+       color = _textOf(fields[WireFields.color]),
+       shape = _textOf(fields[WireFields.shape]),
+       textSize = _textOf(fields[WireFields.textSize]),
+       textColor = _textOf(fields[WireFields.textColor]),
+       points = _textOf(fields[WireFields.points]),
+       strokeWidth = _wholeOf(fields[WireFields.strokeWidth]),
+       rotation = _wholeOf(fields[WireFields.rotation]),
+       textAlign = _textOf(fields[WireFields.textAlign]),
+       textFlow = _textOf(fields[WireFields.textFlow]);
+
+  /// Its synced fields by their names on the wire — all of them.
+  late final Map<String, Object?> fields = {
+    WireFields.kind: kind,
+    WireFields.x: x,
+    WireFields.y: y,
+    WireFields.width: width,
+    WireFields.height: height,
+    WireFields.layer: layer,
+    WireFields.text: text,
+    WireFields.target: target,
+    WireFields.linkView: linkView,
+    WireFields.color: color,
+    WireFields.shape: shape,
+    WireFields.textSize: textSize,
+    WireFields.textColor: textColor,
+    WireFields.points: points,
+    WireFields.strokeWidth: strokeWidth,
+    WireFields.rotation: rotation,
+    WireFields.textAlign: textAlign,
+    WireFields.textFlow: textFlow,
+  };
+
+  /// The same element with [changes] — `null` clears a field that may be empty.
+  MindmapNode withFields(Map<String, Object?> changes) => .fromFields(
+    id: id,
+    ownerId: ownerId,
+    version: version,
+    pageId: pageId,
+    fields: {...fields, ...changes},
+    base: this,
+  );
 
   final String id;
   final String ownerId;
@@ -239,88 +307,29 @@ class MindmapNode {
     double? layer,
     String? text,
     String? points,
-  }) => .new(
-    id: id,
-    ownerId: ownerId,
-    version: version,
-    pageId: pageId,
-    kind: kind,
-    x: x ?? this.x,
-    y: y ?? this.y,
-    width: width ?? this.width,
-    height: height ?? this.height,
-    layer: layer ?? this.layer,
-    text: text ?? this.text,
-    target: target,
-    linkView: linkView,
-    color: color,
-    shape: shape,
-    textSize: textSize,
-    textColor: textColor,
-    points: points ?? this.points,
-    strokeWidth: strokeWidth,
-    rotation: rotation,
-    textAlign: textAlign,
-    textFlow: textFlow,
-  );
+  }) => withFields({
+    WireFields.x: ?x,
+    WireFields.y: ?y,
+    WireFields.width: ?width,
+    WireFields.height: ?height,
+    WireFields.layer: ?layer,
+    WireFields.text: ?text,
+    WireFields.points: ?points,
+  });
 
   /// The fields [other] holds otherwise, by their names on the wire — what a change
   /// from this element to [other] writes, and all that taking it back writes again.
+  /// Never its kind: an element stays what it was made as.
   Set<String> fieldsChangedTo(MindmapNode other) => {
-    if (other.x != x) WireFields.x,
-    if (other.y != y) WireFields.y,
-    if (other.width != width) WireFields.width,
-    if (other.height != height) WireFields.height,
-    if (other.layer != layer) WireFields.layer,
-    if (other.text != text) WireFields.text,
-    if (other.target != target) WireFields.target,
-    if (other.linkView != linkView) WireFields.linkView,
-    if (other.color != color) WireFields.color,
-    if (other.shape != shape) WireFields.shape,
-    if (other.textSize != textSize) WireFields.textSize,
-    if (other.textColor != textColor) WireFields.textColor,
-    if (other.strokeWidth != strokeWidth) WireFields.strokeWidth,
-    if (other.rotation != rotation) WireFields.rotation,
-    if (other.textAlign != textAlign) WireFields.textAlign,
-    if (other.textFlow != textFlow) WireFields.textFlow,
+    for (final MapEntry(key: field, :value) in fields.entries)
+      if (field != WireFields.kind && other.fields[field] != value) field,
   };
 
-  /// The same element with another look or target — `Change(null)` clears one.
-  MindmapNode styled({
-    Change<String?>? target,
-    Change<String?>? linkView,
-    Change<String?>? color,
-    Change<String?>? shape,
-    Change<String?>? textSize,
-    Change<String?>? textColor,
-    Change<int?>? strokeWidth,
-    Change<int?>? rotation,
-    Change<String?>? textAlign,
-    Change<String?>? textFlow,
-  }) => .new(
-    id: id,
-    ownerId: ownerId,
-    version: version,
-    pageId: pageId,
-    kind: kind,
-    x: x,
-    y: y,
-    width: width,
-    height: height,
-    layer: layer,
-    text: text,
-    target: target == null ? this.target : target.value,
-    linkView: linkView == null ? this.linkView : linkView.value,
-    color: color == null ? this.color : color.value,
-    shape: shape == null ? this.shape : shape.value,
-    textSize: textSize == null ? this.textSize : textSize.value,
-    textColor: textColor == null ? this.textColor : textColor.value,
-    points: points,
-    strokeWidth: strokeWidth == null ? this.strokeWidth : strokeWidth.value,
-    rotation: rotation == null ? this.rotation : rotation.value,
-    textAlign: textAlign == null ? this.textAlign : textAlign.value,
-    textFlow: textFlow == null ? this.textFlow : textFlow.value,
-  );
+  /// What a change from this element to [other] writes: each of
+  /// [fieldsChangedTo] with [other]'s value.
+  Map<String, Object?> changesTo(MindmapNode other) => {
+    for (final field in fieldsChangedTo(other)) field: other.fields[field],
+  };
 
   @override
   bool operator ==(Object other) =>
@@ -330,49 +339,38 @@ class MindmapNode {
           other.ownerId == ownerId &&
           other.version == version &&
           other.pageId == pageId &&
-          other.kind == kind &&
-          other.x == x &&
-          other.y == y &&
-          other.width == width &&
-          other.height == height &&
-          other.layer == layer &&
-          other.text == text &&
-          other.target == target &&
-          other.linkView == linkView &&
-          other.color == color &&
-          other.shape == shape &&
-          other.textSize == textSize &&
-          other.textColor == textColor &&
-          other.points == points &&
-          other.strokeWidth == strokeWidth &&
-          other.rotation == rotation &&
-          other.textAlign == textAlign &&
-          other.textFlow == textFlow;
+          _sameFields(other.fields, fields);
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => _hash;
+
+  late final int _hash = Object.hash(
     id,
     version,
-    kind,
-    x,
-    y,
-    width,
-    height,
-    layer,
-    text,
-    target,
-    linkView,
-    color,
-    shape,
-    textSize,
-    textColor,
-    points,
-    strokeWidth,
-    rotation,
-    textAlign,
-    textFlow,
+    Object.hashAll(fields.values),
   );
 }
+
+/// Whether [a] and [b] hold the same fields with the same values.
+bool _sameFields(Map<String, Object?> a, Map<String, Object?> b) =>
+    a.length == b.length &&
+    a.entries.every(
+      (entry) => b.containsKey(entry.key) && b[entry.key] == entry.value,
+    );
+
+/// A field's value as text, as a number — a JSON number may come as either kind —
+/// or `null` where it is none.
+String? _textOf(Object? value) => value?.toString();
+
+int? _wholeOf(Object? value) => switch (value) {
+  final num number => number.round(),
+  _ => null,
+};
+
+double? _fractionOf(Object? value) => switch (value) {
+  final num number => number.toDouble(),
+  _ => null,
+};
 
 const _halfTurn = 180;
 
@@ -411,8 +409,10 @@ int? rotationOf(double degrees) {
 }
 
 /// A connection between two elements, drawn from centre to centre.
+///
+/// Its synced fields are in [fields], as an element's are ([MindmapNode]).
 class MindmapEdge {
-  const MindmapEdge({
+  MindmapEdge({
     required this.id,
     required this.ownerId,
     required this.version,
@@ -425,6 +425,54 @@ class MindmapEdge {
     this.line,
     this.arrows,
   });
+
+  /// A connection with [fields] — read from its row, or [base] with some of them
+  /// changed ([withFields]).
+  MindmapEdge.fromFields({
+    required this.id,
+    required this.ownerId,
+    required this.version,
+    required this.pageId,
+    required Map<String, Object?> fields,
+    MindmapEdge? base,
+  }) : fromId = _textOf(fields[WireFields.fromId]) ?? base?.fromId ?? '',
+       toId = _textOf(fields[WireFields.toId]) ?? base?.toId ?? '',
+       text = _textOf(fields[WireFields.text]) ?? base?.text ?? '',
+       color = _textOf(fields[WireFields.color]),
+       strokeWidth = _wholeOf(fields[WireFields.strokeWidth]),
+       line = _textOf(fields[WireFields.line]),
+       arrows = _textOf(fields[WireFields.arrows]);
+
+  /// Its synced fields by their names on the wire — all of them.
+  late final Map<String, Object?> fields = {
+    WireFields.fromId: fromId,
+    WireFields.toId: toId,
+    WireFields.text: text,
+    WireFields.color: color,
+    WireFields.strokeWidth: strokeWidth,
+    WireFields.line: line,
+    WireFields.arrows: arrows,
+  };
+
+  /// The same connection with [changes] — `null` clears a field that may be empty.
+  MindmapEdge withFields(Map<String, Object?> changes) => .fromFields(
+    id: id,
+    ownerId: ownerId,
+    version: version,
+    pageId: pageId,
+    fields: {...fields, ...changes},
+    base: this,
+  );
+
+  /// The fields [other] holds otherwise — never its ends: a connection joins the
+  /// two it was drawn between.
+  Set<String> fieldsChangedTo(MindmapEdge other) => {
+    for (final MapEntry(key: field, :value) in fields.entries)
+      if (field != WireFields.fromId &&
+          field != WireFields.toId &&
+          other.fields[field] != value)
+        field,
+  };
 
   final String id;
   final String ownerId;
@@ -459,25 +507,15 @@ class MindmapEdge {
           other.ownerId == ownerId &&
           other.version == version &&
           other.pageId == pageId &&
-          other.fromId == fromId &&
-          other.toId == toId &&
-          other.text == text &&
-          other.color == color &&
-          other.strokeWidth == strokeWidth &&
-          other.line == line &&
-          other.arrows == arrows;
+          _sameFields(other.fields, fields);
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => _hash;
+
+  late final int _hash = Object.hash(
     id,
     version,
-    fromId,
-    toId,
-    text,
-    color,
-    strokeWidth,
-    line,
-    arrows,
+    Object.hashAll(fields.values),
   );
 }
 
@@ -1218,44 +1256,14 @@ List<List<SyncConflict>> groupConflicts(List<SyncConflict> conflicts) {
 
 /// [node] as this device wrote it: each field of [conflicts] — lost against someone
 /// else's change, and on the map now as they wrote it — back at this device's value.
-/// Every field an element is drawn by counts, its turn and a stroke's points too:
-/// left out, this device's version was drawn as the map has it.
+/// Every field counts, its turn and a stroke's points too ([MindmapNode.fields]):
+/// one left out, this device's version was drawn as the map has it.
 MindmapNode mineOf(MindmapNode node, List<SyncConflict> conflicts) {
-  int? whole(String field) => switch (_mineOf(conflicts, field)) {
-    final num value => value.round(),
-    _ => null,
-  };
-  bool lost(String field) =>
-      conflicts.any((conflict) => conflict.field == field);
-  // A look that lost may have been cleared on this device: `null` is a value then.
-  Change<String?>? text(String field) =>
-      lost(field) ? .new(_mineOf(conflicts, field)?.toString()) : null;
-  Change<int?>? number(String field) => lost(field) ? .new(whole(field)) : null;
-  return node
-      .changed(
-        x: whole(WireFields.x),
-        y: whole(WireFields.y),
-        width: whole(WireFields.width),
-        height: whole(WireFields.height),
-        layer: switch (_mineOf(conflicts, WireFields.layer)) {
-          final num value => value.toDouble(),
-          _ => null,
-        },
-        text: _mineOf(conflicts, WireFields.text)?.toString(),
-        points: _mineOf(conflicts, WireFields.points)?.toString(),
-      )
-      .styled(
-        target: text(WireFields.target),
-        linkView: text(WireFields.linkView),
-        color: text(WireFields.color),
-        shape: text(WireFields.shape),
-        textSize: text(WireFields.textSize),
-        textColor: text(WireFields.textColor),
-        strokeWidth: number(WireFields.strokeWidth),
-        rotation: number(WireFields.rotation),
-        textAlign: text(WireFields.textAlign),
-        textFlow: text(WireFields.textFlow),
-      );
+  final mine = <String, Object?>{};
+  for (final conflict in conflicts) {
+    mine.putIfAbsent(conflict.field, () => _mineOf(conflicts, conflict.field));
+  }
+  return node.withFields(mine);
 }
 
 /// Where this device's version of [node] is shown beside the map's: where it was

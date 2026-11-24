@@ -3,7 +3,6 @@ import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hiwiski/core/common/wire.dart';
-import 'package:hiwiski/domain/common/change.dart';
 import 'package:hiwiski/domain/links/link_index.dart';
 import 'package:hiwiski/domain/sync/sync_items.dart';
 import 'package:hiwiski/domain/wiki/mindmap.dart';
@@ -441,7 +440,7 @@ void main() {
 
     test('a version differing only in its look stands beside the other', () {
       final theirs = node('a', x: 10, y: 20);
-      final recoloured = theirs.styled(color: const Change('TEAL'));
+      final recoloured = theirs.withFields({WireFields.color: 'TEAL'});
       final moved = theirs.changed(x: 300);
 
       expect(
@@ -606,7 +605,7 @@ void main() {
 
   test('a turned element covers its turned box and grows from its corner', () {
     final upright = node('a', x: 0, y: 0, width: 100, height: 20);
-    const turned = MindmapNode(
+    final turned = MindmapNode(
       id: 'a',
       ownerId: 'anna',
       version: 1,

@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 import 'package:meta/meta.dart';
 
 import '../db/hiwiski_database.dart';
+import '../db/synced_columns.dart';
 import '../db/tables.dart';
 import '../common/page_properties.dart';
 import '../common/wire.dart';
@@ -1648,111 +1649,34 @@ class MindmapNodeCodec extends EntityCodec {
     required String? entityKey,
     required Map<String, dynamic> fields,
   }) async {
-    int whole(Object? value, int empty) => (value as num?)?.toInt() ?? empty;
-    final row = MindmapNodesCompanion(
-      id: Value(id),
-      ownerId: Value(ownerId),
-      version: Value(version),
-      pageId: containerId == null ? const Value.absent() : Value(containerId),
-      // An unknown kind is kept as it is: the canvas shows a placeholder for it.
-      kind: EntityCodec.required(
-        fields,
-        WireFields.kind,
-        (value) => value as String? ?? MindmapKinds.plain,
-      ),
-      x: EntityCodec.required(fields, WireFields.x, (value) => whole(value, 0)),
-      y: EntityCodec.required(fields, WireFields.y, (value) => whole(value, 0)),
-      width: EntityCodec.required(
-        fields,
-        WireFields.width,
-        (value) => whole(value, _defaultWidth),
-      ),
-      height: EntityCodec.required(
-        fields,
-        WireFields.height,
-        (value) => whole(value, _defaultHeight),
-      ),
-      layer: EntityCodec.required(
-        fields,
-        WireFields.layer,
-        (value) => (value as num?)?.toDouble() ?? 0,
-      ),
-      body: EntityCodec.required(
-        fields,
-        WireFields.text,
-        (value) => value as String? ?? '',
-      ),
-      target: EntityCodec.optional(
-        fields,
-        WireFields.target,
-        (value) => value as String?,
-      ),
-      linkView: EntityCodec.optional(
-        fields,
-        WireFields.linkView,
-        (value) => value as String?,
-      ),
-      color: EntityCodec.optional(
-        fields,
-        WireFields.color,
-        (value) => value as String?,
-      ),
-      shape: EntityCodec.optional(
-        fields,
-        WireFields.shape,
-        (value) => value as String?,
-      ),
-      textSize: EntityCodec.optional(
-        fields,
-        WireFields.textSize,
-        (value) => value as String?,
-      ),
-      textColor: EntityCodec.optional(
-        fields,
-        WireFields.textColor,
-        (value) => value as String?,
-      ),
-      points: EntityCodec.optional(
-        fields,
-        WireFields.points,
-        (value) => value as String?,
-      ),
-      strokeWidth: EntityCodec.optional(
-        fields,
-        WireFields.strokeWidth,
-        (value) => (value as num?)?.round(),
-      ),
-      rotation: EntityCodec.optional(
-        fields,
-        WireFields.rotation,
-        (value) => (value as num?)?.round(),
-      ),
-      textAlign: EntityCodec.optional(
-        fields,
-        WireFields.textAlign,
-        (value) => value as String?,
-      ),
-      textFlow: EntityCodec.optional(
-        fields,
-        WireFields.textFlow,
-        (value) => value as String?,
-      ),
-      deletedAt: const Value(null),
-    );
+    final table = db.mindmapNodes;
+    final columns = mindmapNodeColumns(db);
+    final values = <String, Expression<Object>>{
+      table.id.name: Variable<String>(id),
+      table.ownerId.name: Variable<String>(ownerId),
+      table.version.name: Variable<int>(version),
+      if (containerId != null) table.pageId.name: Variable<String>(containerId),
+      // Its fields, as their columns keep them. An unknown kind is kept as it is:
+      // the canvas shows a placeholder for it.
+      ...columns.valuesOf(fields),
+      table.deletedAt.name: const Variable<DateTime>(null),
+    };
     // Update first, then insert: a change carries only what changed, and Drift does
     // not accept a row without its required columns as an insert.
     final updated = await (db.update(
-      db.mindmapNodes,
-    )..where((row) => row.id.equals(id))).write(row);
+      table,
+    )..where((row) => row.id.equals(id))).write(columns.rowOf(values));
     if (updated == 0) {
       await db
-          .into(db.mindmapNodes)
-          .insert(row.copyWith(pageId: Value(containerId ?? '')));
+          .into(table)
+          .insert(
+            columns.rowOf({
+              ...values,
+              table.pageId.name: Variable<String>(containerId ?? ''),
+            }),
+          );
     }
   }
-
-  static const _defaultWidth = 160;
-  static const _defaultHeight = 80;
 
   @override
   Future<String?> containerOf(HiwiskiDatabase db, String id) async =>
@@ -1794,26 +1718,7 @@ class MindmapNodeCodec extends EntityCodec {
       deleted: row.deletedAt != null,
       containerId: row.pageId,
       label: row.body,
-      fields: {
-        WireFields.kind: row.kind,
-        WireFields.x: row.x,
-        WireFields.y: row.y,
-        WireFields.width: row.width,
-        WireFields.height: row.height,
-        WireFields.layer: row.layer,
-        WireFields.text: row.body,
-        WireFields.target: row.target,
-        WireFields.linkView: row.linkView,
-        WireFields.color: row.color,
-        WireFields.shape: row.shape,
-        WireFields.textSize: row.textSize,
-        WireFields.textColor: row.textColor,
-        WireFields.points: row.points,
-        WireFields.strokeWidth: row.strokeWidth,
-        WireFields.rotation: row.rotation,
-        WireFields.textAlign: row.textAlign,
-        WireFields.textFlow: row.textFlow,
-      },
+      fields: mindmapNodeColumns(db).fieldsOf(row),
     );
   }
 }
@@ -1839,60 +1744,30 @@ class MindmapEdgeCodec extends EntityCodec {
     required String? entityKey,
     required Map<String, dynamic> fields,
   }) async {
-    final row = MindmapEdgesCompanion(
-      id: Value(id),
-      ownerId: Value(ownerId),
-      version: Value(version),
-      pageId: containerId == null ? const Value.absent() : Value(containerId),
-      fromId: EntityCodec.required(
-        fields,
-        WireFields.fromId,
-        (value) => value as String? ?? '',
-      ),
-      toId: EntityCodec.required(
-        fields,
-        WireFields.toId,
-        (value) => value as String? ?? '',
-      ),
-      body: EntityCodec.required(
-        fields,
-        WireFields.text,
-        (value) => value as String? ?? '',
-      ),
-      color: EntityCodec.optional(
-        fields,
-        WireFields.color,
-        (value) => value as String?,
-      ),
-      strokeWidth: EntityCodec.optional(
-        fields,
-        WireFields.strokeWidth,
-        (value) => (value as num?)?.round(),
-      ),
-      line: EntityCodec.optional(
-        fields,
-        WireFields.line,
-        (value) => value as String?,
-      ),
-      arrows: EntityCodec.optional(
-        fields,
-        WireFields.arrows,
-        (value) => value as String?,
-      ),
-      deletedAt: const Value(null),
-    );
+    final table = db.mindmapEdges;
+    final columns = mindmapEdgeColumns(db);
+    final values = <String, Expression<Object>>{
+      table.id.name: Variable<String>(id),
+      table.ownerId.name: Variable<String>(ownerId),
+      table.version.name: Variable<int>(version),
+      if (containerId != null) table.pageId.name: Variable<String>(containerId),
+      ...columns.valuesOf(fields),
+      table.deletedAt.name: const Variable<DateTime>(null),
+    };
     final updated = await (db.update(
-      db.mindmapEdges,
-    )..where((row) => row.id.equals(id))).write(row);
+      table,
+    )..where((row) => row.id.equals(id))).write(columns.rowOf(values));
     if (updated == 0) {
       await db
-          .into(db.mindmapEdges)
+          .into(table)
           .insert(
-            row.copyWith(
-              pageId: Value(containerId ?? ''),
-              fromId: Value(fields[WireFields.fromId] as String? ?? ''),
-              toId: Value(fields[WireFields.toId] as String? ?? ''),
-            ),
+            columns.rowOf({
+              // A row cannot be without its ends: empty where they did not come.
+              table.fromId.name: const Variable<String>(''),
+              table.toId.name: const Variable<String>(''),
+              ...values,
+              table.pageId.name: Variable<String>(containerId ?? ''),
+            }),
           );
     }
   }
@@ -1928,15 +1803,7 @@ class MindmapEdgeCodec extends EntityCodec {
       deleted: row.deletedAt != null,
       containerId: row.pageId,
       label: row.body,
-      fields: {
-        WireFields.fromId: row.fromId,
-        WireFields.toId: row.toId,
-        WireFields.text: row.body,
-        WireFields.color: row.color,
-        WireFields.strokeWidth: row.strokeWidth,
-        WireFields.line: row.line,
-        WireFields.arrows: row.arrows,
-      },
+      fields: mindmapEdgeColumns(db).fieldsOf(row),
     );
   }
 }

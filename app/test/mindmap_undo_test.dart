@@ -14,7 +14,6 @@ import 'package:hiwiski/core/sync/local_writes.dart';
 import 'package:hiwiski/core/sync/outbox.dart';
 import 'package:hiwiski/core/sync/sync_engine.dart';
 import 'package:hiwiski/data/wiki/mindmap_repository.dart';
-import 'package:hiwiski/domain/common/change.dart';
 import 'package:hiwiski/domain/wiki/mindmap.dart';
 import 'package:hiwiski/features/wiki/mindmap/mindmap_view_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -231,7 +230,9 @@ void main() {
     await viewModel().connect(map.node(a)!, map.node(b)!);
     map = (await state()).map;
 
-    await viewModel().setEdgeWidth(map.edges.single, 6);
+    await viewModel().setEdgeFields(map.edges.single, {
+      WireFields.strokeWidth: 6,
+    });
     expect((await state()).map.edges.single.strokeWidth, equals(6));
     await viewModel().undo();
     expect((await state()).map.edges.single.strokeWidth, isNull);
@@ -282,13 +283,12 @@ void main() {
       String? color,
     }) async {
       final maps = container.read(mindmapRepositoryProvider);
-      await maps.changeNode(
-        (await maps.node(id))!,
-        x: x,
-        y: y,
-        text: text,
-        color: color == null ? null : Change(color),
-      );
+      await maps.changeNode((await maps.node(id))!, {
+        WireFields.x: ?x,
+        WireFields.y: ?y,
+        WireFields.text: ?text,
+        WireFields.color: ?color,
+      });
     }
 
     test('a move taken back leaves the other axis as it is now', () async {
@@ -326,7 +326,9 @@ void main() {
     test('a colour taken back leaves a text written since', () async {
       container.listen(mindmapViewModelProvider(pageId), (_, _) {});
       final id = await place('Meer');
-      await viewModel().setColor((await state()).map.node(id)!, 'TEAL');
+      await viewModel().setFields((await state()).map.node(id)!, {
+        WireFields.color: 'TEAL',
+      });
       await meanwhile(id, text: 'Strand');
 
       await viewModel().undo();
@@ -345,10 +347,12 @@ void main() {
       Mindmap map = (await state()).map;
       await viewModel().connect(map.node(a)!, map.node(b)!);
       map = (await state()).map;
-      await viewModel().setEdgeWidth(map.edges.single, 6);
+      await viewModel().setEdgeFields(map.edges.single, {
+        WireFields.strokeWidth: 6,
+      });
       final maps = container.read(mindmapRepositoryProvider);
       final edge = (await maps.edge(map.edges.single.id))!;
-      await maps.changeEdge(edge, text: 'oder');
+      await maps.changeEdge(edge, {WireFields.text: 'oder'});
 
       await viewModel().undo();
       final back = (await state()).map.edges.single;
@@ -365,7 +369,7 @@ void main() {
       await meanwhile(a, text: 'Strand');
       await meanwhile(b, color: 'RUST');
 
-      await viewModel().setColors(shown, 'TEAL');
+      await viewModel().setFieldsOfAll(shown, {WireFields.color: 'TEAL'});
       Mindmap map = (await state()).map;
       expect(map.node(a)!.text, equals('Strand'));
       expect(map.node(a)!.color, equals('TEAL'));
@@ -389,7 +393,7 @@ void main() {
   group('what a delete took is brought back as it was when taken', () {
     Future<void> rewrite(String id, String text) async {
       final maps = container.read(mindmapRepositoryProvider);
-      await maps.changeNode((await maps.node(id))!, text: text);
+      await maps.changeNode((await maps.node(id))!, {WireFields.text: text});
     }
 
     test('not as the screen last showed it', () async {
@@ -515,7 +519,7 @@ void main() {
       kind: MindmapKinds.link,
       at: (x: 0, y: 0),
       size: (width: 240, height: 56),
-      target: 'hiwiski://wiki_page/$pageId',
+      look: {WireFields.target: 'hiwiski://wiki_page/$pageId'},
     );
     final node = (await state()).map.node(id)!;
 
@@ -532,7 +536,7 @@ void main() {
   });
 }
 
-/// The repository, with a gate a test can close in front of the next move — a
+/// The repository, with a gate a test can close in front of the next change — a
 /// write that takes its time.
 class _GatedMaps extends MindmapRepository {
   _GatedMaps({
@@ -543,26 +547,21 @@ class _GatedMaps extends MindmapRepository {
 
   Completer<void>? gate;
 
-  /// Whether the next arrangement fails — a write that does not get through.
+  /// Whether the next change fails — a write that does not get through.
   bool failNext = false;
 
   @override
-  Future<void> arrangeNodes(
-    Map<MindmapNode, ({int x, int y, int width, int height})> places,
+  Future<void> changeNodes(
+    Map<MindmapNode, Map<String, Object?>> changes,
   ) async {
     if (failNext) {
       failNext = false;
       throw StateError('The database is gone.');
     }
-    await super.arrangeNodes(places);
-  }
-
-  @override
-  Future<void> moveNodes(Map<MindmapNode, ({int x, int y})> moves) async {
     final closed = gate;
     gate = null;
     await closed?.future;
-    await super.moveNodes(moves);
+    await super.changeNodes(changes);
   }
 }
 

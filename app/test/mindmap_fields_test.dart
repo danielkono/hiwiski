@@ -12,16 +12,22 @@ import 'package:hiwiski/core/db/hiwiski_database.dart';
 import 'package:hiwiski/core/l10n/generated/app_localizations.dart';
 import 'package:hiwiski/core/storage/local_settings.dart';
 import 'package:hiwiski/core/sync/entity_codec.dart';
+import 'package:hiwiski/core/sync/local_writes.dart';
+import 'package:hiwiski/core/sync/outbox.dart';
+import 'package:hiwiski/core/sync/sync_engine.dart';
 import 'package:hiwiski/core/ui/history_field_label.dart';
 import 'package:hiwiski/domain/sync/sync_items.dart';
 import 'package:hiwiski/domain/wiki/mindmap.dart';
+import 'package:hiwiski/features/wiki/mindmap/mindmap_view_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yaml/yaml.dart';
 
+import 'support/fakes.dart';
+
 /// **Every field of an element and of a connection goes the whole way**: what the
 /// contract names arrives in the local database, is read from it, goes out again
-/// whole, tells two versions apart, is taken back as this device's in a conflict and
-/// has a name in the history.
+/// whole, tells two versions apart, is changed on the map and taken back with "Undo",
+/// is taken as this device's in a conflict and has a name in the history.
 ///
 /// The fields come from the contract, not from a list here: one added there and
 /// forgotten anywhere on the way fails this test, field by field.
@@ -90,9 +96,14 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       db = HiwiskiDatabase(NativeDatabase.memory());
       container = ProviderContainer(
+        retry: noRetry,
         overrides: [
           databaseProvider.overrideWithValue(db),
           localSettingsProvider.overrideWithValue(await LocalSettings.open()),
+          sessionAt(signedInAnna),
+          localWritesProvider.overrideWith(
+            (ref) => LocalWrites(db: db, outbox: Outbox(db), sync: _NoSync()),
+          ),
         ],
       );
       pageId = await container
@@ -165,9 +176,8 @@ void main() {
         }
       });
 
-      // Its kind is what it is, and a stroke's points lie across its box: both are
-      // written with the element, and a stroke is resized by its box, never by them.
-      const setOnce = {WireFields.kind, WireFields.points};
+      // Its kind is what it is: written with the element, and never changed.
+      const setOnce = {WireFields.kind};
 
       test(
         'differs in each field, and a change writes just that field',
@@ -193,8 +203,6 @@ void main() {
         'lost in a conflict, is drawn with this device\'s value of each field',
         () async {
           for (final name in nodeFields.keys) {
-            // Never changed after it is made, its kind never loses against a change.
-            if (name == WireFields.kind) continue;
             final (map, mine) = await twoVersions(name);
             final conflict = SyncConflict(
               id: 'c-$name',
@@ -209,6 +217,68 @@ void main() {
         },
       );
     });
+
+    MindmapViewModel viewModel() {
+      container.listen(mindmapViewModelProvider(pageId), (_, _) {});
+      return container.read(mindmapViewModelProvider(pageId).notifier);
+    }
+
+    test(
+      'an element\'s each field, changed, is taken back and done again',
+      () async {
+        const codec = MindmapNodeCodec();
+        const id = 'element';
+        final maps = container.read(mindmapRepositoryProvider);
+        Future<Object?> stored(String name) async =>
+            (await maps.node(id))!.fields[name];
+        for (final name in nodeFields.keys) {
+          if (name == WireFields.kind) continue;
+          final field = nodeFields[name]!;
+          await arrive(codec, id, samples(nodeFields));
+          final other = sampleOf(name, field, other: true);
+          await viewModel().setFields((await maps.node(id))!, {name: other});
+          expect(await stored(name), equals(other), reason: name);
+          await viewModel().undo();
+          expect(
+            await stored(name),
+            equals(sampleOf(name, field)),
+            reason: name,
+          );
+          await viewModel().redo();
+          expect(await stored(name), equals(other), reason: name);
+        }
+      },
+    );
+
+    test(
+      'a connection\'s each field, changed, is taken back and done again',
+      () async {
+        const codec = MindmapEdgeCodec();
+        const id = 'connection';
+        final maps = container.read(mindmapRepositoryProvider);
+        Future<Object?> stored(String name) async =>
+            (await maps.edge(id))!.fields[name];
+        for (final name in edgeFields.keys) {
+          // A connection joins the two it was drawn between.
+          if (name == WireFields.fromId || name == WireFields.toId) continue;
+          final field = edgeFields[name]!;
+          await arrive(codec, id, samples(edgeFields));
+          final other = sampleOf(name, field, other: true);
+          await viewModel().setEdgeFields((await maps.edge(id))!, {
+            name: other,
+          });
+          expect(await stored(name), equals(other), reason: name);
+          await viewModel().undo();
+          expect(
+            await stored(name),
+            equals(sampleOf(name, field)),
+            reason: name,
+          );
+          await viewModel().redo();
+          expect(await stored(name), equals(other), reason: name);
+        }
+      },
+    );
 
     group('a connection', () {
       const codec = MindmapEdgeCodec();
@@ -252,4 +322,9 @@ void main() {
       });
     });
   });
+}
+
+class _NoSync implements SyncTrigger {
+  @override
+  Future<void> syncNow() async {}
 }

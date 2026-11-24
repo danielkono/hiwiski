@@ -16,7 +16,6 @@ import 'package:hiwiski/core/storage/local_settings.dart';
 import 'package:hiwiski/core/sync/entity_codec.dart';
 import 'package:hiwiski/core/sync/outbox.dart';
 import 'package:hiwiski/core/ui/sync_item_label.dart';
-import 'package:hiwiski/domain/common/change.dart';
 import 'package:hiwiski/domain/wiki/mindmap.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -142,9 +141,11 @@ void main() {
   test('a change sends only what it changes', () async {
     final id = await add('Meer');
     final node = (await map()).node(id)!;
-    await container
-        .read(mindmapRepositoryProvider)
-        .changeNode(node, x: 50, y: node.y, color: const Change('#3B6939'));
+    await container.read(mindmapRepositoryProvider).changeNode(node, {
+      WireFields.x: 50,
+      WireFields.y: node.y,
+      WireFields.color: '#3B6939',
+    });
 
     final entries = await outboxOf(id);
     expect(
@@ -156,7 +157,9 @@ void main() {
     expect(changed.color, equals('#3B6939'));
 
     // Nothing changed: nothing goes out.
-    await container.read(mindmapRepositoryProvider).changeNode(changed, x: 50);
+    await container.read(mindmapRepositoryProvider).changeNode(changed, {
+      WireFields.x: 50,
+    });
     expect(await outboxOf(id), hasLength(entries.length));
   });
 
@@ -210,9 +213,10 @@ void main() {
         expect(edgeEntry.state, equals(OutboxStates.blocked));
 
         // Shortened, the element goes out — and the connection after it.
-        await container
-            .read(mindmapRepositoryProvider)
-            .changeNode((await map()).node(a)!, text: 'Meer');
+        await container.read(mindmapRepositoryProvider).changeNode(
+          (await map()).node(a)!,
+          {WireFields.text: 'Meer'},
+        );
         final [released] = await outboxOf(edgeId);
         expect(released.state, equals(OutboxStates.pending));
       },
@@ -265,15 +269,20 @@ void main() {
       ),
     );
 
-    await maps.changeNode((await map()).node(id)!, width: 10, height: 10);
-    await maps.changeNode((await map()).node(id)!, height: mindmapMaxSize + 1);
-    await maps.arrangeNodes({
-      (await map()).node(id)!: (
-        x: 0,
-        y: 0,
-        width: 2 * mindmapMaxSize,
-        height: 5,
-      ),
+    await maps.changeNode((await map()).node(id)!, {
+      WireFields.width: 10,
+      WireFields.height: 10,
+    });
+    await maps.changeNode((await map()).node(id)!, {
+      WireFields.height: mindmapMaxSize + 1,
+    });
+    await maps.changeNodes({
+      (await map()).node(id)!: {
+        WireFields.x: 0,
+        WireFields.y: 0,
+        WireFields.width: 2 * mindmapMaxSize,
+        WireFields.height: 5,
+      },
     });
     final node = (await map()).node(id)!;
     expect(node.width, equals(mindmapMaxSize));

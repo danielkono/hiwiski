@@ -4,7 +4,6 @@ import 'package:hiwiski/core/common/wire.dart';
 import 'package:hiwiski/core/l10n/generated/app_localizations.dart';
 import 'package:hiwiski/core/theme/hiwiski_theme.dart';
 import 'package:hiwiski/core/theme/mindmap_colors.dart';
-import 'package:hiwiski/domain/common/change.dart';
 import 'package:hiwiski/domain/wiki/mindmap.dart';
 import 'package:hiwiski/features/wiki/view/mindmap/mindmap_scene.dart';
 
@@ -43,7 +42,7 @@ void main() {
   ) async {
     // A long bar turned upright about its middle (500, 10): seen from y -490 to 510.
     final map = Mindmap(
-      nodes: const [
+      nodes: [
         MindmapNode(
           id: 'bar',
           ownerId: 'anna',
@@ -71,7 +70,7 @@ void main() {
   testWidgets('this device\'s version of an element is drawn turned as it is', (
     tester,
   ) async {
-    const theirs = MindmapNode(
+    final theirs = MindmapNode(
       id: 'a',
       ownerId: 'anna',
       version: 1,
@@ -84,9 +83,9 @@ void main() {
       layer: 1,
       text: 'Meer',
     );
-    final map = Mindmap(nodes: const [theirs], edges: const []);
+    final map = Mindmap(nodes: [theirs], edges: const []);
     // Only its turn lost: it stands beside the map's, turned upright.
-    final mine = theirs.styled(rotation: const Change(90));
+    final mine = theirs.withFields({WireFields.rotation: 90});
 
     await show(tester, map, mine: mine);
 

@@ -12,7 +12,7 @@ import 'package:hiwiski/features/wiki/view/mindmap/mindmap_scene.dart';
 /// far out, a corner of a finger's size covered the whole element, and a drag meant
 /// to move it resized it.
 void main() {
-  const node = MindmapNode(
+  final node = MindmapNode(
     id: 'a',
     ownerId: 'anna',
     version: 1,
@@ -28,7 +28,7 @@ void main() {
 
   Future<List<String>> touch(WidgetTester tester, double zoom) async {
     final hits = <String>[];
-    final map = Mindmap(nodes: const [node], edges: const []);
+    final map = Mindmap(nodes: [node], edges: const []);
     final area = MindmapScene.areaOf(map, zoom: zoom);
     await tester.pumpWidget(
       MaterialApp(
@@ -93,7 +93,7 @@ void main() {
   }
 
   test('the margin leaves room for the grips of the outermost element', () {
-    final map = Mindmap(nodes: const [node], edges: const []);
+    final map = Mindmap(nodes: [node], edges: const []);
     final area = MindmapScene.areaOf(map, zoom: 0.1);
     expect(
       area.right - node.width,
