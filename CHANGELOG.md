@@ -27,8 +27,8 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
   ellipse, pointed in a diamond — and bring
   them forward or send them back; a line can be as thick as you like. **Undo** and
   **Redo** take changes back and do them again. A snippet of text is written right
-  on the canvas and is just as large as its words; a picture keeps its own shape; a
-  member shows as their picture in a circle; a link shows its target's title or its
+  on the canvas and is just as large as its words; a picture keeps its own shape, and
+  several chosen at once stand side by side, as high as each other; a member shows as their picture in a circle; a link shows its target's title or its
   content, as its preview does; a note's checklist is ticked off with a tap where the
   map is read, as a page's is. A **pen** draws on the map in a colour and thickness
   of your choice — freehand or as a rectangle, ellipse, triangle, diamond, line or

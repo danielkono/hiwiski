@@ -398,6 +398,9 @@ class HiwiskiMetrics {
   /// A new picture fits into this, in the picture's own shape.
   static const Size mindmapImageSize = Size(240, 240);
 
+  /// Between elements placed together — pictures chosen at once, side by side.
+  static const double mindmapRowGap = space24;
+
   /// A new member: their picture in a circle.
   static const Size mindmapMemberSize = Size(120, 120);
 

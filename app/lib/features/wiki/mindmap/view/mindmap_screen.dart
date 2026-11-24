@@ -452,12 +452,14 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
           pageId: widget.pageId,
           text: '',
         );
-        if (typed == null || typed.trim().isEmpty) return null;
-        return (
-          text: typed,
-          look: const <String, Object?>{},
-          size: last ?? HiwiskiMetrics.mindmapNoteSize,
-        );
+        if (typed == null || typed.trim().isEmpty) return const [];
+        return [
+          (
+            text: typed,
+            look: const <String, Object?>{},
+            size: last ?? HiwiskiMetrics.mindmapNoteSize,
+          ),
+        ];
       },
       edit: (node) async {
         final text = await showMindmapNoteSheet(
@@ -472,27 +474,31 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
       icon: HiwiskiSymbols.image,
       label: (l) => l.mindmapToolImage,
       make: (last, _) async {
-        final picture = await _pickPicture();
-        if (picture == null) return null;
-        // In the picture's own shape, within the room a new one takes.
-        // Taken after the last picture, it is as high, in its own shape.
+        // Every picture chosen, side by side ([_place]), all as high as the first.
+        final pictures = await _pickPictures();
+        final first = pictures.firstOrNull;
+        if (first == null) return const [];
+        // The first in its own shape, within the room a new one takes. Taken after
+        // the last picture, it is as high, in its own shape.
         const room = HiwiskiMetrics.mindmapImageSize;
-        return (
-          text: picture.markdown,
-          look: const <String, Object?>{},
-          size: switch (last) {
-            final last? => Size(last.height * picture.aspect, last.height),
-            null when picture.aspect >= room.width / room.height => Size(
-              room.width,
-              room.width / picture.aspect,
+        final height = switch (last) {
+          final last? => last.height,
+          null when first.aspect >= room.width / room.height =>
+            room.width / first.aspect,
+          null => room.height,
+        };
+        return [
+          for (final picture in pictures)
+            (
+              text: picture.markdown,
+              look: const <String, Object?>{},
+              size: Size(height * picture.aspect, height),
             ),
-            null => Size(room.height * picture.aspect, room.height),
-          },
-        );
+        ];
       },
       edit: (node) async {
         // Another picture: as wide as the one before, in its own shape.
-        final picture = await _pickPicture();
+        final picture = (await _pickPictures(single: true)).firstOrNull;
         if (picture == null || !mounted) return;
         await _viewModel.setText(
           node,
@@ -524,23 +530,25 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
       make: (last, _) async {
         final markdown = await showLinkPicker(context);
         final target = markdown == null ? null : linkAddressOf(markdown);
-        if (target == null) return null;
-        return (
-          text: '',
-          // Shown with what it points to: the title alone said too little.
-          look: {
-            WireFields.target: target,
-            WireFields.linkView: MindmapLinkViews.content,
-          },
-          // A link last placed as its title only is no measure for one showing
-          // content.
-          size: switch (last) {
-            final last?
-                when last.height > HiwiskiMetrics.mindmapLinkSize.height =>
-              last,
-            _ => HiwiskiMetrics.mindmapLinkContentSize,
-          },
-        );
+        if (target == null) return const [];
+        return [
+          (
+            text: '',
+            // Shown with what it points to: the title alone said too little.
+            look: {
+              WireFields.target: target,
+              WireFields.linkView: MindmapLinkViews.content,
+            },
+            // A link last placed as its title only is no measure for one showing
+            // content.
+            size: switch (last) {
+              final last?
+                  when last.height > HiwiskiMetrics.mindmapLinkSize.height =>
+                last,
+              _ => HiwiskiMetrics.mindmapLinkContentSize,
+            },
+          ),
+        ];
       },
       edit: (node) async {
         final markdown = await showLinkPicker(context);
@@ -564,12 +572,14 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
       label: (l) => l.mindmapToolMember,
       make: (last, _) async {
         final member = await _pickMember();
-        if (member == null) return null;
-        return (
-          text: '',
-          look: {WireFields.target: memberAddressOf(member.id)},
-          size: last ?? HiwiskiMetrics.mindmapMemberSize,
-        );
+        if (member == null) return const [];
+        return [
+          (
+            text: '',
+            look: {WireFields.target: memberAddressOf(member.id)},
+            size: last ?? HiwiskiMetrics.mindmapMemberSize,
+          ),
+        ];
       },
       edit: (node) async {
         final member = await _pickMember(current: memberIdOf(node.target));
@@ -584,7 +594,7 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
 
   /// A snippet is written on the canvas where it lands, and is on the map once it
   /// holds a word — nothing to place before.
-  Future<_Made?> _makePlain(Size? last, Offset? at) async {
+  Future<List<_Made>> _makePlain(Size? last, Offset? at) async {
     final box = _writingBox(L.of(context).mindmapPlainHint, null, isNew: true);
     final half = Offset(box.width / 2, box.height / 2);
     final corner = at == null
@@ -606,7 +616,7 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
       ),
       isNew: true,
     );
-    return null;
+    return const [];
   }
 
   /// Someone of the family, for a member element.
@@ -618,7 +628,8 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
 
   /// A new element of [kind] — its content asked for first: a cancelled sheet or
   /// picker places nothing. [at] is where it was dropped; `null`: the middle of the
-  /// view.
+  /// view. Several made at once — pictures chosen together — stand side by side
+  /// around it, in the order they were chosen, and are selected together.
   Future<void> _place(String kind, Offset? at) async {
     final tool = _kindTools[kind];
     if (tool == null) return;
@@ -632,56 +643,95 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
       null => null,
     };
     final made = await tool.make(last, at);
-    if (made == null || !mounted) return;
-    final size = made.size;
+    if (made.isEmpty || !mounted) return;
+    const gap = HiwiskiMetrics.mindmapRowGap;
+    final row = Size(
+      made.fold(-gap, (width, one) => width + gap + one.size.width),
+      made.fold(0, (height, one) => math.max(height, one.size.height)),
+    );
     final corner = at == null
-        ? _middle(size)
+        ? _middle(row)
         : (
-            x: (at.dx - size.width / 2).round(),
-            y: (at.dy - size.height / 2).round(),
+            x: (at.dx - row.width / 2).round(),
+            y: (at.dy - row.height / 2).round(),
           );
-    final id = await addMindmapNodeMutation.run(
+    double left = corner.x.toDouble();
+    final placements = <MindmapPlacement>[];
+    for (final one in made) {
+      final size = one.size;
+      placements.add((
+        kind: kind,
+        at: (
+          x: left.round(),
+          y: (corner.y + (row.height - size.height) / 2).round(),
+        ),
+        // A very wide picture is still a line high.
+        size: (
+          width: math.max(1, size.width.round()),
+          height: math.max(1, size.height.round()),
+        ),
+        text: one.text,
+        look: one.look,
+      ));
+      left += size.width + gap;
+    }
+    final ids = await addMindmapNodesMutation.run(
       ref,
       (tsx) => tsx
           .get(mindmapViewModelProvider(widget.pageId).notifier)
-          .addNode(
-            kind: kind,
-            at: corner,
-            // A very wide picture is still a line high.
-            size: (
-              width: math.max(1, size.width.round()),
-              height: math.max(1, size.height.round()),
-            ),
-            text: made.text,
-            look: made.look,
-          ),
+          .addNodes(placements),
     );
-    if (mounted) _select(.node(id));
+    if (!mounted) return;
+    if (ids case [final id]) {
+      _select(.node(id));
+    } else {
+      _grouped(ids.toSet());
+    }
   }
 
-  /// One picture, picked and kept for the page, as the Markdown a picture element
-  /// holds, and its shape — `null` when none was picked.
-  Future<({String markdown, double aspect})?> _pickPicture() async {
+  /// The pictures picked — several at once, or one where [single] says so — kept
+  /// for the page, each as the Markdown a picture element holds and its shape, in
+  /// the order they were picked; none when the choice was cancelled. One that cannot
+  /// be read is left out, and said so.
+  Future<List<({String markdown, double aspect})>> _pickPictures({
+    bool single = false,
+  }) async {
     final l = L.of(context);
     final messenger = ScaffoldMessenger.of(context);
+    final List<({Uint8List bytes, String filename})> files;
     try {
-      final file = (await pickImageFiles(single: true)).firstOrNull;
-      if (file == null || !mounted) return null;
-      final aspect = await _aspectOf(file.bytes);
-      if (!mounted) return null;
-      final markdown = await keepMindmapImagesMutation.run(
-        ref,
-        (tsx) => tsx
-            .get(mindmapViewModelProvider(widget.pageId).notifier)
-            .keepImages([file]),
-      );
-      return (markdown: markdown, aspect: aspect);
+      files = await pickImageFiles(single: single);
     } on Object catch (error) {
-      // Not the server's answer: a picture that could not be read.
-      debugPrint('hiwiski: mind map picture not added: $error');
+      // Not the server's answer: the dialog or a file it handed over failed.
+      debugPrint('hiwiski: mind map pictures not picked: $error');
       messenger.showSnackBar(SnackBar(content: Text(l.wikiImagesFailed)));
-      return null;
+      return const [];
     }
+    final readable = <({Uint8List bytes, String filename})>[];
+    final aspects = <double>[];
+    for (final file in files) {
+      try {
+        aspects.add(await _aspectOf(file.bytes));
+        readable.add(file);
+      } on Object catch (error) {
+        // Not a picture this device can decode: the others still go on the map.
+        debugPrint('hiwiski: mind map picture not added: $error');
+      }
+    }
+    if (readable.length < files.length) {
+      messenger.showSnackBar(SnackBar(content: Text(l.wikiImagesFailed)));
+    }
+    if (readable.isEmpty || !mounted) return const [];
+    final markdown = await keepMindmapImagesMutation.run(
+      ref,
+      (tsx) => tsx
+          .get(mindmapViewModelProvider(widget.pageId).notifier)
+          .keepImages(readable),
+    );
+    return [
+      for (final (index, text) in markdown.indexed)
+        (markdown: text, aspect: aspects[index]),
+    ];
   }
 
   /// A picture's width over its height, as it is shown — turned as its camera said.
@@ -2852,10 +2902,10 @@ class const _KindTool({
   required final IconData icon,
   required final String Function(L l) label,
 
-  /// Asks for a new element's content and size — `null`: nothing is placed. [last]
-  /// is the size the last of its kind was given on this map, [at] where it was
-  /// dropped.
-  required final Future<_Made?> Function(Size? last, Offset? at) make,
+  /// Asks for a new element's content and size — none: nothing is placed; several,
+  /// for pictures chosen together, side by side. [last] is the size the last of its
+  /// kind was given on this map, [at] where it was dropped.
+  required final Future<List<_Made>> Function(Size? last, Offset? at) make,
 
   /// Asks for an element's new content and writes it.
   required final Future<void> Function(MindmapNode node) edit,

@@ -34,10 +34,26 @@ final addMindmapNodeMutation = Mutation<String>(
   label: 'mindmapViewModel.addNode',
 );
 
+/// `addNodes`, run by the canvas: it selects what it placed.
+final addMindmapNodesMutation = Mutation<List<String>>(
+  label: 'mindmapViewModel.addNodes',
+);
+
 /// `keepImages`, run by the canvas: it shows that pictures are being read in.
-final keepMindmapImagesMutation = Mutation<String>(
+final keepMindmapImagesMutation = Mutation<List<String>>(
   label: 'mindmapViewModel.keepImages',
 );
+
+/// A new element: of [kind], its top left corner [at] and its [size] in the map's
+/// units, its [text], and its other fields by their names on the wire in [look]
+/// ([MindmapNode.fields]).
+typedef MindmapPlacement = ({
+  String kind,
+  ({int x, int y}) at,
+  ({int width, int height}) size,
+  String text,
+  Map<String, Object?> look,
+});
 
 /// A page's mind map on its own screen: the canvas, what may be done on it, what a
 /// search found and what lost against someone else's change.
@@ -268,25 +284,39 @@ class MindmapViewModel extends _$MindmapViewModel {
     required ({int width, int height}) size,
     String text = '',
     Map<String, Object?> look = const {},
-  }) async {
+  }) async =>
+      (await _add([(kind: kind, at: at, size: size, text: text, look: look)]))
+          .single;
+
+  /// Places several new elements at once — pictures chosen together — and returns
+  /// their ids, in order. One step for "Undo": they go and come back together.
+  @command
+  Future<List<String>> addNodes(List<MindmapPlacement> placements) =>
+      _add(placements);
+
+  Future<List<String>> _add(List<MindmapPlacement> placements) async {
     final maps = ref.read(mindmapRepositoryProvider);
-    final id = newId();
-    _rememberPlaced(id);
-    _sized(kind, size.width, size.height);
-    await _inTurn(
-      () => maps.addNode(
-        id: id,
-        pageId: pageId,
-        kind: kind,
-        x: at.x,
-        y: at.y,
-        width: size.width,
-        height: size.height,
-        text: text,
-        look: look,
-      ),
-    );
-    return id;
+    final ids = [for (final _ in placements) newId()];
+    _rememberPlaced(ids);
+    for (final placement in placements) {
+      _sized(placement.kind, placement.size.width, placement.size.height);
+    }
+    await _inTurn(() async {
+      for (final (index, placement) in placements.indexed) {
+        await maps.addNode(
+          id: ids[index],
+          pageId: pageId,
+          kind: placement.kind,
+          x: placement.at.x,
+          y: placement.at.y,
+          width: placement.size.width,
+          height: placement.size.height,
+          text: placement.text,
+          look: placement.look,
+        );
+      }
+    });
+    return ids;
   }
 
   /// Remembers that an element of [kind] now is [width] × [height]: the next new
@@ -300,12 +330,12 @@ class MindmapViewModel extends _$MindmapViewModel {
     );
   }
 
-  /// The way back from placing [id], and forth again.
-  void _rememberPlaced(String id) {
+  /// The way back from placing [ids], and forth again.
+  void _rememberPlaced(List<String> ids) {
     final maps = ref.read(mindmapRepositoryProvider);
     _Taken? taken;
     _remember(
-      undo: () async => taken = await _take(maps, [id]),
+      undo: () async => taken = await _take(maps, ids),
       redo: () async {
         if (taken case final gone?) {
           await maps.restore(nodes: gone.nodes, edges: gone.edges);
@@ -314,24 +344,25 @@ class MindmapViewModel extends _$MindmapViewModel {
     );
   }
 
-  /// Keeps pictures on the device for this page and returns them as the Markdown a
-  /// picture element holds — they go up with the sync, after the page; offline too.
+  /// Keeps pictures on the device for this page and returns each as the Markdown a
+  /// picture element holds, in order — they go up with the sync, after the page;
+  /// offline too.
   @command
-  Future<String> keepImages(
+  Future<List<String>> keepImages(
     List<({Uint8List bytes, String filename})> files,
-  ) async {
-    final media = ref.read(mediaRepositoryProvider);
-    final ids = [
-      for (final file in files)
-        await media.keep(
-          ownerType: ImageOwnerTypes.wikiPage,
-          ownerItemId: pageId,
-          bytes: file.bytes,
-          filename: file.filename,
-        ),
-    ];
-    return imagesInsertion('', 0, ids).trim();
-  }
+  ) async => [
+    for (final file in files)
+      imageMarkdown(
+        await ref
+            .read(mediaRepositoryProvider)
+            .keep(
+              ownerType: ImageOwnerTypes.wikiPage,
+              ownerItemId: pageId,
+              bytes: file.bytes,
+              filename: file.filename,
+            ),
+      ),
+  ];
 
   /// Moves elements dragged together, each to its new top left corner.
   Future<void> move(Map<MindmapNode, ({int x, int y})> moves) => _changeAll({
@@ -438,7 +469,7 @@ class MindmapViewModel extends _$MindmapViewModel {
     final stroke = strokeOf(points, width.toDouble());
     final maps = ref.read(mindmapRepositoryProvider);
     final id = newId();
-    _rememberPlaced(id);
+    _rememberPlaced([id]);
     await _inTurn(
       () => maps.addNode(
         id: id,

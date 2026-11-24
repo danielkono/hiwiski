@@ -1,7 +1,9 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:clock/clock.dart';
 import 'package:drift/native.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -1538,6 +1540,92 @@ void main() {
     },
   );
 
+  testWidgets('pictures chosen together stand side by side, as high as each '
+      'other, and go with one Undo; a picture is replaced by one', (
+    tester,
+  ) async {
+    final picker = (await tester.runAsync(
+      () async => _Picker([
+        _Picked('weit.png', await _png(200, 100)),
+        _Picked('quadrat.png', await _png(100, 100)),
+        _Picked('hoch.png', await _png(100, 200)),
+      ]),
+    ))!;
+    final before = FilePickerPlatform.instance;
+    FilePickerPlatform.instance = picker;
+    addTearDown(() => FilePickerPlatform.instance = before);
+    await seed(tester);
+    await open(tester);
+    await tester.tap(find.byKey(MindmapKeys.edit));
+    await settle(tester);
+
+    Future<List<MindmapNodeRow>> pictures() async => [
+      for (final row in (await tester.runAsync(
+        () => db.select(db.mindmapNodes).get(),
+      ))!)
+        if (row.kind == MindmapKinds.image && row.deletedAt == null) row,
+    ]..sort((a, b) => a.x.compareTo(b.x));
+
+    await pick(
+      tester,
+      MindmapKeys.addMenu,
+      MindmapKeys.tool(MindmapKinds.image),
+    );
+    // The pictures are read in for real: their shapes are decoded.
+    for (int turn = 0; (await pictures()).length < 3; turn++) {
+      if (turn > 20) fail('the pictures were not placed');
+      await settle(tester);
+    }
+    expect(picker.asked, equals(['several']));
+    final placed = await pictures();
+    // In the order they were chosen, left to right, a gap apart, all as high and
+    // each in its own shape — each its own picture.
+    expect(placed.map((row) => row.body).toSet(), hasLength(3));
+    final height = placed.first.height;
+    for (final (index, aspect) in const [2.0, 1.0, 0.5].indexed) {
+      final row = placed[index];
+      expect(row.height, equals(height), reason: '$index');
+      expect(row.width, closeTo(height * aspect, 1), reason: '$index');
+      expect(row.y, equals(placed.first.y), reason: '$index');
+      if (index > 0) {
+        final left = placed[index - 1];
+        expect(
+          row.x - (left.x + left.width),
+          closeTo(HiwiskiMetrics.mindmapRowGap, 1),
+          reason: '$index',
+        );
+      }
+    }
+
+    // One Undo takes them all, one Redo brings them all back.
+    await tester.tap(find.byKey(MindmapKeys.undo));
+    await settle(tester);
+    expect(await pictures(), isEmpty);
+    await tester.tap(find.byKey(MindmapKeys.redo));
+    await settle(tester);
+    expect(await pictures(), hasLength(3));
+
+    // Another picture for one of them: chosen alone.
+    await tester.tap(find.byKey(ValueKey(placed.first.id)));
+    await settle(tester);
+    for (
+      int turn = 0;
+      find.byKey(MindmapKeys.editContent).hitTestable().evaluate().isEmpty;
+      turn++
+    ) {
+      if (turn > 5) fail('no way to change the picture in the corner');
+      await turnCorner(tester);
+    }
+    await tester.tap(find.byKey(MindmapKeys.editContent));
+    for (int turn = 0; picker.asked.length < 2; turn++) {
+      if (turn > 20) fail('no picture was asked for');
+      await settle(tester);
+    }
+    await settle(tester);
+    expect(picker.asked, equals(['several', 'one']));
+    expect(await pictures(), hasLength(3));
+  });
+
   testWidgets('a note\'s heading stays larger than its text at any text '
       'size', (tester) async {
     await seed(tester);
@@ -2655,3 +2743,92 @@ MindmapNode _node(
 const _pngMagic = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 const _widthAt = 16;
 const _heightAt = 20;
+
+/// The system's file dialog, handing over [files]: all of them where several may be
+/// chosen, the first where one is asked for. [asked] says which way it was asked.
+final class _Picker extends FilePickerPlatform {
+  _Picker(this.files);
+
+  final List<PlatformFile> files;
+  final asked = <String>[];
+
+  @override
+  Future<List<PlatformFile>> pickFiles({
+    String? dialogTitle,
+    String? initialDirectory,
+    FileType type = .any,
+    List<String>? allowedExtensions,
+    Function(FilePickerStatus)? onFileLoading,
+    int compressionQuality = 0,
+    AndroidOptions androidOptions = const AndroidOptions(),
+    DarwinOptions darwinOptions = const DarwinOptions(),
+    WindowsOptions windowsOptions = const WindowsOptions(),
+    LinuxOptions linuxOptions = const LinuxOptions(),
+    WebOptions webOptions = const WebOptions(),
+  }) async {
+    asked.add('several');
+    return files;
+  }
+
+  @override
+  Future<PlatformFile?> pickFile({
+    String? dialogTitle,
+    String? initialDirectory,
+    FileType type = .any,
+    List<String>? allowedExtensions,
+    Function(FilePickerStatus)? onFileLoading,
+    int compressionQuality = 0,
+    AndroidOptions androidOptions = const AndroidOptions(),
+    DarwinOptions darwinOptions = const DarwinOptions(),
+    WindowsOptions windowsOptions = const WindowsOptions(),
+    LinuxOptions linuxOptions = const LinuxOptions(),
+    WebOptions webOptions = const WebOptions(),
+  }) async {
+    asked.add('one');
+    return files.firstOrNull;
+  }
+}
+
+/// A picture chosen in the dialog, held in memory.
+final class _Picked extends PlatformFile {
+  _Picked(this.name, this._bytes);
+
+  @override
+  final String name;
+
+  final Uint8List _bytes;
+
+  @override
+  Uri get uri => .new(scheme: 'memory', path: name);
+
+  // Its type is cross_file's, which the app does not name itself: the app reads a
+  // chosen file through readAsBytes, never through this.
+  @override
+  // ignore: always_declare_return_types
+  get xFile => throw UnimplementedError('read through readAsBytes');
+
+  @override
+  int? lengthSync() => _bytes.length;
+
+  @override
+  Future<int?> length() async => _bytes.length;
+
+  @override
+  Future<Uint8List> readAsBytes() async => _bytes;
+
+  @override
+  Stream<Uint8List> readAsByteStream() => .value(_bytes);
+}
+
+/// A picture [width] × [height] large, as a PNG — from inside `runAsync`.
+Future<Uint8List> _png(int width, int height) async {
+  final recorder = ui.PictureRecorder();
+  Canvas(recorder).drawRect(
+    Rect.fromLTWH(0, 0, width.toDouble(), height.toDouble()),
+    Paint()..color = const Color(0xFF2E7D6B),
+  );
+  final image = await recorder.endRecording().toImage(width, height);
+  final data = await image.toByteData(format: ui.ImageByteFormat.png);
+  image.dispose();
+  return data!.buffer.asUint8List();
+}
