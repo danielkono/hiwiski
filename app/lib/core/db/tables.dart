@@ -593,6 +593,12 @@ class MindmapNodes extends Table with SyncedItem {
 
   /// What a note's lines fill ([MindmapTextFlows]); `null`: the box inside its shape.
   TextColumn get textFlow => text().nullable()();
+
+  /// The calendars a week of calendars shows, their ids separated by spaces.
+  TextColumn get calendars => text().nullable()();
+
+  /// The week it shows (`2027-W28`); `null`: the current one, for whoever looks.
+  TextColumn get week => text().nullable()();
 }
 
 /// A connection between two elements of the same mind map, drawn from centre to centre.

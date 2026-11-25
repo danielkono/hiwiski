@@ -175,6 +175,8 @@ void main() {
         WireFields.rotation: 30,
         WireFields.textAlign: MindmapTextAligns.bottomCenter,
         WireFields.textFlow: MindmapTextFlows.shape,
+        WireFields.calendars: 'c1 c2',
+        WireFields.week: '2027-W28',
       },
     ),
     EntityTypes.mindmapEdge: (

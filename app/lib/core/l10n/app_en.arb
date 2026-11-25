@@ -1943,6 +1943,33 @@
   "mindmapColorOpacity": "Opacity",
   "mindmapPlainHint": "Text",
   "mindmapKindDrawing": "Drawing",
+  "mindmapToolCalendar": "Calendar week",
+  "mindmapKindCalendar": "Calendar week",
+  "mindmapFieldCalendars": "Calendars",
+  "mindmapFieldWeek": "Week",
+  "mindmapCalendarsCount": "{count, plural, =1{1 calendar} other{{count} calendars}}",
+  "@mindmapCalendarsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mindmapWeekCurrent": "Current week",
+  "mindmapWeekCurrentHint": "Moves on with the days, for whoever looks",
+  "mindmapWeekChosen": "A particular week",
+  "mindmapWeekOf": "Week {week} · {range}",
+  "@mindmapWeekOf": {
+    "placeholders": {
+      "week": {
+        "type": "int"
+      },
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "mindmapCalendarNone": "No calendar chosen",
   "mindmapToolPen": "Pen",
   "mindmapToolEraser": "Eraser",
   "mindmapStrokeWidth": "Stroke width",

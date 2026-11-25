@@ -7,6 +7,7 @@ import '../../core/api/generated/export.dart' show Member;
 
 import '../../core/common/app_names.dart';
 import '../../core/common/wire.dart';
+import '../common/calendar_days.dart';
 import '../links/link_index.dart';
 import '../links/link_text.dart';
 import '../sync/sync_items.dart';
@@ -51,6 +52,8 @@ class MindmapNode {
     this.rotation,
     this.textAlign,
     this.textFlow,
+    this.calendars,
+    this.week,
   });
 
   /// An element with [fields] — read from its row, or [base] with some of them
@@ -81,7 +84,9 @@ class MindmapNode {
        strokeWidth = _wholeOf(fields[WireFields.strokeWidth]),
        rotation = _wholeOf(fields[WireFields.rotation]),
        textAlign = _textOf(fields[WireFields.textAlign]),
-       textFlow = _textOf(fields[WireFields.textFlow]);
+       textFlow = _textOf(fields[WireFields.textFlow]),
+       calendars = _textOf(fields[WireFields.calendars]),
+       week = _textOf(fields[WireFields.week]);
 
   /// Its synced fields by their names on the wire — all of them.
   late final Map<String, Object?> fields = {
@@ -103,6 +108,8 @@ class MindmapNode {
     WireFields.rotation: rotation,
     WireFields.textAlign: textAlign,
     WireFields.textFlow: textFlow,
+    WireFields.calendars: calendars,
+    WireFields.week: week,
   };
 
   /// The same element with [changes] — `null` clears a field that may be empty.
@@ -177,6 +184,24 @@ class MindmapNode {
 
   /// What a note's lines fill ([MindmapTextFlows]); `null`: the box inside its shape.
   final String? textFlow;
+
+  /// The calendars a week of calendars shows, their ids separated by spaces
+  /// ([calendarIds]).
+  final String? calendars;
+
+  /// The week a week of calendars shows, as ISO 8601 writes it (`2027-W28`);
+  /// `null`: the current one, for whoever looks ([weekStart]).
+  final String? week;
+
+  /// The calendars a week of calendars shows, in the order they were chosen.
+  List<String> get calendarIds => calendarIdsOf(calendars);
+
+  /// The Monday of the week a week of calendars shows: its [week], or the one
+  /// [today] falls in — it moves on with the days.
+  DateTime weekStart(DateTime today) => switch (week) {
+    final week? => mondayOfIsoWeek(week) ?? startOfWeek(today),
+    null => startOfWeek(today),
+  };
 
   /// [rotation] in radians, 0 for none.
   double get turn => (rotation ?? 0) * math.pi / _halfTurn;
@@ -1198,6 +1223,21 @@ Map<String, LinkItem> mindmapTargetsOf(Mindmap map, LinkIndex index) => {
 // --- Members ---------------------------------------------------------------------
 
 /// The address a member element keeps of whom it shows.
+/// The calendar ids a week of calendars' [calendars] holds, in order.
+List<String> calendarIdsOf(String? calendars) => [
+  for (final id in (calendars ?? '').split(_calendarSeparator))
+    if (id.isNotEmpty) id,
+];
+
+/// [ids] as a week of calendars keeps them — `null` for none.
+String? calendarsOf(Iterable<String> ids) =>
+    ids.isEmpty ? null : ids.join(_calendarSeparator);
+
+/// The most calendars a week of calendars shows — the server refuses more.
+const mindmapMaxCalendars = 50;
+
+const _calendarSeparator = ' ';
+
 String memberAddressOf(String memberId) =>
     '${UriSchemes.hiwiski}://$_memberPath/$memberId';
 

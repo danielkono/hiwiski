@@ -117,4 +117,30 @@ void main() {
     expect(isoWeekNumber(DateTime(2026)), equals(1));
     expect(isoWeekNumber(DateTime(2027)), equals(53));
   });
+
+  // A week of the year as ISO 8601 writes it — its year is the week's own, not the
+  // day's: the 1st of January 2027 lies in the last week of 2026.
+  test('a week of the year is written and read as ISO 8601 does', () {
+    expect(isoWeekOf(DateTime(2026, 11, 25)), equals('2026-W48'));
+    expect(isoWeekOf(DateTime(2027)), equals('2026-W53'));
+    expect(isoWeekOf(DateTime(2025, 12, 29)), equals('2026-W01'));
+    expect(isoWeekOf(DateTime(2027, 7, 18)), equals('2027-W28'));
+
+    expect(mondayOfIsoWeek('2027-W28'), equals(DateTime(2027, 7, 12)));
+    expect(mondayOfIsoWeek('2026-W01'), equals(DateTime(2025, 12, 29)));
+    expect(mondayOfIsoWeek('2026-W53'), equals(DateTime(2026, 12, 28)));
+    for (final day in [
+      DateTime(2026, 3, 29),
+      DateTime(2026, 10, 25),
+      DateTime(2027, 1, 3),
+    ]) {
+      expect(
+        mondayOfIsoWeek(isoWeekOf(day)),
+        equals(startOfWeek(day)),
+        reason: '$day',
+      );
+    }
+    expect(mondayOfIsoWeek('2027-28'), isNull);
+    expect(mondayOfIsoWeek('2027-W00'), isNull);
+  });
 }

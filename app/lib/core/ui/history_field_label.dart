@@ -31,6 +31,8 @@ String historyFieldLabel(L l, String field) => switch (field) {
   WireFields.rotation => l.mindmapFieldRotation,
   WireFields.textAlign => l.mindmapTextAlign,
   WireFields.textFlow => l.mindmapTextFlow,
+  WireFields.calendars => l.mindmapFieldCalendars,
+  WireFields.week => l.mindmapFieldWeek,
   // One choice in the form: a dashed arrow is a kind of line.
   WireFields.line || WireFields.arrows => l.mindmapEdgeStyle,
   WireFields.tags => l.tagsTitle,

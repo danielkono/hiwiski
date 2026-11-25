@@ -567,6 +567,40 @@ class _MindmapScreenState extends ConsumerState<MindmapScreen> {
         }
       },
     ),
+    MindmapKinds.calendar: _KindTool(
+      icon: HiwiskiSymbols.calendarViewWeek,
+      label: (l) => l.mindmapToolCalendar,
+      make: (last, _) async {
+        final chosen = await showMindmapCalendarSheet(
+          context,
+          calendars: _state?.calendars ?? const [],
+        );
+        if (chosen == null) return const [];
+        return [
+          (
+            text: '',
+            look: {
+              WireFields.calendars: chosen.calendars,
+              WireFields.week: chosen.week,
+            },
+            size: last ?? HiwiskiMetrics.mindmapCalendarSize,
+          ),
+        ];
+      },
+      edit: (node) async {
+        final chosen = await showMindmapCalendarSheet(
+          context,
+          calendars: _state?.calendars ?? const [],
+          chosen: node.calendars,
+          week: node.week,
+        );
+        if (chosen == null || !mounted) return;
+        await _viewModel.setFields(node, {
+          WireFields.calendars: chosen.calendars,
+          WireFields.week: chosen.week,
+        });
+      },
+    ),
     MindmapKinds.member: _KindTool(
       icon: HiwiskiSymbols.person,
       label: (l) => l.mindmapToolMember,

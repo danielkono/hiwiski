@@ -22,6 +22,7 @@ import '../../../domain/common/item_ref.dart';
 import '../../../domain/links/link_index.dart';
 import '../../../domain/preferences/preferences.dart';
 import '../../../domain/sync/sync_items.dart';
+import '../../../domain/calendar/calendar_items.dart';
 import '../../../domain/wiki/mindmap.dart';
 import '../../../domain/wiki/mindmap_kinds.dart';
 import '../../../domain/wiki/page_images.dart';
@@ -71,6 +72,7 @@ class MindmapState {
     this.order = .place,
     this.descending = false,
     this.members = const {},
+    this.calendars = const [],
     this.canUndo = false,
     this.canRedo = false,
     this.snap = true,
@@ -132,6 +134,10 @@ class MindmapState {
   /// family (any more).
   Member? memberOf(String? target) => members[memberIdOf(target)];
 
+  /// The calendars this member can see, as the calendar lists them — what a week of
+  /// calendars may be given.
+  final List<Calendar> calendars;
+
   /// The own colours already used on this map, newest first — offered again.
   List<String> get ownColors {
     final seen = <String>{};
@@ -165,6 +171,10 @@ Stream<List<Member>> _members(Ref ref) =>
     ref.watch(familyRepositoryProvider).watchMembers();
 
 @riverpod
+Stream<List<Calendar>> _calendars(Ref ref) =>
+    ref.watch(calendarRepositoryProvider).watchCalendars();
+
+@riverpod
 Stream<List<SyncConflict>> _conflicts(Ref ref) =>
     ref.watch(syncRepositoryProvider).watchConflicts();
 
@@ -190,6 +200,8 @@ class MindmapViewModel extends _$MindmapViewModel {
           in ref.watch(_membersProvider).value ?? const <Member>[])
         member.id: member,
     };
+    // Not waited for either: needed only once a week of calendars is placed.
+    final calendars = ref.watch(_calendarsProvider).value ?? const <Calendar>[];
     final index = ref.watch(linkIndexProvider);
     final lining = ref.watch(
       preferencesProvider.select(
@@ -244,6 +256,7 @@ class MindmapViewModel extends _$MindmapViewModel {
       descending: _descending,
       index: index,
       members: members,
+      calendars: calendars,
       canUndo: _undo.isNotEmpty,
       canRedo: _redo.isNotEmpty,
       snap: lining.snap,

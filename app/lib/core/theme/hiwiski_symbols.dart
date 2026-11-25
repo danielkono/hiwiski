@@ -82,6 +82,10 @@ abstract final class HiwiskiSymbols {
     0xebcc,
     fontFamily: fontFamily,
   );
+  static const IconData calendarViewWeek = IconData(
+    0xefe8,
+    fontFamily: fontFamily,
+  );
   static const IconData category = IconData(0xe72c, fontFamily: fontFamily);
   static const IconData check = IconData(0xe668, fontFamily: fontFamily);
   static const IconData checkBox = IconData(0xe9de, fontFamily: fontFamily);

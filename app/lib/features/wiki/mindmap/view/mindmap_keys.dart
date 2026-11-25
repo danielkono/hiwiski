@@ -73,6 +73,13 @@ abstract final class MindmapKeys {
   static ValueKey<String> choice(String value) => .new('$_choice$value');
   static const ownNumber = ValueKey('mindmap-own-number');
   static const ownApply = ValueKey('mindmap-own-apply');
+
+  /// The week of calendars' sheet: a calendar to tick, the week, done.
+  static ValueKey<String> calendar(String id) => .new('$_calendar$id');
+  static const weekCurrent = ValueKey('mindmap-week-current');
+  static const weekChosen = ValueKey('mindmap-week-chosen');
+  static const weekPick = ValueKey('mindmap-week-pick');
+  static const calendarDone = ValueKey('mindmap-calendar-done');
   static const addMenu = ValueKey('mindmap-add-menu');
   static const drawMenu = ValueKey('mindmap-draw-menu');
   static const toolsMenu = ValueKey('mindmap-tools-menu');
@@ -88,6 +95,7 @@ abstract final class MindmapKeys {
   static ValueKey<String> swatch(String color) => .new('$_swatch$color');
 
   static const _member = 'mindmap-member-';
+  static const _calendar = 'mindmap-calendar-';
   static ValueKey<String> member(String id) => .new('$_member$id');
 
   static const _target = 'mindmap-connect-';

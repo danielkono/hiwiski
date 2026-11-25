@@ -82,3 +82,29 @@ int isoWeekNumber(DateTime day) {
   final firstOfYear = DateTime.utc(thursday.year);
   return (thursday.difference(firstOfYear).inDays ~/ 7) + 1;
 }
+
+/// The week [day] falls in, as ISO 8601 writes it: `2027-W28`. The year is the
+/// week's own: the last days of December may lie in week 1 of the next year, the
+/// first days of January in the last week of the one before.
+String isoWeekOf(DateTime day) {
+  final date = DateTime.utc(day.year, day.month, day.day);
+  final thursday = date.add(Duration(days: DateTime.thursday - date.weekday));
+  final number = isoWeekNumber(day).toString().padLeft(2, '0');
+  return '${thursday.year}$_weekMark$number';
+}
+
+/// The Monday of [week] as ISO 8601 writes it (`2027-W28`) — `null` for anything else.
+/// Week 1 is the one with the 4th of January in it.
+DateTime? mondayOfIsoWeek(String week) {
+  final match = _isoWeek.firstMatch(week);
+  final year = int.tryParse(match?.group(1) ?? '');
+  final number = int.tryParse(match?.group(2) ?? '');
+  if (year == null || number == null || number < 1) return null;
+  return addDays(
+    startOfWeek(DateTime(year, DateTime.january, 4)),
+    (number - 1) * DateTime.daysPerWeek,
+  );
+}
+
+const _weekMark = '-W';
+final _isoWeek = RegExp(r'^(\d{4})-W(\d{2})$');

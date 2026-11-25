@@ -13,6 +13,7 @@ import '../../../../components/rich_text/view/rich_image.dart';
 import '../../../../domain/links/link_index.dart';
 import '../../../../domain/wiki/mindmap.dart';
 import '../../../../domain/wiki/mindmap_shapes.dart';
+import 'mindmap_calendar.dart';
 import 'mindmap_link.dart';
 import 'mindmap_members.dart';
 import 'mindmap_note.dart';
@@ -251,6 +252,11 @@ class MindmapElementView extends StatelessWidget {
       content: (content) => _Member(node: content.node),
       // Around a member's circle, a circle.
       frame: MindmapShapes.ellipse,
+    ),
+    MindmapKinds.calendar: MindmapKindLook(
+      icon: HiwiskiSymbols.calendarViewWeek,
+      name: (context, _) => L.of(context).mindmapKindCalendar,
+      content: _CalendarContent.new,
     ),
     MindmapKinds.drawing: MindmapKindLook(
       icon: HiwiskiSymbols.draw,
@@ -544,6 +550,19 @@ class _LinkContent extends StatelessWidget {
       ],
     );
   }
+}
+
+/// A week of calendars, growing as a whole with its text size.
+class _CalendarContent extends StatelessWidget {
+  const _CalendarContent(this.content);
+
+  final MindmapContent content;
+
+  @override
+  Widget build(BuildContext context) => MindmapCalendar(
+    node: content.node,
+    textScale: MindmapElementView.textScaleOf(context, content.node.textSize),
+  );
 }
 
 /// A kind a newer app placed: kept as it is, shown as what it is not.

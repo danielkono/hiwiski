@@ -412,6 +412,9 @@ class HiwiskiMetrics {
   /// read the preview in.
   static const Size mindmapLinkContentSize = Size(360, 420);
 
+  /// A new week of calendars: seven days side by side, a working day high.
+  static const Size mindmapCalendarSize = Size(640, 400);
+
   /// The editing controls in the corner, on rings around the screen's corner: the
   /// button in the middle [mindmapCornerMargin] clear of the safe area, the buttons'
   /// ring [mindmapCornerRingGap] further out, on a larger screen the choices' ring

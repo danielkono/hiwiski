@@ -131,6 +131,11 @@ abstract final class WireFields {
   static const rotation = 'rotation';
   static const textAlign = 'textAlign';
   static const textFlow = 'textFlow';
+
+  /// A week of calendars: the calendars it shows, their ids separated by spaces, and
+  /// its week as ISO 8601 writes it (`2027-W28`), none for the current one.
+  static const calendars = 'calendars';
+  static const week = 'week';
   static const arrows = 'arrows';
   static const fromId = 'fromId';
   static const toId = 'toId';
@@ -244,6 +249,9 @@ abstract final class MindmapKinds {
 
   /// A stroke drawn by hand — its `points` across the element.
   static const drawing = 'DRAWING';
+
+  /// A week of calendars, side by side — its `calendars` and its `week`.
+  static const calendar = 'CALENDAR';
 }
 
 /// What a link element shows of its target. An unknown one shows the title.

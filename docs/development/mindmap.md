@@ -23,8 +23,9 @@ places and nowhere else:
    number with bounds, its check in the type's `refusal`; a test in `MindmapIT`.
 3. **The device's database**: its column in `MindmapNodes` or `MindmapEdges`
    (`lib/core/db/tables.dart`), a schema step with `_addColumnOnce` in
-   `hiwiski_database.dart` and its line in `test/core/schema_upgrade_test.dart`, and
-   its line in `mindmapNodeColumns` or `mindmapEdgeColumns`
+   `hiwiski_database.dart` and its line in `test/core/schema_upgrade_test.dart` and in
+   the element of `test/core/stored_item_test.dart`, which sends every field back out;
+   and its line in `mindmapNodeColumns` or `mindmapEdgeColumns`
    (`lib/core/db/synced_columns.dart`), which maps the field to its column for the
    sync codec and the repository alike.
 4. **The domain**: its name in `WireFields` and, for named values, a class of
@@ -83,10 +84,14 @@ draws them, and another way to offer them would draw the same list.
 `test/mindmap_kinds_test.dart` checks that every kind the app knows is drawn as
 itself; `mindmap_screen_test.dart` that every kind but a stroke is on the "Add" menu.
 
-A kind that is a view of an item elsewhere in the app — a calendar's agenda, a list —
-may not need to be a kind at all: a link element points to any item the link index
-knows and shows its content as its preview does (`MindmapLinkContent`). A new kind
-is for what a link's preview cannot show.
+A kind that is a view of an item elsewhere in the app — a list, a page — may not need
+to be a kind at all: a link element points to any item the link index knows and shows
+its content as its preview does (`MindmapLinkContent`). A new kind is for what a
+link's preview cannot show. The week of calendars (`CALENDAR`) is one: several
+calendars at once, in a week of its own (`week`, or the current one for whoever
+looks), with fields of its own for both. Its view is a component,
+`lib/components/calendar_week/`, which shows what the calendar shows — a calendar
+the reader cannot see is not on their device, and its events show nowhere.
 
 ## An outline
 

@@ -5,6 +5,7 @@
 /// `DateFormat` takes from the locale.
 abstract final class DatePatterns {
   static const dayMonth = 'dd.MM.';
+  static const dayMonthYear = 'dd.MM.yyyy';
   static const weekdayDayMonth = 'E, dd.MM.';
   static const dayMonthName = 'd. MMM';
 

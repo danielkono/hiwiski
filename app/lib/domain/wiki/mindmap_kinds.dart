@@ -100,6 +100,14 @@ const _kinds = <String, MindmapKind>{
     remembersSize: true,
     words: .target,
   ),
+  MindmapKinds.calendar: MindmapKind(
+    surface: true,
+    coloured: true,
+    texted: true,
+    outlined: true,
+    remembersSize: true,
+    words: .none,
+  ),
   MindmapKinds.drawing: MindmapKind(
     coloured: true,
     stroked: true,

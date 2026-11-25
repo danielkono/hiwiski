@@ -28,8 +28,12 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
   them forward or send them back; a line can be as thick as you like. **Undo** and
   **Redo** take changes back and do them again. A snippet of text is written right
   on the canvas and is just as large as its words; a picture keeps its own shape, and
-  several chosen at once stand side by side, as high as each other; a member shows as their picture in a circle; a link shows its target's title or its
-  content, as its preview does; a note's checklist is ticked off with a tap where the
+  several chosen at once stand side by side, as high as each other; a member shows as
+  their picture in a circle; a link shows its target's title or its content, as its
+  preview does; a **calendar week** shows one or more calendars side by side — the
+  current week, moving on with the days, or a week of the year — and an event opens
+  into its card on hover or a long press, as in the calendar; whoever cannot see a
+  calendar sees nothing of it there; a note's checklist is ticked off with a tap where the
   map is read, as a page's is. A **pen** draws on the map in a colour and thickness
   of your choice — freehand or as a rectangle, ellipse, triangle, diamond, line or
   arrow, which can be resized afterwards — and the **eraser** takes away every stroke it is swiped over; one tap

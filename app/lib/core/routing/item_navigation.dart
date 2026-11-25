@@ -70,17 +70,25 @@ Future<void> openLinkTarget(
 /// mind map's link element shows when it shows its target's content: the same view
 /// of an item in both places.
 class ItemPreview extends StatelessWidget {
-  const ItemPreview({super.key, required this.itemType, required this.itemId});
+  const ItemPreview({
+    super.key,
+    required this.itemType,
+    required this.itemId,
+    this.at,
+  });
 
   final String itemType;
   final String itemId;
+
+  /// An event's occurrence, where it is one of a series: its start.
+  final DateTime? at;
 
   @override
   Widget build(BuildContext context) => switch (itemType) {
     EntityTypes.wikiPage => PagePreview(pageId: itemId),
     EntityTypes.todo => TodoBody(todoId: itemId, preview: true),
     EntityTypes.todoList => TodoListBody(listId: itemId),
-    EntityTypes.event => EventBody(eventId: itemId),
+    EntityTypes.event => EventBody(eventId: itemId, at: at),
     _ => const SizedBox.shrink(),
   };
 }

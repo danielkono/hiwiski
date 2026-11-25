@@ -51,6 +51,8 @@ class MindmapSyncTypes {
     private static final String ROTATION = "rotation";
     private static final String TEXT_ALIGN = "textAlign";
     private static final String TEXT_FLOW = "textFlow";
+    private static final String CALENDARS = "calendars";
+    private static final String WEEK = "week";
     private static final String TARGET = "target";
     private static final String LINK_VIEW = "linkView";
     private static final String WIDTH = "width";
@@ -86,6 +88,17 @@ class MindmapSyncTypes {
      */
     private static final Pattern TARGET_VALUE = Pattern.compile(
             "hiwiski://[a-z_]+/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
+
+    /**
+     * The calendars a week of calendars shows: their ids, separated by spaces. Which of
+     * them a reader sees is decided where it is shown, as on the calendar's own page.
+     */
+    private static final Pattern CALENDARS_VALUE = Pattern.compile(
+            "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+                    + "( [0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}){0,49}");
+
+    /** A week of the year as ISO 8601 writes it, Monday to Sunday: {@code 2027-W28}. */
+    private static final Pattern WEEK_VALUE = Pattern.compile("[0-9]{4}-W(0[1-9]|[1-4][0-9]|5[0-3])");
 
     /** Far beyond any element a person draws; it keeps a typo from making one endless. */
     private static final int MAX_SIZE = 100_000;
@@ -148,7 +161,9 @@ class MindmapSyncTypes {
                         SyncField.integer(STROKE_WIDTH, MINDMAP_NODE.STROKE_WIDTH),
                         SyncField.integer(ROTATION, MINDMAP_NODE.ROTATION),
                         SyncField.text(TEXT_ALIGN, MINDMAP_NODE.TEXT_ALIGN),
-                        SyncField.text(TEXT_FLOW, MINDMAP_NODE.TEXT_FLOW));
+                        SyncField.text(TEXT_FLOW, MINDMAP_NODE.TEXT_FLOW),
+                        SyncField.text(CALENDARS, MINDMAP_NODE.CALENDARS),
+                        SyncField.text(WEEK, MINDMAP_NODE.WEEK));
             }
 
             @Override
@@ -170,7 +185,8 @@ class MindmapSyncTypes {
                         || !fitsStroke(changes)
                         || !fitsTextSize(changes)
                         || !fitsRotation(changes)
-                        || !fitsTextPlace(changes)) {
+                        || !fitsTextPlace(changes)
+                        || !fitsWeekOfCalendars(changes)) {
                     return Optional.of(SyncField.INVALID_FIELD);
                 }
                 return Optional.empty();
@@ -329,6 +345,13 @@ class MindmapSyncTypes {
     private static boolean fitsTextPlace(Map<String, Object> changes) {
         return Stream.of(TEXT_ALIGN, TEXT_FLOW).map(changes::get)
                 .allMatch(name -> name == null || EDGE_STYLE_VALUE.matcher(name.toString()).matches());
+    }
+
+    private static boolean fitsWeekOfCalendars(Map<String, Object> changes) {
+        Object calendars = changes.get(CALENDARS);
+        Object week = changes.get(WEEK);
+        return (calendars == null || CALENDARS_VALUE.matcher(calendars.toString()).matches())
+                && (week == null || WEEK_VALUE.matcher(week.toString()).matches());
     }
 
     private static boolean fitsEdgeStyle(Map<String, Object> changes) {

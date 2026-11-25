@@ -15,6 +15,7 @@ import de.danielkononov.hiwiski.support.IntegrationTest;
 import de.danielkononov.hiwiski.support.SyncClient;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.HashMap;
 import java.util.List;
@@ -301,6 +302,8 @@ class MindmapIT {
                 "target", "hiwiski://wiki_page/" + map,
                 "points", "0,0 10000,10000",
                 "textSize", "XL",
+                "calendars", UUID.randomUUID() + " " + UUID.randomUUID(),
+                "week", "2027-W28",
                 "fromId", first.toString(),
                 "toId", second.toString());
         var element = sampled(MindmapNodeFields.class, formed);
@@ -355,6 +358,30 @@ class MindmapIT {
         }
         var result = phone.push(onMap(NODE, note, null, Map.of("textFlow", "shape")));
         assertThat(result.getFirst().get("code")).isEqualTo("sync.invalid_field");
+    }
+
+    @Test
+    void aWeekOfCalendarsNamesItsCalendarsByIdAndItsWeekAsTheYearCountsIt() {
+        UUID week = node(phone, "Woche");
+        String one = UUID.randomUUID().toString();
+        String fifty = String.join(" ", Collections.nCopies(50, one));
+        for (var fields : List.of(
+                Map.<String, Object>of("calendars", one, "week", "2027-W28"),
+                Map.<String, Object>of("calendars", one + " " + UUID.randomUUID(), "week", "2026-W53"),
+                Map.<String, Object>of("calendars", fifty, "week", "2027-W01"))) {
+            var result = phone.push(onMap(NODE, week, null, fields));
+            assertThat(result.getFirst().get("status")).as(fields.toString()).isEqualTo("applied");
+        }
+        for (var fields : List.of(
+                Map.<String, Object>of("calendars", "Familie"),
+                Map.<String, Object>of("calendars", one + ","),
+                Map.<String, Object>of("calendars", fifty + " " + one),
+                Map.<String, Object>of("week", "2027-W54"),
+                Map.<String, Object>of("week", "2027-W00"),
+                Map.<String, Object>of("week", "2027-28"))) {
+            var result = phone.push(onMap(NODE, week, null, fields));
+            assertThat(result.getFirst().get("code")).as(fields.toString()).isEqualTo("sync.invalid_field");
+        }
     }
 
     @Test

@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../components/member_avatar/view/member_avatar.dart';
@@ -8,9 +9,14 @@ import '../../../../core/common/wire.dart';
 import '../../../../core/l10n/generated/app_localizations.dart';
 import '../../../../core/theme/hiwiski_metrics.dart';
 import '../../../../core/theme/hiwiski_symbols.dart';
+import '../../../../core/theme/hiwiski_tokens.dart';
+import '../../../../core/ui/color_tokens.dart';
 import '../../../../core/ui/hiwiski_sheet.dart';
+import '../../../../domain/calendar/calendar_items.dart';
+import '../../../../domain/common/calendar_days.dart';
 import '../../../../domain/common/item_ref.dart';
 import '../../../../domain/wiki/mindmap.dart';
+import '../../view/mindmap/mindmap_calendar.dart';
 import '../../view/mindmap/mindmap_scene.dart';
 import 'mindmap_keys.dart';
 
@@ -370,6 +376,125 @@ Future<Member?> showMindmapMemberSheet(
     ],
   ),
 );
+
+/// The calendars a week of calendars shows and its week — the current one, or one of
+/// the year. [calendars] are those this member can see; [chosen] and [week] what the
+/// element has. `null` when it was closed without "Done".
+Future<({String calendars, String? week})?> showMindmapCalendarSheet(
+  BuildContext context, {
+  required List<Calendar> calendars,
+  String? chosen,
+  String? week,
+}) => showHiwiskiSheet<({String calendars, String? week})>(
+  context: context,
+  title: L.of(context).mindmapKindCalendar,
+  builder: (context) =>
+      _CalendarChoice(calendars: calendars, chosen: chosen, week: week),
+);
+
+class _CalendarChoice extends StatefulWidget {
+  const _CalendarChoice({
+    required this.calendars,
+    required this.chosen,
+    required this.week,
+  });
+
+  final List<Calendar> calendars;
+  final String? chosen;
+  final String? week;
+
+  @override
+  State<_CalendarChoice> createState() => _CalendarChoiceState();
+}
+
+class _CalendarChoiceState extends State<_CalendarChoice> {
+  // A calendar this member cannot see stays chosen: it is someone else's choice, and
+  // they would lose it here without seeing it.
+  late final List<String> _chosen = calendarIdsOf(widget.chosen);
+  late String? _week = widget.week;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = L.of(context);
+    final today = startOfDay(clock.now());
+    final monday = switch (_week) {
+      final week? => mondayOfIsoWeek(week) ?? startOfWeek(today),
+      null => startOfWeek(today),
+    };
+    final seen = {for (final calendar in widget.calendars) calendar.id};
+    return Column(
+      mainAxisSize: .min,
+      crossAxisAlignment: .stretch,
+      children: [
+        Text(l.widgetCalendarsShown, style: context.tokens.text.sectionLabel),
+        for (final calendar in widget.calendars)
+          CheckboxListTile(
+            key: MindmapKeys.calendar(calendar.id),
+            contentPadding: .zero,
+            controlAffinity: .leading,
+            activeColor: context.tokens.accent(accentOf(calendar.colorToken)),
+            value: _chosen.contains(calendar.id),
+            title: Text(calendar.name),
+            onChanged: (ticked) => setState(() {
+              if (ticked ?? false) {
+                if (_chosen.length < mindmapMaxCalendars) {
+                  _chosen.add(calendar.id);
+                }
+              } else {
+                _chosen.remove(calendar.id);
+              }
+            }),
+          ),
+        const SizedBox(height: HiwiskiMetrics.space12),
+        ListTile(
+          key: MindmapKeys.weekCurrent,
+          contentPadding: .zero,
+          title: Text(l.mindmapWeekCurrent),
+          subtitle: Text(l.mindmapWeekCurrentHint),
+          trailing: _week == null ? const Icon(HiwiskiSymbols.check) : null,
+          onTap: () => setState(() => _week = null),
+        ),
+        ListTile(
+          key: MindmapKeys.weekChosen,
+          contentPadding: .zero,
+          title: Text(l.mindmapWeekChosen),
+          subtitle: _week == null
+              ? null
+              : Text(MindmapCalendar.weekLabelOf(context, monday)),
+          trailing: _week == null ? null : const Icon(HiwiskiSymbols.check),
+          onTap: () => _pickWeek(monday),
+        ),
+        const SizedBox(height: HiwiskiMetrics.space12),
+        Align(
+          alignment: .centerRight,
+          child: FilledButton(
+            key: MindmapKeys.calendarDone,
+            // At least one this member can see: a week of none shows nothing.
+            onPressed: _chosen.any(seen.contains)
+                ? () => Navigator.of(context)
+                      .pop((calendars: calendarsOf(_chosen) ?? '', week: _week))
+                : null,
+            child: Text(l.mindmapDone),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// A day of the week wanted — its week is the one shown.
+  Future<void> _pickWeek(DateTime monday) async {
+    final day = await showDatePicker(
+      context: context,
+      initialDate: monday,
+      firstDate: DateTime(monday.year - _yearsAround),
+      lastDate: DateTime(monday.year + _yearsAround),
+    );
+    if (day == null || !mounted) return;
+    setState(() => _week = isoWeekOf(day));
+  }
+
+  static const _yearsAround = 10;
+}
 
 /// One of [choices] — or, where [own] is given, a number of one's own from
 /// [own].min to [own].max, made into a value by [own].toValue. `null` when it was

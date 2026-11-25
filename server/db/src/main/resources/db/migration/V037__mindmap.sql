@@ -59,7 +59,13 @@ CREATE TABLE mindmap_node (
     text_align text,
     -- What its lines fill: BOX, the largest box inside its shape, or SHAPE, the shape
     -- itself; empty: BOX.
-    text_flow text
+    text_flow text,
+    -- The calendars a week of calendars shows, their ids separated by spaces; where it
+    -- is shown, those its reader cannot see are left out.
+    calendars text,
+    -- The week it shows, as ISO 8601 "2027-W28"; empty: the week it is for whoever
+    -- looks.
+    week text
 );
 
 CREATE TABLE mindmap_edge (

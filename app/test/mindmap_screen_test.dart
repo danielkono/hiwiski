@@ -29,6 +29,7 @@ import 'package:hiwiski/core/sync/sync_status.dart';
 import 'package:hiwiski/core/theme/hiwiski_theme.dart';
 import 'package:hiwiski/core/ui/flowing_text.dart';
 import 'package:hiwiski/core/ui/ui_keys.dart';
+import 'package:hiwiski/domain/calendar/event_draft.dart';
 import 'package:hiwiski/domain/wiki/mindmap.dart';
 import 'package:hiwiski/domain/wiki/mindmap_kinds.dart';
 import 'package:hiwiski/features/wiki/mindmap/view/mindmap_conflict_bar.dart';
@@ -1632,6 +1633,128 @@ void main() {
     await settle(tester);
     expect(picker.asked, equals(['several', 'one']));
     expect(await pictures(), hasLength(3));
+  });
+
+  testWidgets('a week of calendars shows the events of the calendars chosen, '
+      'the current week moving on with the days, an event opening on hover', (
+    tester,
+  ) async {
+    final wednesday = DateTime(2026, 11, 25, 9);
+    await withClock(Clock.fixed(wednesday), () async {
+      await seed(tester);
+      final ids = (await tester.runAsync(() async {
+        final calendars = container.read(calendarRepositoryProvider);
+        final family = await calendars.createCalendar(
+          name: 'Familie',
+          colorToken: ColorTokens.blue,
+        );
+        final work = await calendars.createCalendar(
+          name: 'Arbeit',
+          colorToken: ColorTokens.rust,
+        );
+        Future<void> event(
+          String calendarId,
+          String title,
+          DateTime start, {
+          String? location,
+        }) => calendars.createEvent(
+          calendarId: calendarId,
+          draft: EventDraft(
+            title: title,
+            time: TimedEvent(start, start.add(const Duration(hours: 1))),
+            location: location,
+          ),
+        );
+        await event(
+          family,
+          'Chorprobe',
+          DateTime(2026, 11, 25, 19, 30),
+          location: 'Gemeindehaus',
+        );
+        await event(work, 'Teamtreffen', DateTime(2026, 11, 26, 10));
+        await event(family, 'Sommerfest', DateTime(2027, 7, 14, 15));
+        return (family: family, work: work);
+      }))!;
+      await open(tester);
+      await tester.tap(find.byKey(MindmapKeys.edit));
+      await settle(tester);
+
+      // Placed with the family's calendar and the current week.
+      await pick(
+        tester,
+        MindmapKeys.addMenu,
+        MindmapKeys.tool(MindmapKinds.calendar),
+      );
+      await settle(tester);
+      expect(
+        tester
+            .widget<FilledButton>(find.byKey(MindmapKeys.calendarDone))
+            .onPressed,
+        isNull,
+        reason: 'a week of no calendar is not placed',
+      );
+      await tester.tap(find.byKey(MindmapKeys.calendar(ids.family)));
+      await tester.pump();
+      await tester.tap(find.byKey(MindmapKeys.calendarDone));
+      await settle(tester);
+      Future<MindmapNodeRow> week() async => (await tester.runAsync(
+        () => (db.select(
+          db.mindmapNodes,
+        )..where((row) => row.kind.equals(MindmapKinds.calendar))).getSingle(),
+      ))!;
+      final placed = await week();
+      expect(placed.calendars, equals(ids.family));
+      expect(placed.week, isNull);
+      expect(find.textContaining('Week 48'), findsOneWidget);
+      expect(find.textContaining('Chorprobe'), findsOneWidget);
+      // Another calendar's events are not this week's of these calendars.
+      expect(find.textContaining('Teamtreffen'), findsNothing);
+      expect(find.textContaining('Sommerfest'), findsNothing);
+
+      // Where the map is read, an event opens into its card on hover.
+      await tester.tap(find.byKey(MindmapKeys.edit));
+      await settle(tester);
+      final mouse = await tester.createGesture(kind: .mouse);
+      await mouse.addPointer(location: .zero);
+      addTearDown(mouse.removePointer);
+      await mouse.moveTo(tester.getCenter(find.textContaining('Chorprobe')));
+      await tester.pump(const Duration(milliseconds: 600));
+      await settle(tester);
+      expect(find.textContaining('Gemeindehaus'), findsOneWidget);
+      await mouse.moveTo(Offset.zero);
+      await settle(tester);
+
+      // A week of the year stays where it is.
+      final node = (await tester.runAsync(
+        () => container.read(mindmapRepositoryProvider).node(placed.id),
+      ))!;
+      await tester.runAsync(
+        () => container.read(mindmapRepositoryProvider).changeNode(node, {
+          WireFields.week: '2027-W28',
+        }),
+      );
+      await settle(tester);
+      expect(find.textContaining('Week 28'), findsOneWidget);
+      expect(find.textContaining('Sommerfest'), findsOneWidget);
+      expect(find.textContaining('Chorprobe'), findsNothing);
+    });
+
+    // The current week is the week it is: the map opened again in July 2027 shows
+    // that week's.
+    await tester.runAsync(() async {
+      final maps = container.read(mindmapRepositoryProvider);
+      final row = await (db.select(
+        db.mindmapNodes,
+      )..where((row) => row.kind.equals(MindmapKinds.calendar))).getSingle();
+      final node = await maps.node(row.id);
+      if (node != null) await maps.changeNode(node, {WireFields.week: null});
+    });
+    await tester.pumpWidget(const SizedBox.shrink());
+    await withClock(Clock.fixed(DateTime(2027, 7, 13, 9)), () async {
+      await open(tester);
+      expect(find.textContaining('Week 28'), findsOneWidget);
+      expect(find.textContaining('Sommerfest'), findsOneWidget);
+    });
   });
 
   testWidgets('a note\'s heading stays larger than its text at any text '

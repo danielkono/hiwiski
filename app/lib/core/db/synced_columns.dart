@@ -82,6 +82,8 @@ SyncedColumns<MindmapNodeRow> mindmapNodeColumns(HiwiskiDatabase db) {
     WireFields.rotation: table.rotation,
     WireFields.textAlign: table.textAlign,
     WireFields.textFlow: table.textFlow,
+    WireFields.calendars: table.calendars,
+    WireFields.week: table.week,
   });
 }
 

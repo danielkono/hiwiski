@@ -8,9 +8,11 @@ import '../../../../core/theme/hiwiski_tokens.dart';
 import '../../../../core/theme/mindmap_colors.dart';
 import '../../../../core/ui/color_tokens.dart';
 import '../../../../core/ui/history_field_label.dart';
+import '../../../../domain/common/calendar_days.dart';
 import '../../../../domain/sync/conflict_values.dart';
 import '../../../../domain/sync/sync_items.dart';
 import '../../../../domain/wiki/mindmap.dart';
+import '../../view/mindmap/mindmap_calendar.dart';
 import '../../view/mindmap/mindmap_element.dart';
 import 'mindmap_keys.dart';
 import 'mindmap_sheets.dart';
@@ -278,6 +280,13 @@ class _Value extends StatelessWidget {
       },
       WireFields.textAlign => MindmapSheetText.alignNameOf(l, stored),
       WireFields.textFlow => MindmapSheetText.flowNameOf(l, stored),
+      WireFields.calendars => l.mindmapCalendarsCount(
+        calendarIdsOf(stored).length,
+      ),
+      WireFields.week => switch (mondayOfIsoWeek(stored ?? '')) {
+        final monday? => MindmapCalendar.weekLabelOf(context, monday),
+        null => l.mindmapWeekCurrent,
+      },
       WireFields.text => plainOfMarkdown(raw),
       _ => raw,
     };
