@@ -13,7 +13,7 @@ name: hiwiski
 
 services:
   postgres:
-    image: postgres:18-alpine
+    image: postgres:19-alpine
     restart: unless-stopped
     # Two roles: the image's superuser, which
     # creates the database and nothing else, and the server's own role, which owns the
