@@ -269,7 +269,13 @@ Drift, `lib/core/db/`: the tables in `tables.dart`, the database and its migrati
 
 **Migrate, never recreate.** A device may hold changes not yet synced; a
 `deleteAndRecreate` would lose them. Every schema change gets a step in `onUpgrade` and a
-test that migrates from the previous version. Every table that goes through sync has the
+test that migrates from the previous version — one step per released version: what a
+branch adds before its release goes into its one step, which changes until a release
+has it. A step that adds a column to a table a release has checks first whether the
+column is there (`PRAGMA table_info`): a step can be half done — the background sync
+opens the file through a connection of its own and may be stopped mid-upgrade, or
+upgrade at the same moment as the app — and every start after it failed on "duplicate
+column name". Every table that goes through sync has the
 standard columns (`id`, `ownerId`, `version`, deleted flag) and a codec entry.
 
 ## Navigation

@@ -22,12 +22,12 @@ places and nowhere else:
    edited —, its `SyncField` in `PinboardSyncTypes`, and, for a name in capitals or a
    number with bounds, its check in the type's `refusal`; a test in `PinboardIT`.
 3. **The device's database**: its column in `PinboardNodes` or `PinboardEdges`
-   (`lib/core/db/tables.dart`), a schema step with `_addColumnOnce` in
-   `hiwiski_database.dart` and its line in `test/core/schema_upgrade_test.dart` and in
-   the element of `test/core/stored_item_test.dart`, which sends every field back out;
-   and its line in `pinboardNodeColumns` or `pinboardEdgeColumns`
-   (`lib/core/db/synced_columns.dart`), which maps the field to its column for the
-   sync codec and the repository alike.
+   (`lib/core/db/tables.dart`) — until the pinboard's first release, schema step 20
+   creates both tables whole and a column needs no step of its own; after it, a step
+   that adds the column ([app.md](app.md), "The local database"). Its line in the
+   element of `test/core/stored_item_test.dart`, which sends every field back out, and
+   in `pinboardNodeColumns` or `pinboardEdgeColumns` (`lib/core/db/synced_columns.dart`),
+   which maps the field to its column for the sync codec and the repository alike.
 4. **The domain**: its name in `WireFields` and, for named values, a class of
    constants in `lib/core/common/wire.dart` that says what an unknown one is drawn as;
    its property on `PinboardNode` or `PinboardEdge`, its line in `fields` and its line in

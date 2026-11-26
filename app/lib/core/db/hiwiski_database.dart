@@ -42,69 +42,6 @@ part 'hiwiski_database.drift.dart';
 )
 class HiwiskiDatabase extends _$HiwiskiDatabase {
   static const _foreignKeysOn = 'PRAGMA foreign_keys = ON';
-  static const _tableInfo = 'PRAGMA table_info(';
-  static const _tableInfoEnd = ')';
-  static const _columnName = 'name';
-  static const _tableNamed =
-      'SELECT name FROM sqlite_master WHERE type = \'table\' AND name = ?';
-  static const _renameTable = 'ALTER TABLE ';
-  static const _renameTo = ' RENAME TO ';
-  static const _replaceIn = 'UPDATE ';
-  static const _replaceSet = ' SET ';
-  static const _replaceCall = ' = replace(';
-  static const _replaceArgs = ', ?, ?)';
-
-  // What the pinboard was called up to 30 ([_renamedFromMindmap]).
-  static const _oldNodes = 'mindmap_nodes';
-  static const _oldEdges = 'mindmap_edges';
-  static const _oldKind = 'MINDMAP';
-  static const _oldTypes = {
-    'MINDMAP_NODE': EntityTypes.pinboardNode,
-    'MINDMAP_EDGE': EntityTypes.pinboardEdge,
-  };
-  static const _oldKindInJson = '"MINDMAP"';
-  static const _kindInJson = '"${PageKinds.pinboard}"';
-
-  /// Until 30 the pinboard was called a mind map, and so were its tables, the kind
-  /// of its pages and the types of its items. A device that had it keeps all of it
-  /// under the new names — what waits to go out and what is in conflict too, which
-  /// the server would no longer know by the old ones. First of all steps: those
-  /// after 20 change the tables by their new names.
-  Future<void> _renamedFromMindmap() async {
-    for (final (old, now) in [
-      (_oldNodes, pinboardNodes.actualTableName),
-      (_oldEdges, pinboardEdges.actualTableName),
-    ]) {
-      final present = await customSelect(
-        _tableNamed,
-        variables: [Variable<String>(old)],
-      ).get();
-      if (present.isEmpty) continue;
-      await customStatement('$_renameTable$old$_renameTo$now');
-    }
-    await (update(wikiPages)..where((row) => row.kind.equals(_oldKind))).write(
-      const WikiPagesCompanion(kind: Value(PageKinds.pinboard)),
-    );
-    for (final MapEntry(key: old, value: now) in _oldTypes.entries) {
-      await (update(outboxEntries)..where((row) => row.entityType.equals(old)))
-          .write(OutboxEntriesCompanion(entityType: Value(now)));
-      await (update(conflicts)..where((row) => row.entityType.equals(old)))
-          .write(ConflictsCompanion(entityType: Value(now)));
-      await (update(leftBehindItems)
-            ..where((row) => row.entityType.equals(old)))
-          .write(LeftBehindItemsCompanion(entityType: Value(now)));
-    }
-    // A page made as a mind map, still waiting to go out or left behind.
-    for (final (table, column) in [
-      (outboxEntries.actualTableName, outboxEntries.fields.name),
-      (leftBehindItems.actualTableName, leftBehindItems.fields.name),
-    ]) {
-      await customStatement(
-        '$_replaceIn$table$_replaceSet$column$_replaceCall$column$_replaceArgs',
-        [_oldKindInJson, _kindInJson],
-      );
-    }
-  }
 
   /// A file on the device, only memory in the browser — see `connection_web.dart`.
   HiwiskiDatabase([QueryExecutor? executor])
@@ -118,33 +55,9 @@ class HiwiskiDatabase extends _$HiwiskiDatabase {
   /// on every device. The steps that led there are gone with the devices that needed
   /// them; each change since has its step in [migration].
   ///
-  /// 20: a pinboard's elements and connections. 21: what a link element shows. 22: the
-  /// colour of an element's text. 23: strokes drawn by hand. 24: how thick a connection
-  /// is. 25: a connection's kind of line and its arrowheads. 26: how far an element is
-  /// turned. 27: where a note's text stands inside it. 28: what a note's lines fill.
-  /// 29: a week of calendars. 30: the mind map is called a pinboard — its tables, the
-  /// kind of its pages, the types of its items.
+  /// 20: a pinboard's elements and connections.
   @override
-  int get schemaVersion => 30;
-
-  /// Adds [column] to [table] unless it is there already. A step can be half done:
-  /// the column added but the new version not yet written — the background sync
-  /// opens the file through a connection of its own and may be stopped by the system
-  /// mid-upgrade, or upgrade at the same moment as the app. Every start after that
-  /// failed on "duplicate column name", and the app showed nothing.
-  Future<void> _addColumnOnce(
-    Migrator m,
-    TableInfo<Table, Object?> table,
-    GeneratedColumn<Object> column,
-  ) async {
-    final columns = await customSelect(
-      '$_tableInfo${table.actualTableName}$_tableInfoEnd',
-    ).get();
-    if (columns.any((row) => row.read<String>(_columnName) == column.name)) {
-      return;
-    }
-    await m.addColumn(table, column);
-  }
+  int get schemaVersion => 20;
 
   @override
   MigrationStrategy get migration => .new(
@@ -158,46 +71,11 @@ class HiwiskiDatabase extends _$HiwiskiDatabase {
       // fetch what the server already holds for it — pulled by the old app, the
       // unknown field was dropped and never came again. Asked here once, no step can
       // forget it; it is idempotent and costs one snapshot per schema bump.
-      if (from >= 20 && from < 30) await _renamedFromMindmap();
       if (from < 20) {
         // A pinboard's elements and connections: the snapshot below fetches what an
         // older app skipped as a type it did not know.
         await m.createTable(pinboardNodes);
         await m.createTable(pinboardEdges);
-      } else {
-        // Created above with every column already. A device on 20 keeps its unused
-        // `image_id`: pictures stand in the text now, and a column dropped in SQLite
-        // means a copy of the table for nothing.
-        if (from < 21) {
-          await _addColumnOnce(m, pinboardNodes, pinboardNodes.linkView);
-        }
-        if (from < 22) {
-          await _addColumnOnce(m, pinboardNodes, pinboardNodes.textColor);
-        }
-        if (from < 23) {
-          await _addColumnOnce(m, pinboardNodes, pinboardNodes.points);
-          await _addColumnOnce(m, pinboardNodes, pinboardNodes.strokeWidth);
-        }
-        if (from < 24) {
-          await _addColumnOnce(m, pinboardEdges, pinboardEdges.strokeWidth);
-        }
-        if (from < 25) {
-          await _addColumnOnce(m, pinboardEdges, pinboardEdges.line);
-          await _addColumnOnce(m, pinboardEdges, pinboardEdges.arrows);
-        }
-        if (from < 26) {
-          await _addColumnOnce(m, pinboardNodes, pinboardNodes.rotation);
-        }
-        if (from < 27) {
-          await _addColumnOnce(m, pinboardNodes, pinboardNodes.textAlign);
-        }
-        if (from < 28) {
-          await _addColumnOnce(m, pinboardNodes, pinboardNodes.textFlow);
-        }
-        if (from < 29) {
-          await _addColumnOnce(m, pinboardNodes, pinboardNodes.calendars);
-          await _addColumnOnce(m, pinboardNodes, pinboardNodes.week);
-        }
       }
       await requestSnapshot();
     },
