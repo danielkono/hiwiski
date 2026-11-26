@@ -5,7 +5,6 @@
   "actionSave": "Save",
   "actionCreate": "Create",
   "actionContinue": "Continue",
-  "actionBack": "Back",
   "actionRetry": "Try again",
   "actionCopy": "Copy",
   "actionCopied": "Copied",
@@ -68,9 +67,6 @@
   "navTasks": "Tasks",
   "navWiki": "Wiki",
   "navFamily": "Family",
-  "navSettings": "Settings",
-  "navSearch": "Search",
-  "navAccount": "Account",
   "serverTitle": "Server address",
   "serverLead": "Enter your server's address.",
   "serverField": "Address",
@@ -159,7 +155,6 @@
   },
   "inviteYourName": "Your name",
   "inviteJoin": "Join",
-  "inviteExpired": "This code has expired or has already been used. Ask for a new invitation.",
   "passwordChangeTitle": "Choose a new password",
   "passwordChangeLead": "Your password was reset. Pick your own before you carry on.",
   "passwordCurrent": "Current password",
@@ -258,9 +253,6 @@
   "inviteValidity7Days": "7 days",
   "inviteCreateSubmit": "Create invitation",
   "inviteResultLead": "Install Hiwiski on the new device and scan the QR code with its camera — or choose \"Redeem invitation\" in Hiwiski and enter this code.",
-  "inviteResultFor": "For",
-  "inviteResultGroups": "Groups",
-  "inviteResultValid": "Valid",
   "inviteCopyCode": "Copy code",
   "devicesTitle": "My devices",
   "devicesThisDevice": "This device",
@@ -311,8 +303,6 @@
   "stateLoading": "Loading",
   "stateOffline": "Offline. Syncing is pending.",
   "stateOfflineWeb": "No connection to the server. If you close the tab, your changes are lost.",
-  "stateOfflineSearch": "Offline — only what is on this device.",
-  "stateReadOnly": "Read only.",
   "stateReadOnlyShared": "Shared with you to read. Only the owner and those who may write change it.",
   "conflictTitle": "Conflict: {field}",
   "@conflictTitle": {
@@ -361,7 +351,6 @@
   },
   "validationRequired": "Required",
   "validationDays": "A whole number of days, at least 1",
-  "stateErrorGeneric": "Something went wrong.",
   "errorAuthInvalidCredentials": "Username or password is wrong.",
   "errorAuthRequired": "Please sign in.",
   "errorAuthCurrentPasswordWrong": "The current password is wrong.",
@@ -438,14 +427,6 @@
       }
     }
   },
-  "syncPending": "{count, plural, =1{1 change is waiting to sync.} other{{count} changes are waiting to sync.}}",
-  "@syncPending": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "shareTitle": "Sharing",
   "shareOwner": "Owner",
   "shareAssigned": "automatic · assigned",
@@ -459,7 +440,6 @@
   },
   "shareOwnShares": "Shared with",
   "shareAddSubject": "Add person or group",
-  "shareSetOwn": "Set own sharing",
   "shareLevelRead": "read",
   "shareLevelCheck": "tick off",
   "shareLevelWrite": "write",
@@ -538,8 +518,6 @@
   "calNewEvent": "Event",
   "calEmpty": "No events yet. Create a calendar and add an event.",
   "calToday": "Today",
-  "calReadOnly": "From a subscribed calendar. Read-only.",
-  "calSubscribedLocked": "Subscribed",
   "calEventTitle": "Title",
   "calEndBeforeStart": "The end is before the start.",
   "calDeleteEvent": "Delete event",
@@ -620,16 +598,7 @@
   "calRepeatNth3": "third",
   "calRepeatNth4": "fourth",
   "calRepeatNthLast": "last",
-  "calRepeatCustom": "Custom rule",
   "calRepeatForeign": "This recurrence comes from another source and cannot be edited here.",
-  "calRepeatSummary": "{rule}",
-  "@calRepeatSummary": {
-    "placeholders": {
-      "rule": {
-        "type": "String"
-      }
-    }
-  },
   "calScopeQuestion": "Change recurring event",
   "calScopeOnlyThis": "This event only",
   "calScopeFollowing": "This and all following",
@@ -717,7 +686,6 @@
   "errorCalendarSubscriptionUnreachable": "The address could not be reached.",
   "errorCalendarSubscriptionTooLarge": "The file is too large.",
   "errorCalendarSubscriptionTooManyRedirects": "That address redirects in a circle.",
-  "errorCalendarSubscriptionBlocked": "That address is on the home network. The server fetches nothing from there.",
   "errorCalendarSubscriptionFailed": "The refresh failed.",
   "errorCalendarSubscriptionReadOnly": "You are not allowed to refresh this subscription.",
   "errorNetUrlInvalid": "That is not a valid address.",
@@ -727,7 +695,6 @@
   "wikiTitle": "Wiki",
   "wikiEmpty": "Create a wiki page first.",
   "wikiNewPage": "New page",
-  "wikiNewSubpage": "Subpage",
   "wikiNewFolder": "Folder",
   "wikiNewRecipe": "Recipe",
   "wikiNewRecipeFolder": "Recipe collection",
@@ -742,7 +709,6 @@
   },
   "wikiPageTitle": "Title",
   "wikiEdit": "Edit",
-  "wikiHistory": "History",
   "wikiMove": "Move",
   "wikiDelete": "Delete",
   "wikiDeleteBody": "The page and all its subpages go to the trash.",
@@ -759,8 +725,6 @@
   "wikiCommentHint": "Write a comment",
   "wikiRestoreRevision": "Restore this version",
   "wikiRevisionConflict": "Conflict",
-  "wikiRevision": "Version",
-  "wikiSaved": "Saved",
   "wikiLinkInsert": "Link",
   "wikiLinkPick": "Link to what?",
   "linkPreviewOpen": "Open",
@@ -825,7 +789,6 @@
   "recipeImport": "Recipe from an address",
   "recipeImportUrl": "Address",
   "recipeImportFetch": "Fetch",
-  "recipeImportCheck": "Check and add",
   "recipeImportUncertain": "This line could not be parsed with confidence.",
   "recipeImportUncertainCount": "{count, plural, =1{1 line to check} other{{count} lines to check}}",
   "@recipeImportUncertainCount": {
@@ -839,27 +802,10 @@
   "recipeStaple": "Staple",
   "recipeNoIngredients": "No ingredients yet.",
   "recipeAddIngredient": "Add ingredient",
-  "boardStart": "Start",
-  "boardGreeting": "Hello, {name}",
-  "@boardGreeting": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "boardCustomize": "Customise start",
   "boardDone": "Done",
   "boardEditHint": "Tap a widget to configure it. Only your own dashboard changes.",
   "boardEmpty": "Nothing here yet. Set up what you want to see when you open the app.",
-  "boardAdd": "+ {name}",
-  "@boardAdd": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "boardUnknownWidget": "Your app version does not know this widget yet.",
   "boardDashboard": "Dashboard",
   "boardDashboardHint": "Open it on the wall tablet at this address — without signing in.",
@@ -896,7 +842,6 @@
   "widgetClock24h": "24-hour display",
   "widgetClockSeconds": "Seconds",
   "widgetClockDate": "Date",
-  "widgetCalendarWhich": "Which calendars",
   "widgetCalendarRange": "Look ahead",
   "widgetCalendarHidePast": "Hide today's past entries",
   "widgetRangeToday": "Today",
@@ -904,7 +849,6 @@
   "widgetRange3": "3 days",
   "widgetRange7": "7 days",
   "widgetRange14": "14 days",
-  "widgetListsWhich": "Which lists",
   "widgetListWhich": "Which list",
   "widgetShowDone": "Show completed",
   "widgetCount": "Count",
@@ -913,7 +857,6 @@
   "widgetRecipeOfTheDay": "Suggestion of the day",
   "widgetNothingToShow": "Nothing to show.",
   "widgetNotConfigured": "Not configured yet.",
-  "widgetAllCalendars": "All calendars",
   "widgetListCount": "{count, plural, =1{1 list} other{{count} lists}}",
   "@widgetListCount": {
     "placeholders": {
@@ -1037,7 +980,6 @@
   "propRepeat": "Repeat",
   "propReminder": "Reminder",
   "propCalendar": "Calendar",
-  "commentsTitle": "Comments",
   "calAssignedHint": "Assignees see the event automatically.",
   "todoAssignedHint": "Assignees see the task automatically and may check it off.",
   "listAssignedHint": "Assignees see the list automatically and may edit it.",
@@ -1100,7 +1042,6 @@
       }
     }
   },
-  "listRename": "Rename list",
   "aisleProduce": "Fruit & vegetables",
   "aisleBakery": "Bakery",
   "aisleMeatSeafood": "Meat & fish",
@@ -1276,7 +1217,6 @@
   "tagSearch": "Search tags",
   "tagSearchNone": "No tag matches — \"+ Tag\" creates it.",
   "listDescription": "Description",
-  "listEdit": "Edit list",
   "calImportTitle": "Import calendar",
   "calImportSource": "Source",
   "calImportOr": "or",
@@ -1515,7 +1455,6 @@
     }
   },
   "kanbanConvertAction": "Convert",
-  "kanbanColumnsTitle": "Columns",
   "widgetKanban": "Kanban board",
   "widgetTitleKanban": "Set up Kanban board",
   "widgetKanbanWhich": "Which board",
@@ -1552,14 +1491,6 @@
   },
   "unitDays": "{count} d",
   "@unitDays": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "unitKilobytes": "{count} KB",
-  "@unitKilobytes": {
     "placeholders": {
       "count": {
         "type": "int"
@@ -1643,7 +1574,6 @@
   "localNameTitle": "What should we call you?",
   "localNameField": "Your name",
   "localStartAction": "Start",
-  "localBack": "Continue without a server",
   "localConnectLead": "Connect to your server. Everything on this device is carried over.",
   "localMoveNotice": "Everything on this device goes along to this server.",
   "localMoveSignIn": "Everything on this device goes into the account you sign in to — next to what is in it already.",
@@ -1848,7 +1778,6 @@
   "pinboardSearchNext": "Next match",
   "pinboardSearchPrevious": "Previous match",
   "pinboardSearchClose": "Close search",
-  "pinboardElements": "Elements",
   "pinboardEdge": "Connection",
   "pinboardFit": "Show everything",
   "pinboardColor": "Colour",
@@ -1860,7 +1789,6 @@
   "pinboardColorDark": "Dark",
   "pinboardColorRecent": "Recently used",
   "pinboardShape": "Shape",
-  "pinboardShapeNone": "None",
   "pinboardShapeRectangle": "Rectangle",
   "pinboardShapeRounded": "Rounded",
   "pinboardShapeEllipse": "Ellipse",
@@ -1871,7 +1799,6 @@
   "pinboardTextMedium": "Medium",
   "pinboardTextLarge": "Large",
   "pinboardTextXLarge": "Extra large",
-  "pinboardLook": "Look",
   "pinboardLayerUp": "Bring forward",
   "pinboardLayerDown": "Send backward",
   "pinboardLayerFront": "Bring to front",
@@ -1974,8 +1901,6 @@
   "pinboardToolEraser": "Eraser",
   "pinboardStrokeWidth": "Stroke width",
   "pinboardPenColor": "Pen colour",
-  "pinboardPenHint": "Draw with one finger, move the map with two.",
-  "pinboardEraserHint": "Swipe over strokes to erase them.",
   "pinboardDrawingsHide": "Hide drawings",
   "pinboardSnap": "Snap",
   "pinboardGrid": "Grid",

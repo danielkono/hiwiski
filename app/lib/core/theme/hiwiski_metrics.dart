@@ -96,10 +96,9 @@ class HiwiskiMetrics {
   /// The event dots in the month grid, the "now" marker.
   static const double dotTiny = 6;
 
-  /// Color dots (10 / 14 / 28).
+  /// Color dots (10 / 14).
   static const double dotSmall = 10;
   static const double dotMedium = 14;
-  static const double dotLarge = 28;
 
   /// A color to pick in a color picker.
   static const double swatchSize = 32;
@@ -177,9 +176,6 @@ class HiwiskiMetrics {
   // --- Individual components -------------------------------------------------
   /// Text field, full height.
   static const double fieldHeight = 56;
-
-  /// Text field in a sheet.
-  static const double fieldHeightSheet = 52;
 
   /// Search field.
   static const double searchHeight = 52;
