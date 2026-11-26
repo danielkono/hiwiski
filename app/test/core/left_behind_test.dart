@@ -126,7 +126,7 @@ void main() {
     expect(queued.single.baseVersion, equals(3));
   });
 
-  group('a mind map', () {
+  group('a pinboard', () {
     Future<void> page() => const WikiPageCodec().upsert(
       db,
       id: 'p1',
@@ -136,13 +136,13 @@ void main() {
       entityKey: null,
       fields: {
         WireFields.title: 'Urlaub',
-        WireFields.kind: PageKinds.mindmap,
+        WireFields.kind: PageKinds.pinboard,
         WireFields.position: 0,
         WireFields.content: '',
       },
     );
     Future<void> node(String id, String kind, String text) =>
-        const MindmapNodeCodec().upsert(
+        const PinboardNodeCodec().upsert(
           db,
           id: id,
           ownerId: 'anna',
@@ -162,9 +162,9 @@ void main() {
 
     setUp(() async {
       await page();
-      await node('n1', MindmapKinds.note, '# Packliste\n- Sonnencreme');
-      await node('n2', MindmapKinds.image, '![](hiwiski-image://i1)');
-      await const MindmapEdgeCodec().upsert(
+      await node('n1', PinboardKinds.note, '# Packliste\n- Sonnencreme');
+      await node('n2', PinboardKinds.image, '![](hiwiski-image://i1)');
+      await const PinboardEdgeCodec().upsert(
         db,
         id: 'e1',
         ownerId: 'anna',
@@ -182,7 +182,7 @@ void main() {
     });
 
     test('a connection brought back brings its elements along', () async {
-      await left.restore(keys: {(EntityTypes.mindmapEdge, 'e1')});
+      await left.restore(keys: {(EntityTypes.pinboardEdge, 'e1')});
 
       final queued = await Outbox(db).pending(limit: 10);
       expect([

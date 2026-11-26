@@ -113,23 +113,23 @@ Stream<List<AttachedText>> _linkComments(Ref ref) => ref
       ],
     );
 
-/// A mind map speaks for its page: a link on the canvas is one from the page, as on the
+/// A pinboard speaks for its page: a link on the canvas is one from the page, as on the
 /// server — a note's text, and the address a link element points to. Not the member
 /// an element shows: no item the page links to.
 @Riverpod(keepAlive: true)
-Stream<List<AttachedText>> _linkMindmaps(Ref ref) => ref
-    .watch(mindmapRepositoryProvider)
+Stream<List<AttachedText>> _linkPinboards(Ref ref) => ref
+    .watch(pinboardRepositoryProvider)
     .watchAllNodes()
     .map(
       (nodes) => [
         for (final node in nodes)
-          if (node.text.isNotEmpty || node.kind == MindmapKinds.link)
+          if (node.text.isNotEmpty || node.kind == PinboardKinds.link)
             AttachedText(
               itemType: EntityTypes.wikiPage,
               itemId: node.pageId,
               text: [
                 node.text,
-                if (node.kind == MindmapKinds.link) ?node.target,
+                if (node.kind == PinboardKinds.link) ?node.target,
               ].join('\n'),
             ),
       ],
@@ -139,8 +139,8 @@ Stream<List<AttachedText>> _linkMindmaps(Ref ref) => ref
 /// the page's texts, and a link written there showed at its target only once the
 /// server's links were asked for.
 @Riverpod(keepAlive: true)
-Stream<List<AttachedText>> _linkMindmapLabels(Ref ref) => ref
-    .watch(mindmapRepositoryProvider)
+Stream<List<AttachedText>> _linkPinboardLabels(Ref ref) => ref
+    .watch(pinboardRepositoryProvider)
     .watchAllLabelledEdges()
     .map(
       (edges) => [
@@ -167,8 +167,8 @@ LinkIndex linkIndex(Ref ref) => .from(
   ],
   attached: [
     ...?ref.watch(_linkCommentsProvider).value,
-    ...?ref.watch(_linkMindmapsProvider).value,
-    ...?ref.watch(_linkMindmapLabelsProvider).value,
+    ...?ref.watch(_linkPinboardsProvider).value,
+    ...?ref.watch(_linkPinboardLabelsProvider).value,
   ],
   references: ref.read(_referencesProvider),
 );

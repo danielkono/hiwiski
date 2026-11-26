@@ -16,7 +16,7 @@ import '../../core/sync/local_writes.dart';
 /// `deletedAt` until [LocalTakeover.trashRetention] has passed. It lists what the
 /// server's would — lists, tasks, calendars, events, pages and tags — and, like the
 /// server's, restores an item on its own, not what went with it — but for a page's
-/// mind map, which is in no trash of its own.
+/// pinboard, which is in no trash of its own.
 class LocalTrash {
   LocalTrash({required this._db, required this._writes});
 
@@ -264,7 +264,7 @@ class LocalTrash {
     }
   }
 
-  /// A page's mind map comes back with it, as from a server's trash: its elements
+  /// A page's pinboard comes back with it, as from a server's trash: its elements
   /// are in no trash of their own, and left behind they were lost for good once the
   /// device moved onto a server. What went with the page — deleted when it was, or
   /// after — and not what was deleted on its own before; a connection only where
@@ -275,7 +275,7 @@ class LocalTrash {
     DateTime since,
   ) async {
     final nodes =
-        await (_db.select(_db.mindmapNodes)..where(
+        await (_db.select(_db.pinboardNodes)..where(
               (row) =>
                   row.pageId.equals(pageId) &
                   row.deletedAt.isBiggerOrEqualValue(since),
@@ -283,23 +283,23 @@ class LocalTrash {
             .get();
     for (final node in nodes) {
       await write.revive(
-        _db.mindmapNodes,
+        _db.pinboardNodes,
         id: node.id,
         containerType: EntityTypes.wikiPage,
       );
     }
     final edges =
-        await (_db.select(_db.mindmapEdges)..where(
+        await (_db.select(_db.pinboardEdges)..where(
               (row) =>
                   row.pageId.equals(pageId) &
                   row.deletedAt.isBiggerOrEqualValue(since),
             ))
             .get();
     for (final edge in edges) {
-      if (await _alive(_db.mindmapNodes, edge.fromId) &&
-          await _alive(_db.mindmapNodes, edge.toId)) {
+      if (await _alive(_db.pinboardNodes, edge.fromId) &&
+          await _alive(_db.pinboardNodes, edge.toId)) {
         await write.revive(
-          _db.mindmapEdges,
+          _db.pinboardEdges,
           id: edge.id,
           containerType: EntityTypes.wikiPage,
         );

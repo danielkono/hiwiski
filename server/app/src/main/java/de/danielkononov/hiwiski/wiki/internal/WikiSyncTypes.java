@@ -44,13 +44,13 @@ class WikiSyncTypes {
     /** The kinds of page and their fields. */
     private final List<WikiKind> kinds;
 
-    /** A mind map's elements and connections, which go and come back with their page. */
-    private final MindmapSyncTypes mindmaps;
+    /** A pinboard's elements and connections, which go and come back with their page. */
+    private final PinboardSyncTypes pinboards;
 
-    WikiSyncTypes(DSLContext db, List<WikiKind> kinds, MindmapSyncTypes mindmaps) {
+    WikiSyncTypes(DSLContext db, List<WikiKind> kinds, PinboardSyncTypes pinboards) {
         this.db = db;
         this.kinds = List.copyOf(kinds);
-        this.mindmaps = mindmaps;
+        this.pinboards = pinboards;
         var names = new java.util.HashSet<String>();
         for (var kind : this.kinds) {
             for (var property : kind.properties()) {
@@ -253,20 +253,20 @@ class WikiSyncTypes {
                         .fetch(WIKI_PAGE.ID)
                         .stream()
                         .map(id -> new Ref(PAGE_TYPE, id));
-                // A mind map's elements and connections: left alive, they stayed on the
+                // A pinboard's elements and connections: left alive, they stayed on the
                 // devices and in the page's references after the page had gone.
-                return java.util.stream.Stream.concat(subpages, mindmaps.livingOn(entityId).stream())
+                return java.util.stream.Stream.concat(subpages, pinboards.livingOn(entityId).stream())
                         .toList();
             }
 
             /**
-             * A mind map's elements and connections come back with their page. They have
+             * A pinboard's elements and connections come back with their page. They have
              * no entry of their own in the trash, and the page came back empty without
              * them. Subpages do have one each and are restored on their own.
              */
             @Override
             public List<Ref> alsoRestored(UUID entityId, java.time.OffsetDateTime deletedAt) {
-                return mindmaps.deletedWith(entityId, deletedAt);
+                return pinboards.deletedWith(entityId, deletedAt);
             }
         };
     }

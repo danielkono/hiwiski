@@ -160,14 +160,14 @@ class A11yWorld {
         kind: PageKinds.recipe,
       );
 
-      ids['mindmap'] = await wiki.createPage(
+      ids['pinboard'] = await wiki.createPage(
         title: 'Holiday',
-        kind: PageKinds.mindmap,
+        kind: PageKinds.pinboard,
       );
-      final maps = container.read(mindmapRepositoryProvider);
+      final maps = container.read(pinboardRepositoryProvider);
       final sea = await maps.addNode(
-        pageId: ids['mindmap']!,
-        kind: MindmapKinds.note,
+        pageId: ids['pinboard']!,
+        kind: PinboardKinds.note,
         x: 0,
         y: 0,
         width: 220,
@@ -176,15 +176,15 @@ class A11yWorld {
         look: {WireFields.color: ColorTokens.teal},
       );
       final hills = await maps.addNode(
-        pageId: ids['mindmap']!,
-        kind: MindmapKinds.plain,
+        pageId: ids['pinboard']!,
+        kind: PinboardKinds.plain,
         x: 360,
         y: 40,
         width: 160,
         height: 40,
         text: 'Hills',
       );
-      final holiday = await maps.watchMap(ids['mindmap']!).first;
+      final holiday = await maps.watchMap(ids['pinboard']!).first;
       await maps.connect(holiday.node(sea)!, holiday.node(hills)!, text: 'or');
 
       final page = (await wiki.watchPage(ids['page']!).first)!;

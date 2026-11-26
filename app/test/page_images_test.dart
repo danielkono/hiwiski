@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hiwiski/domain/wiki/mindmap.dart';
+import 'package:hiwiski/domain/wiki/pinboard.dart';
 import 'package:hiwiski/domain/wiki/page_images.dart';
 
 /// **Images in a page's text** — on lines of their own, consecutive ones a group.

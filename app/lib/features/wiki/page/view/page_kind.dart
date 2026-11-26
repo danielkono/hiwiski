@@ -4,7 +4,7 @@ import '../../../../core/l10n/generated/app_localizations.dart';
 import '../../../../domain/wiki/wiki_models.dart';
 import '../../../../domain/wiki/wiki_page.dart';
 import '../page_view_model.dart';
-import 'mindmap/mindmap_kind.dart';
+import 'pinboard/pinboard_kind.dart';
 import 'recipe/recipe_folder_kind.dart';
 import 'recipe/recipe_kind.dart';
 import 'text/text_kind.dart';
@@ -25,7 +25,7 @@ abstract class PageKindView {
   /// Every kind this app knows, in the order "New page" offers them.
   static const all = <PageKindView>[
     TextKindView(),
-    MindmapKindView(),
+    PinboardKindView(),
     RecipeFolderKindView(),
     RecipeKindView(),
   ];
@@ -66,7 +66,7 @@ abstract class PageKindView {
     required PageKindActions actions,
   }) => const [];
 
-  /// What stands below the text while it is read — a mind map's preview.
+  /// What stands below the text while it is read — a pinboard's preview.
   List<Widget> tail(
     BuildContext context, {
     required WikiPage page,

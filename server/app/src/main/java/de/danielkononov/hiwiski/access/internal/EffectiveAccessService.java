@@ -114,7 +114,7 @@ class EffectiveAccessService {
         // What lies inside inherits this item's resolved audience and nothing else of
         // it: where that stayed as it was, so did theirs, and there is nothing to carry
         // down. Carried down on every write, a page's new title went through every
-        // element of its mind map -- thousands of rows, under the lock every writer
+        // element of its pinboard -- thousands of rows, under the lock every writer
         // waits for.
         if (!change.changed()) {
             return;

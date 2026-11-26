@@ -17,7 +17,7 @@ import 'package:hiwiski/data/media/media_repository.dart';
 import 'package:hiwiski/domain/common/item_ref.dart';
 import 'package:hiwiski/domain/links/link_text.dart';
 import 'package:hiwiski/domain/todo/kanban.dart';
-import 'package:hiwiski/domain/wiki/mindmap.dart';
+import 'package:hiwiski/domain/wiki/pinboard.dart';
 import 'package:hiwiski/domain/transfer/transfer_bundle.dart';
 import 'package:hiwiski/domain/transfer/transfer_models.dart';
 import 'package:hiwiski/domain/wiki/page_images.dart';
@@ -281,7 +281,7 @@ void main() {
   });
 
   test(
-    'a page goes out offline, a mind map drawn without the family',
+    'a page goes out offline, a pinboard drawn without the family',
     () async {
       // The family comes from the server, and this one cannot be reached.
       final offline = ProviderContainer(
@@ -297,20 +297,20 @@ void main() {
       final pageId = await wiki.createPage(title: 'Router');
       final mapId = await wiki.createPage(
         title: 'Urlaub',
-        kind: PageKinds.mindmap,
+        kind: PageKinds.pinboard,
       );
       await offline
-          .read(mindmapRepositoryProvider)
+          .read(pinboardRepositoryProvider)
           .addNode(
             pageId: mapId,
-            kind: MindmapKinds.plain,
+            kind: PinboardKinds.plain,
             x: 0,
             y: 0,
             width: 100,
             height: 50,
             text: 'Strand',
           );
-      final drawn = <MindmapPicture>[];
+      final drawn = <PinboardPicture>[];
       Future<ExportedFile> export(String id) {
         final provider = exportViewModelProvider(ItemRef.wikiPage(id));
         final held = offline.listen(provider, (_, _) {});
@@ -318,7 +318,7 @@ void main() {
         return offline
             .read(provider.notifier)
             .export(
-              drawMindmap: (picture) async {
+              drawPinboard: (picture) async {
                 drawn.add(picture);
                 return Uint8List.fromList([0x89, 0x50, 0x4E, 0x47]);
               },

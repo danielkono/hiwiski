@@ -13,11 +13,11 @@ import org.springframework.stereotype.Component;
 class WikiLinkSource implements LinkSource {
 
     private final DSLContext db;
-    private final MindmapTexts mindmaps;
+    private final PinboardTexts pinboards;
 
-    WikiLinkSource(DSLContext db, MindmapTexts mindmaps) {
+    WikiLinkSource(DSLContext db, PinboardTexts pinboards) {
         this.db = db;
-        this.mindmaps = mindmaps;
+        this.pinboards = pinboards;
     }
 
     @Override
@@ -31,8 +31,8 @@ class WikiLinkSource implements LinkSource {
                 .from(WIKI_PAGE)
                 .where(WIKI_PAGE.ID.eq(itemId))
                 .fetchOne(WIKI_PAGE.CONTENT);
-        // A link on the page's mind map is a link from the page.
-        String map = mindmaps.of(itemId);
+        // A link on the page's pinboard is a link from the page.
+        String map = pinboards.of(itemId);
         return map.isEmpty() || content == null ? content : content + "\n" + map;
     }
 

@@ -5,7 +5,7 @@ import '../../app/repositories.dart';
 import '../../domain/calendar/calendar_items.dart';
 import '../../domain/calendar/occurrence.dart';
 import '../../domain/common/calendar_days.dart';
-import '../../domain/wiki/mindmap.dart' show calendarIdsOf;
+import '../../domain/wiki/pinboard.dart' show calendarIdsOf;
 
 part 'calendar_week_view_model.g.dart';
 
@@ -17,7 +17,7 @@ Stream<List<Calendar>> _calendars(Ref ref) =>
 Stream<List<CalendarEvent>> _events(Ref ref) =>
     ref.watch(calendarRepositoryProvider).watchEvents();
 
-/// A week of some calendars, side by side — as a mind map shows one.
+/// A week of some calendars, side by side — as a pinboard shows one.
 @immutable
 class const CalendarWeekState({
   /// The calendars chosen that this member can see, by id: one they cannot see is
@@ -34,7 +34,7 @@ class const CalendarWeekState({
 @riverpod
 class CalendarWeekViewModel extends _$CalendarWeekViewModel {
   /// The week from [monday] of the calendars [calendars] names — their ids separated
-  /// by spaces, as a mind map keeps them: a list would be another provider with
+  /// by spaces, as a pinboard keeps them: a list would be another provider with
   /// every build.
   @override
   Future<CalendarWeekState> build(String calendars, DateTime monday) async {

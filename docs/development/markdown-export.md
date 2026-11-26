@@ -27,12 +27,12 @@ Recipes/Pancakes/Tips.md
 media/<id>.jpg             every image once
 ```
 
-A mind map's elements are not exported — no Markdown editor could show them. Where the
-person asks for it, each mind map goes along as its **picture**: the whole map drawn
-as a PNG (`features/wiki/view/mindmap/mindmap_picture.dart`, off the screen, as "Show
+A pinboard's elements are not exported — no Markdown editor could show them. Where the
+person asks for it, each pinboard goes along as its **picture**: the whole map drawn
+as a PNG (`features/wiki/view/pinboard/pinboard_picture.dart`, off the screen, as "Show
 everything" shows it), stored like any image under `media/` and shown at the top of
 its page. The wiki page's screen hands the drawing to the export sheet
-(`InfoExportButton.drawMindmap`): the export component may not import a feature.
+(`InfoExportButton.drawPinboard`): the export component may not import a feature.
 
 Not exported: ids, owners, sharing, assignees, comments, the history, a recurring
 task's ticked-off dates, and archived subpages. An import therefore always creates
@@ -118,7 +118,7 @@ The list's description.
   page in the wiki, named after its file.
 - **A folder without a file of its name** — notes zipped by hand — becomes an empty
   page of that name, so its pages keep their place below one another.
-- **A mind map** comes in as an ordinary page: its file holds at most its picture,
+- **A pinboard** comes in as an ordinary page: its file holds at most its picture,
   which the page keeps as an image.
 - A board without valid columns is a plain list; an unknown color is the default; a
   recurrence rule the server would refuse is dropped, since a refused task would hold

@@ -538,17 +538,17 @@ class Widgets extends Table with SyncedItem {
 /// name.
 const _textColumn = 'text';
 
-/// An element on a mind map — an item of its own in its page, so that two people
+/// An element on a pinboard — an item of its own in its page, so that two people
 /// changing different elements never collide and a conflict names the one both changed.
-@DataClassName('MindmapNodeRow')
-class MindmapNodes extends Table with SyncedItem {
+@DataClassName('PinboardNodeRow')
+class PinboardNodes extends Table with SyncedItem {
   /// The page the map is on; its share is the element's.
   TextColumn get pageId => text()();
 
   /// `PLAIN`, `NOTE`, `IMAGE`, `LINK` — an unknown one is kept and drawn as a
   /// placeholder.
   TextColumn get kind =>
-      text().withDefault(const Constant(MindmapKinds.plain))();
+      text().withDefault(const Constant(PinboardKinds.plain))();
 
   IntColumn get x => integer().withDefault(const Constant(0))();
 
@@ -588,10 +588,10 @@ class MindmapNodes extends Table with SyncedItem {
   /// Turned clockwise about its centre, in whole degrees 0–359; `null`: not turned.
   IntColumn get rotation => integer().nullable()();
 
-  /// Where a note's text stands inside it ([MindmapTextAligns]); `null`: top left.
+  /// Where a note's text stands inside it ([PinboardTextAligns]); `null`: top left.
   TextColumn get textAlign => text().nullable()();
 
-  /// What a note's lines fill ([MindmapTextFlows]); `null`: the box inside its shape.
+  /// What a note's lines fill ([PinboardTextFlows]); `null`: the box inside its shape.
   TextColumn get textFlow => text().nullable()();
 
   /// The calendars a week of calendars shows, their ids separated by spaces.
@@ -601,9 +601,9 @@ class MindmapNodes extends Table with SyncedItem {
   TextColumn get week => text().nullable()();
 }
 
-/// A connection between two elements of the same mind map, drawn from centre to centre.
-@DataClassName('MindmapEdgeRow')
-class MindmapEdges extends Table with SyncedItem {
+/// A connection between two elements of the same pinboard, drawn from centre to centre.
+@DataClassName('PinboardEdgeRow')
+class PinboardEdges extends Table with SyncedItem {
   TextColumn get pageId => text()();
 
   TextColumn get fromId => text()();
@@ -619,7 +619,7 @@ class MindmapEdges extends Table with SyncedItem {
   /// How thick the line is drawn; `null` for the app's own.
   IntColumn get strokeWidth => integer().nullable()();
 
-  /// The line drawn ([MindmapLines]) and its arrow heads ([MindmapArrows]); `null`:
+  /// The line drawn ([PinboardLines]) and its arrow heads ([PinboardArrows]); `null`:
   /// solid, without heads.
   TextColumn get line => text().nullable()();
   TextColumn get arrows => text().nullable()();

@@ -3,7 +3,7 @@ package de.danielkononov.hiwiski.media.internal;
 import static de.danielkononov.hiwiski.db.generated.Tables.EVENT;
 import static de.danielkononov.hiwiski.db.generated.Tables.MEDIA;
 import static de.danielkononov.hiwiski.db.generated.Tables.MEMBER;
-import static de.danielkononov.hiwiski.db.generated.Tables.MINDMAP_NODE;
+import static de.danielkononov.hiwiski.db.generated.Tables.PINBOARD_NODE;
 import static de.danielkononov.hiwiski.db.generated.Tables.TODO;
 import static de.danielkononov.hiwiski.db.generated.Tables.TODO_LIST;
 import static de.danielkononov.hiwiski.db.generated.Tables.WIKI_PAGE;
@@ -35,7 +35,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  *
  * <p>A page hangs on an image as its recipe picture (a property, {@code imageId}) <strong>or in its
  * text</strong> ({@code ![](hiwiski-image:<id>)}) — the current one or any of its
- * revisions, or on one of the elements of its mind map. A list and a task hang on the
+ * revisions, or on one of the elements of its pinboard. A list and a task hang on the
  * images in their description, an event on those in its note. Counting the picture field alone took every image in a page's text away on
  * Sunday night; counting the current text alone would leave a restored revision with
  * images that are gone. Revisions go with their page, so a page deleted for good frees
@@ -119,14 +119,14 @@ class OrphanedImagesJob {
                         .from(WIKI_REVISION)
                         .where(WIKI_REVISION.PAGE_ID.eq(MEDIA.ITEM_ID))
                         .and(WIKI_REVISION.CONTENT.like(inText))))
-                // An element of a page's mind map: a picture element's pictures and the
+                // An element of a page's pinboard: a picture element's pictures and the
                 // images in a note are in its text. Deleted ones too, while they are
                 // kept: they come back with their page, and their images have to be
                 // there then.
                 .or(DSL.exists(DSL.selectOne()
-                        .from(MINDMAP_NODE)
-                        .where(MINDMAP_NODE.PAGE_ID.eq(MEDIA.ITEM_ID))
-                        .and(MINDMAP_NODE.TEXT.like(inText))))
+                        .from(PINBOARD_NODE)
+                        .where(PINBOARD_NODE.PAGE_ID.eq(MEDIA.ITEM_ID))
+                        .and(PINBOARD_NODE.TEXT.like(inText))))
                 .or(DSL.exists(DSL.selectOne()
                         .from(MEMBER)
                         .where(MEMBER.ID.eq(MEDIA.ITEM_ID))

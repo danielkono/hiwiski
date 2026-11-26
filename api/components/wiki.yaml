@@ -128,11 +128,11 @@ ParsedRecipe:
       items:
         $ref: '#/ParsedIngredient'
 
-MindmapNodeFields:
+PinboardNodeFields:
   type: object
   description: |
-    Entity type `MINDMAP_NODE`. An element on the canvas of a page of the kind
-    `MINDMAP`; its container is the page (`containerType` `WIKI_PAGE`), whose share it
+    Entity type `PINBOARD_NODE`. An element on the canvas of a page of the kind
+    `PINBOARD`; its container is the page (`containerType` `WIKI_PAGE`), whose share it
     inherits.
 
     An item of its own rather than a property of the page, so that two people changing
@@ -259,14 +259,14 @@ MindmapNodeFields:
         days.
       example: 2027-W28
 
-MindmapEdgeFields:
+PinboardEdgeFields:
   type: object
   description: |
-    Entity type `MINDMAP_EDGE`. A connection between two elements of the same mind map,
+    Entity type `PINBOARD_EDGE`. A connection between two elements of the same pinboard,
     drawn from centre to centre; its container is the page.
 
     Both ends have to be living elements of the page, on every write: a connection whose
-    element is gone is refused with `wiki.mindmap_element_gone`. The ends never change.
+    element is gone is refused with `wiki.pinboard_element_gone`. The ends never change.
     A connection goes with either of its elements.
   properties:
     fromId:

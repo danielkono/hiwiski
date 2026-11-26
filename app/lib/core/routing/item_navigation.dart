@@ -9,7 +9,7 @@ import '../../domain/links/link_text.dart';
 import '../../features/calendar/event/view/event_body.dart';
 import '../../features/todo/detail/view/todo_body.dart';
 import '../../features/todo/list/view/todo_list_body.dart';
-import '../../features/wiki/mindmap/view/mindmap_screen.dart';
+import '../../features/wiki/pinboard/view/pinboard_screen.dart';
 import '../../features/wiki/page/view/page_preview.dart';
 import '../theme/hiwiski_metrics.dart';
 import '../common/wire.dart';
@@ -67,7 +67,7 @@ Future<void> openLinkTarget(
 }
 
 /// An item as a link's preview shows it — its page without the info bar. Also what a
-/// mind map's link element shows when it shows its target's content: the same view
+/// pinboard's link element shows when it shows its target's content: the same view
 /// of an item in both places.
 class ItemPreview extends StatelessWidget {
   const ItemPreview({
@@ -165,14 +165,14 @@ void goBack(BuildContext context, VoidCallback toParent) {
 bool canGoBack(BuildContext context) =>
     ModalRoute.of(context)?.canPop ?? GoRouter.of(context).canPop();
 
-/// Opens a page's mind map full screen, growing out of [from] — the global rect of
+/// Opens a page's pinboard full screen, growing out of [from] — the global rect of
 /// the preview it was opened from — as a picture grows out of its card, and shrinking
 /// back into it when closed.
 ///
 /// A route of its own over everything, not the shell's: the canvas takes the whole
 /// screen. The screen is laid out at its full size from the first frame and only
 /// shown through the growing frame, so the canvas fits the map once, to the screen.
-Future<void> openMindmap(
+Future<void> openPinboard(
   BuildContext context, {
   required String pageId,
   required Rect from,
@@ -181,7 +181,7 @@ Future<void> openMindmap(
     opaque: false,
     transitionDuration: const Duration(milliseconds: 360),
     reverseTransitionDuration: const Duration(milliseconds: 300),
-    pageBuilder: (context, _, _) => MindmapScreen(pageId: pageId),
+    pageBuilder: (context, _, _) => PinboardScreen(pageId: pageId),
     transitionsBuilder: (context, animation, _, child) => _GrowFrom(
       from: from,
       animation: CurvedAnimation(

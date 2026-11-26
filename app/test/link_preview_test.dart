@@ -257,7 +257,7 @@ void main() {
     expect(find.text('Shopping'), findsNothing);
   });
 
-  // A mind map full screen lies over the shell: a target opened in the shell landed
+  // A pinboard full screen lies over the shell: a target opened in the shell landed
   // behind it, out of sight. The screen makes way first.
   testWidgets('"Open" from a screen over the shell closes that screen first', (
     tester,

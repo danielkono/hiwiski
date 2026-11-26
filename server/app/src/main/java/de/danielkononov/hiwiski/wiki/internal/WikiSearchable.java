@@ -20,11 +20,11 @@ class WikiSearchable implements Searchable {
     private static final int MAX_DEPTH = 32;
 
     private final DSLContext db;
-    private final MindmapTexts mindmaps;
+    private final PinboardTexts pinboards;
 
-    WikiSearchable(DSLContext db, MindmapTexts mindmaps) {
+    WikiSearchable(DSLContext db, PinboardTexts pinboards) {
         this.db = db;
-        this.mindmaps = mindmaps;
+        this.pinboards = pinboards;
     }
 
     @Override
@@ -49,8 +49,8 @@ class WikiSearchable implements Searchable {
         if (row == null) {
             return Optional.empty();
         }
-        // A word on the page's mind map finds the page.
-        String map = mindmaps.of(itemId);
+        // A word on the page's pinboard finds the page.
+        String map = pinboards.of(itemId);
         return Optional.of(new Entry(
                 row.value1(),
                 row.value2(),
@@ -61,10 +61,10 @@ class WikiSearchable implements Searchable {
                 row.value6() != null));
     }
 
-    /** A change on a mind map is one of its page's text. */
+    /** A change on a pinboard is one of its page's text. */
     @Override
     public List<UUID> affectedBy(String entityType, UUID entityId) {
-        return mindmaps.pageOf(entityType, entityId).stream().toList();
+        return pinboards.pageOf(entityType, entityId).stream().toList();
     }
 
     /**

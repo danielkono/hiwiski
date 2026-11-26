@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import 'rich_image.dart';
 
-/// The images of a tree drawn once into a file rather than shown — a mind map saved
+/// The images of a tree drawn once into a file rather than shown — a pinboard saved
 /// as a picture —, given to it with [StillImageScope]: whether any of them is still
 /// on its way, fetched or decoded.
 ///

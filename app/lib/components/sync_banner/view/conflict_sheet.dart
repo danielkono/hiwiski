@@ -13,7 +13,7 @@ import '../../../core/ui/hiwiski_sheet.dart';
 import '../../../domain/common/word_diff.dart';
 import '../../../domain/sync/conflict_values.dart';
 import '../../../domain/sync/sync_items.dart';
-import '../../../domain/wiki/mindmap.dart';
+import '../../../domain/wiki/pinboard.dart';
 import '../sync_banner_view_model.dart';
 
 /// **A conflict, resolved by looking at it** — what it was, what the server has now,
@@ -23,31 +23,31 @@ import '../sync_banner_view_model.dart';
 /// link into the version history. Whoever has to choose needs to see what each side
 /// changed.
 ///
-/// [onMindmap] decides a mind map's conflict where it is shown already — the map
+/// [onPinboard] decides a pinboard's conflict where it is shown already — the map
 /// open under the banner — and says whether it did.
 Future<void> showConflictSheet(
   BuildContext context,
   SyncConflict conflict, {
-  MindmapConflictHandler? onMindmap,
+  PinboardConflictHandler? onPinboard,
 }) {
   final l = L.of(context);
   return showHiwiskiSheet<void>(
     context: context,
     title: l.conflictTitle(historyFieldLabel(l, conflict.field)),
     builder: (context) =>
-        _ConflictBody(conflict: conflict, onMindmap: onMindmap),
+        _ConflictBody(conflict: conflict, onPinboard: onPinboard),
   );
 }
 
 /// Shows an element's conflict on its map — `false` when that map is not the one
 /// open here.
-typedef MindmapConflictHandler = bool Function(String pageId, String entityId);
+typedef PinboardConflictHandler = bool Function(String pageId, String entityId);
 
 class _ConflictBody extends ConsumerWidget {
-  const _ConflictBody({required this.conflict, required this.onMindmap});
+  const _ConflictBody({required this.conflict, required this.onPinboard});
 
   final SyncConflict conflict;
-  final MindmapConflictHandler? onMindmap;
+  final PinboardConflictHandler? onPinboard;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -68,11 +68,11 @@ class _ConflictBody extends ConsumerWidget {
       // their name — not by its address.
       TextValue(:final text)
           when of.field == WireFields.target &&
-              of.entityType == EntityTypes.mindmapNode &&
+              of.entityType == EntityTypes.pinboardNode &&
               index != null =>
         targetLabelOf(text, index) ??
             state?.members[memberIdOf(text)] ??
-            l.mindmapLinkGone,
+            l.pinboardLinkGone,
       TextValue(:final text) => text,
       ColumnsValue(:final columns) => [
         for (final column in columns)
@@ -85,12 +85,12 @@ class _ConflictBody extends ConsumerWidget {
     // An element's position or size: both of its values, as one — a size width by
     // height, whichever of its two conflicts was found first.
     final group = inReadingOrder([conflict, ...?state?.partners[conflict.id]]);
-    final size = mindmapConflictGroup(conflict.field) == WireFields.width;
+    final size = pinboardConflictGroup(conflict.field) == WireFields.width;
     String side(String? Function(SyncConflict conflict) of) =>
         [for (final each in group) text(each, of(each))]
             .join(size ? _by : _and);
 
-    final mindmap = state?.mindmaps[conflict.id];
+    final pinboard = state?.pinboards[conflict.id];
     final base = conflict.base == null ? null : side((each) => each.base);
     final theirs = side((each) => each.theirs);
     final mine = side((each) => each.mine);
@@ -118,28 +118,28 @@ class _ConflictBody extends ConsumerWidget {
           label: l.conflictMine,
           child: _Diff(before: base ?? theirs, after: mine),
         ),
-        // An element of a mind map is decided on its map, where it can be seen among
+        // An element of a pinboard is decided on its map, where it can be seen among
         // the others.
-        if (mindmap != null)
+        if (pinboard != null)
           Align(
             alignment: .centerLeft,
             child: TextButton.icon(
               icon: const Icon(HiwiskiSymbols.hub),
-              label: Text(l.mindmapConflictShow),
+              label: Text(l.pinboardConflictShow),
               onPressed: () {
                 // Looked up now: the sheet is gone in a moment.
                 final router = GoRouter.maybeOf(context);
                 // Every sheet over the page goes — this one and the list it may
                 // have been opened from: the map is where it is decided now.
                 Navigator.of(context).popUntil((route) => route is! PopupRoute);
-                if (onMindmap?.call(mindmap, conflict.entityId) ?? false) {
+                if (onPinboard?.call(pinboard, conflict.entityId) ?? false) {
                   return;
                 }
                 // The pushed route answers nothing here.
                 router
                     ?.push<void>(
-                      MindmapRoute(
-                        pageId: mindmap,
+                      PinboardRoute(
+                        pageId: pinboard,
                         node: conflict.entityId,
                       ).location,
                     )

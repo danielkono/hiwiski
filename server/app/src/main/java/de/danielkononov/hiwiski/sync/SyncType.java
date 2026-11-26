@@ -168,7 +168,7 @@ public interface SyncType {
      * itself is back.
      *
      * <p>For what went with it on its delete and has no place in the trash of its own: a
-     * mind map's elements went with their page, and the page came back empty without
+     * pinboard's elements went with their page, and the page came back empty without
      * them. Only what was deleted at or after {@code deletedAt} is meant -- an element
      * deleted on its own before the page stays deleted. Each element gets its own log
      * entry, like the item.

@@ -6,7 +6,7 @@ import '../../../core/l10n/generated/app_localizations.dart';
 import '../../../core/theme/hiwiski_metrics.dart';
 import '../../../core/theme/hiwiski_symbols.dart';
 import '../../../domain/common/item_ref.dart';
-import '../../../domain/wiki/mindmap.dart';
+import '../../../domain/wiki/pinboard.dart';
 import 'export_keys.dart';
 import 'export_sheet.dart';
 
@@ -15,19 +15,19 @@ import 'export_sheet.dart';
 /// For everyone who can read the item: an export takes nothing away and changes
 /// nothing.
 class InfoExportButton extends StatelessWidget {
-  const InfoExportButton({super.key, required this.item, this.drawMindmap});
+  const InfoExportButton({super.key, required this.item, this.drawPinboard});
 
   final ItemRef item;
 
-  /// How a mind map among the pages is drawn as a picture — handed in by the
-  /// screen that draws mind maps; without it, none goes along.
-  final MindmapDrawing Function(BuildContext context)? drawMindmap;
+  /// How a pinboard among the pages is drawn as a picture — handed in by the
+  /// screen that draws pinboards; without it, none goes along.
+  final PinboardDrawing Function(BuildContext context)? drawPinboard;
 
   @override
   Widget build(BuildContext context) => TextButton.icon(
     key: ExportKeys.open,
     onPressed: () => unawaited(
-      showExportSheet(context, item: item, drawMindmap: drawMindmap),
+      showExportSheet(context, item: item, drawPinboard: drawPinboard),
     ),
     icon: const Icon(HiwiskiSymbols.download, size: HiwiskiMetrics.icon18),
     label: Text(L.of(context).exportAction),

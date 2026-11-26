@@ -76,7 +76,7 @@ final class LocalWrite {
   /// The id comes from [row]. [after] is the item whose still-pending mutation this
   /// one waits for: the task created offline in a list created offline must not go
   /// out if the list fails permanently. [alsoAfter] are more the new item needs on
-  /// the server — a mind map's connection both its elements ([_prerequisite]).
+  /// the server — a pinboard's connection both its elements ([_prerequisite]).
   Future<Queued> create<T extends SyncedItem, D>(
     TableInfo<T, D> table,
     Insertable<D> row, {
@@ -151,7 +151,7 @@ final class LocalWrite {
   /// can go out — they go in the order they were made, so the new entry follows
   /// every one of them anyway. But one that cannot go out yet, of any of the items,
   /// comes first: the new entry has to wait for exactly that one. Hung off the first
-  /// item alone, a mind map connection went out while its other element was held
+  /// item alone, a pinboard connection went out while its other element was held
   /// back or refused, and the server refused the connection as pointing at nothing.
   Future<String?> _prerequisite(List<String> items) async {
     String? first;
@@ -196,7 +196,7 @@ final class LocalWrite {
 
   /// Brings the deleted item [id] back and queues it with **every field it holds**,
   /// not only what changed — for what comes back from the trash of a device without
-  /// a server: the item itself, and what comes back alongside it, as a mind map's
+  /// a server: the item itself, and what comes back alongside it, as a pinboard's
   /// elements with their page. Its own mutations may be gone by then: while it lay
   /// in the trash, a compaction (`LocalTakeover.compact`) dropped everything about an
   /// item the server never knew, and what went out after would change something the

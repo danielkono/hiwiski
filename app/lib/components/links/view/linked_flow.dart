@@ -18,7 +18,7 @@ import 'linked_markdown.dart';
 
 /// A text with link chips and pictures that fills an outline line by line — a box,
 /// or a circle whose lines are short at its top and long in its middle
-/// ([FlowingText]). Read-only, as a note on a mind map is.
+/// ([FlowingText]). Read-only, as a note on a pinboard is.
 ///
 /// Everything in it stands where [place] puts it, lists and pictures too: a list's
 /// marker leads its line wherever the line stands. Markdown's blocks become lines of

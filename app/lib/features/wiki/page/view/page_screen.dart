@@ -25,7 +25,7 @@ import '../../../../core/ui/text_insertion.dart';
 import '../../../../domain/wiki/page_images.dart';
 import '../../../../domain/common/item_ref.dart';
 import '../../../../domain/wiki/wiki_page.dart';
-import '../../view/mindmap/mindmap_picture.dart';
+import '../../view/pinboard/pinboard_picture.dart';
 import '../../view/wiki_keys.dart';
 import '../page_view_model.dart';
 import 'page_actions.dart';
@@ -349,7 +349,7 @@ class _PageScreenState extends ConsumerState<PageScreen> {
                   besides: [
                     InfoExportButton(
                       item: ItemRef.wikiPage(widget.page.id),
-                      drawMindmap: mindmapDrawingOf,
+                      drawPinboard: pinboardDrawingOf,
                     ),
                     if (!archived)
                       InfoArchiveButton(
@@ -374,7 +374,7 @@ class _PageScreenState extends ConsumerState<PageScreen> {
                   alignment: Alignment.centerLeft,
                   child: InfoExportButton(
                     item: ItemRef.wikiPage(widget.page.id),
-                    drawMindmap: mindmapDrawingOf,
+                    drawPinboard: pinboardDrawingOf,
                   ),
                 ),
             ],

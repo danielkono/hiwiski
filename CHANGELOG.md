@@ -14,7 +14,7 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
 
 ### Added
 
-- **Mind maps.** A new kind of wiki page: its text as on any page, and below it a
+- **Pinboards.** A new kind of wiki page: its text as on any page, and below it a
   picture of a canvas that opens full screen. There you move around and zoom with
   fingers, trackpad or mouse wheel, search the canvas, and — with **Edit** — place
   text, notes, pictures, links and members of the family, connect them with labelled
@@ -53,7 +53,7 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
   down zooms with one finger. The search's hits are put in order as they lie on
   the map, alphabetically or by when they were made.
   **Save as picture** saves the whole map as a PNG, and a page's export can take its
-  mind maps along as pictures; an import makes ordinary pages of them, with the
+  pinboards along as pictures; an import makes ordinary pages of them, with the
   picture.
   Several people can work on one map at once, offline too; each element is synced on
   its own, so a conflict names the one element two people changed and is decided for
@@ -61,7 +61,7 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
   map count as links from its page, and the search finds a page by the words on its
   map. The demo has one to try: the sample family's ideas for a summer on Sardinia.
 
-  *Upgrade notes:* update the server before the apps. An older app shows a mind map as
+  *Upgrade notes:* update the server before the apps. An older app shows a pinboard as
   an ordinary page and leaves its canvas alone; an older server refuses the elements
   an app places, and they wait in the app's list of changes that could not sync.
 
@@ -69,7 +69,7 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
 
 - **A picture in a format the server does not take is no longer lost.** A HEIC
   chosen from the files — in the browser, on a Mac, on Android — showed in a page or
-  on a mind map at first, was refused by the server and then given up; in the
+  on a pinboard at first, was refused by the server and then given up; in the
   browser it was gone with the next reload. The app now draws such a picture, and
   one larger than an upload may be, again before it is kept — in the browser as a
   JPEG, by the browser itself, which leaves the photo's location and camera data

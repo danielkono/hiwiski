@@ -1138,12 +1138,12 @@ class WikiPageCodec extends EntityCodec {
                 row.itemId.equals(id),
           ))
           .go();
-      // Its mind map, which lives in it and goes with its share.
+      // Its pinboard, which lives in it and goes with its share.
       await (db.delete(
-        db.mindmapEdges,
+        db.pinboardEdges,
       )..where((row) => row.pageId.equals(id))).go();
       await (db.delete(
-        db.mindmapNodes,
+        db.pinboardNodes,
       )..where((row) => row.pageId.equals(id))).go();
       await (db.delete(db.wikiPages)..where((row) => row.id.equals(id))).go();
     });
@@ -1626,18 +1626,18 @@ class ListOrderCodec extends EntityCodec {
   }
 }
 
-// --- Mind maps --------------------------------------------------------------
+// --- Pinboards --------------------------------------------------------------
 
-/// An element on a mind map. Its page is the container: it comes as `containerId`,
+/// An element on a pinboard. Its page is the container: it comes as `containerId`,
 /// never as a field.
-class MindmapNodeCodec extends EntityCodec {
-  const MindmapNodeCodec();
+class PinboardNodeCodec extends EntityCodec {
+  const PinboardNodeCodec();
 
   @override
-  String get entityType => EntityTypes.mindmapNode;
+  String get entityType => EntityTypes.pinboardNode;
 
   @override
-  TableInfo<Table, Object?> table(HiwiskiDatabase db) => db.mindmapNodes;
+  TableInfo<Table, Object?> table(HiwiskiDatabase db) => db.pinboardNodes;
 
   @override
   Future<void> upsert(
@@ -1649,8 +1649,8 @@ class MindmapNodeCodec extends EntityCodec {
     required String? entityKey,
     required Map<String, dynamic> fields,
   }) async {
-    final table = db.mindmapNodes;
-    final columns = mindmapNodeColumns(db);
+    final table = db.pinboardNodes;
+    final columns = pinboardNodeColumns(db);
     final values = <String, Expression<Object>>{
       table.id.name: Variable<String>(id),
       table.ownerId.name: Variable<String>(ownerId),
@@ -1681,13 +1681,13 @@ class MindmapNodeCodec extends EntityCodec {
   @override
   Future<String?> containerOf(HiwiskiDatabase db, String id) async =>
       (await (db.select(
-        db.mindmapNodes,
+        db.pinboardNodes,
       )..where((row) => row.id.equals(id))).getSingleOrNull())?.pageId;
 
   @override
   Future<void> markDeleted(HiwiskiDatabase db, String id, int version) =>
-      (db.update(db.mindmapNodes)..where((row) => row.id.equals(id))).write(
-        MindmapNodesCompanion(
+      (db.update(db.pinboardNodes)..where((row) => row.id.equals(id))).write(
+        PinboardNodesCompanion(
           deletedAt: Value(clock.now()),
           version: Value(version),
         ),
@@ -1698,10 +1698,10 @@ class MindmapNodeCodec extends EntityCodec {
   Future<void> purge(HiwiskiDatabase db, String id) async {
     await db.transaction(() async {
       await (db.delete(
-        db.mindmapEdges,
+        db.pinboardEdges,
       )..where((row) => row.fromId.equals(id) | row.toId.equals(id))).go();
       await (db.delete(
-        db.mindmapNodes,
+        db.pinboardNodes,
       )..where((row) => row.id.equals(id))).go();
     });
   }
@@ -1709,7 +1709,7 @@ class MindmapNodeCodec extends EntityCodec {
   @override
   Future<StoredItem?> stored(HiwiskiDatabase db, String id) async {
     final row = await (db.select(
-      db.mindmapNodes,
+      db.pinboardNodes,
     )..where((r) => r.id.equals(id))).getSingleOrNull();
     if (row == null) return null;
     return StoredItem(
@@ -1718,21 +1718,21 @@ class MindmapNodeCodec extends EntityCodec {
       deleted: row.deletedAt != null,
       containerId: row.pageId,
       label: row.body,
-      fields: mindmapNodeColumns(db).fieldsOf(row),
+      fields: pinboardNodeColumns(db).fieldsOf(row),
     );
   }
 }
 
-/// A connection between two elements of a mind map. Its ends never change; its page
+/// A connection between two elements of a pinboard. Its ends never change; its page
 /// is the container.
-class MindmapEdgeCodec extends EntityCodec {
-  const MindmapEdgeCodec();
+class PinboardEdgeCodec extends EntityCodec {
+  const PinboardEdgeCodec();
 
   @override
-  String get entityType => EntityTypes.mindmapEdge;
+  String get entityType => EntityTypes.pinboardEdge;
 
   @override
-  TableInfo<Table, Object?> table(HiwiskiDatabase db) => db.mindmapEdges;
+  TableInfo<Table, Object?> table(HiwiskiDatabase db) => db.pinboardEdges;
 
   @override
   Future<void> upsert(
@@ -1744,8 +1744,8 @@ class MindmapEdgeCodec extends EntityCodec {
     required String? entityKey,
     required Map<String, dynamic> fields,
   }) async {
-    final table = db.mindmapEdges;
-    final columns = mindmapEdgeColumns(db);
+    final table = db.pinboardEdges;
+    final columns = pinboardEdgeColumns(db);
     final values = <String, Expression<Object>>{
       table.id.name: Variable<String>(id),
       table.ownerId.name: Variable<String>(ownerId),
@@ -1775,13 +1775,13 @@ class MindmapEdgeCodec extends EntityCodec {
   @override
   Future<String?> containerOf(HiwiskiDatabase db, String id) async =>
       (await (db.select(
-        db.mindmapEdges,
+        db.pinboardEdges,
       )..where((row) => row.id.equals(id))).getSingleOrNull())?.pageId;
 
   @override
   Future<void> markDeleted(HiwiskiDatabase db, String id, int version) =>
-      (db.update(db.mindmapEdges)..where((row) => row.id.equals(id))).write(
-        MindmapEdgesCompanion(
+      (db.update(db.pinboardEdges)..where((row) => row.id.equals(id))).write(
+        PinboardEdgesCompanion(
           deletedAt: Value(clock.now()),
           version: Value(version),
         ),
@@ -1789,12 +1789,12 @@ class MindmapEdgeCodec extends EntityCodec {
 
   @override
   Future<void> purge(HiwiskiDatabase db, String id) =>
-      (db.delete(db.mindmapEdges)..where((row) => row.id.equals(id))).go();
+      (db.delete(db.pinboardEdges)..where((row) => row.id.equals(id))).go();
 
   @override
   Future<StoredItem?> stored(HiwiskiDatabase db, String id) async {
     final row = await (db.select(
-      db.mindmapEdges,
+      db.pinboardEdges,
     )..where((r) => r.id.equals(id))).getSingleOrNull();
     if (row == null) return null;
     return StoredItem(
@@ -1803,7 +1803,7 @@ class MindmapEdgeCodec extends EntityCodec {
       deleted: row.deletedAt != null,
       containerId: row.pageId,
       label: row.body,
-      fields: mindmapEdgeColumns(db).fieldsOf(row),
+      fields: pinboardEdgeColumns(db).fieldsOf(row),
     );
   }
 }
@@ -1827,6 +1827,6 @@ const entityCodecs = <EntityCodec>[
   TagCodec(),
   ListOrderCodec(),
   // After the pages: an element arrives into its page.
-  MindmapNodeCodec(),
-  MindmapEdgeCodec(),
+  PinboardNodeCodec(),
+  PinboardEdgeCodec(),
 ];

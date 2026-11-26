@@ -13,7 +13,7 @@ import '../domain/board/widget_kinds.dart';
 import '../domain/calendar/event_draft.dart';
 import '../domain/links/link_text.dart';
 import '../domain/todo/kanban.dart';
-import '../domain/wiki/mindmap.dart';
+import '../domain/wiki/pinboard.dart';
 import '../domain/wiki/page_images.dart';
 import '../domain/wiki/wiki_models.dart';
 import 'repositories.dart';
@@ -84,7 +84,7 @@ class Demo {
   static const _linkKey = 'key';
   static const _pageLink = 'page:';
   static const _listLink = 'list:';
-  static const _mindmap = 'mindmap';
+  static const _pinboard = 'pinboard';
   static const _nodes = 'nodes';
   static const _edges = 'edges';
   static const _x = 'x';
@@ -285,7 +285,7 @@ class Demo {
     }
   }
 
-  /// All pages first, then their texts and mind maps: a text links to pages further
+  /// All pages first, then their texts and pinboards: a text links to pages further
   /// down.
   Future<void> _seedPages(
     Map<String, dynamic> data,
@@ -320,24 +320,24 @@ class Demo {
             ],
         },
       );
-      if (entry[_mindmap] case final Map<String, dynamic> map) {
-        await _seedMindmap(id, map, members);
+      if (entry[_pinboard] case final Map<String, dynamic> map) {
+        await _seedPinboard(id, map, members);
       }
     }
   }
 
-  /// The elements of a mind map, in the order they lie on each other, and then their
+  /// The elements of a pinboard, in the order they lie on each other, and then their
   /// connections — placed as the map's screen places them. An element names what it
   /// shows by the sample data's own words: a picture by its file in
   /// `assets/demo/images/`, a link by `page:<key>` or `list:<key>`, a member by their
   /// place in the family; a stroke by its points on the map, or a shape the pen draws
   /// by its two corners.
-  Future<void> _seedMindmap(
+  Future<void> _seedPinboard(
     String pageId,
     Map<String, dynamic> map,
     List<String> Function(Object?) members,
   ) async {
-    final maps = _ref.read(mindmapRepositoryProvider);
+    final maps = _ref.read(pinboardRepositoryProvider);
     final media = _ref.read(mediaRepositoryProvider);
     final ids = <String, String>{};
     for (final node in _list(map[_nodes])) {
@@ -375,7 +375,7 @@ class Demo {
           for (final point in given.cast<List<dynamic>>())
             Offset((point[0] as num).toDouble(), (point[1] as num).toDouble()),
         ];
-        final pen = MindmapPenShape.values
+        final pen = PinboardPenShape.values
             .where((shape) => penShapeName(shape) == node[_pen])
             .firstOrNull;
         // As the pen draws it: a shape along its outline, as thick as on the screen.
@@ -388,7 +388,7 @@ class Demo {
                   points.last,
                   head: penArrowHead(
                     strokeWidth.toDouble(),
-                    least: HiwiskiMetrics.mindmapArrowHead * 2,
+                    least: HiwiskiMetrics.pinboardArrowHead * 2,
                   ),
                 ),
           strokeWidth.toDouble(),

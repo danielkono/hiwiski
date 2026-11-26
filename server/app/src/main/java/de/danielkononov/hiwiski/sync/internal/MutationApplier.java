@@ -328,7 +328,7 @@ class MutationApplier {
                 seq,
                 entityKey);
 
-        // After the item's own entry: a mind map's elements need their page alive.
+        // After the item's own entry: a pinboard's elements need their page alive.
         if (revivedFrom != null) {
             serverWrites.restoreAlong(type, entityId, revivedFrom, principal.memberId());
         }

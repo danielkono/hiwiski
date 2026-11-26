@@ -14,7 +14,7 @@ import 'package:hiwiski/core/storage/local_settings.dart';
 import 'package:hiwiski/domain/calendar/occurrence.dart';
 import 'package:hiwiski/domain/common/calendar_days.dart';
 import 'package:hiwiski/domain/session/session_state.dart';
-import 'package:hiwiski/domain/wiki/mindmap.dart';
+import 'package:hiwiski/domain/wiki/pinboard.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 
@@ -200,7 +200,7 @@ void main() {
     final widgets = await db.select(db.widgets).get();
     expect(widgets, hasLength((data['start'] as List).length));
 
-    // The mind map: every element and connection; its pictures kept on the device,
+    // The pinboard: every element and connection; its pictures kept on the device,
     // its links and members pointing where a link picker would have them point.
     List<Map<String, dynamic>> flat(Object? entries) => [
       for (final page
@@ -210,22 +210,22 @@ void main() {
       ],
     ];
     final sampled = flat(data['pages'])
-        .singleWhere((page) => page['mindmap'] != null);
-    final mindmap = sampled['mindmap'] as Map<String, dynamic>;
-    final sampledNodes = (mindmap['nodes'] as List)
+        .singleWhere((page) => page['pinboard'] != null);
+    final pinboard = sampled['pinboard'] as Map<String, dynamic>;
+    final sampledNodes = (pinboard['nodes'] as List)
         .cast<Map<String, dynamic>>();
-    final mapPage = rows.singleWhere((row) => row.kind == PageKinds.mindmap);
+    final mapPage = rows.singleWhere((row) => row.kind == PageKinds.pinboard);
     expect(mapPage.title, equals(sampled['title']));
-    Future<List<MindmapNodeRow>> nodes() => (db.select(
-      db.mindmapNodes,
+    Future<List<PinboardNodeRow>> nodes() => (db.select(
+      db.pinboardNodes,
     )..where((node) => node.pageId.equals(mapPage.id))).get();
     final placed = await nodes();
     expect(placed, hasLength(sampledNodes.length));
     expect(
       await (db.select(
-        db.mindmapEdges,
+        db.pinboardEdges,
       )..where((edge) => edge.pageId.equals(mapPage.id))).get(),
-      hasLength((mindmap['edges'] as List).length),
+      hasLength((pinboard['edges'] as List).length),
     );
     final kept = await db.select(db.localImages).get();
     expect(
@@ -237,7 +237,7 @@ void main() {
     };
     for (final node in placed) {
       switch (node.kind) {
-        case MindmapKinds.image:
+        case PinboardKinds.image:
           // Named, for a screen reader; kept here, for the demo has no server.
           expect(pictureNameOf(node.body), isNotNull, reason: node.body);
           expect(
@@ -245,16 +245,16 @@ void main() {
             hasLength(1),
             reason: node.body,
           );
-        case MindmapKinds.link:
+        case PinboardKinds.link:
           expect(node.target, startsWith('hiwiski://wiki_page/'));
-        case MindmapKinds.member:
+        case PinboardKinds.member:
           expect(memberIds, contains(memberIdOf(node.target)));
-        case MindmapKinds.drawing:
+        case PinboardKinds.drawing:
           expect(node.points, isNotEmpty);
       }
     }
     expect(
-      placed.where((node) => node.shape == MindmapShapes.arrow),
+      placed.where((node) => node.shape == PinboardShapes.arrow),
       hasLength(sampledNodes.where((node) => node['pen'] != null).length),
     );
 
@@ -268,7 +268,7 @@ void main() {
       hasLength((data['lists'] as List).length),
     );
     expect(
-      await db.select(db.mindmapNodes).get(),
+      await db.select(db.pinboardNodes).get(),
       hasLength(sampledNodes.length),
     );
   });

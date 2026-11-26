@@ -35,7 +35,7 @@ class SearchIndexer {
     /**
      * The items rebuilt for what depends on them, by type and id. Once for writes that
      * come together: a page deleted or brought back with the thousand elements of its
-     * mind map rebuilt its entry -- reading the whole map -- for each of them.
+     * pinboard rebuilt its entry -- reading the whole map -- for each of them.
      */
     private final CoveredWrites<String> dependents;
 

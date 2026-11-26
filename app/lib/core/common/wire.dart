@@ -25,10 +25,10 @@ abstract final class EntityTypes {
   /// A member's own order of the task lists — owned by them, shared with no one.
   static const listOrder = 'LIST_ORDER';
 
-  /// An element on a mind map, and a connection between two — items of their own in
+  /// An element on a pinboard, and a connection between two — items of their own in
   /// their page, so that each conflicts on its own.
-  static const mindmapNode = 'MINDMAP_NODE';
-  static const mindmapEdge = 'MINDMAP_EDGE';
+  static const pinboardNode = 'PINBOARD_NODE';
+  static const pinboardEdge = 'PINBOARD_EDGE';
 }
 
 /// The `op` of a mutation.
@@ -112,7 +112,7 @@ abstract final class WireFields {
   static const itemId = 'itemId';
   static const body = 'body';
 
-  // A mind map's elements and connections.
+  // A pinboard's elements and connections.
   static const x = 'x';
   static const y = 'y';
   static const width = 'width';
@@ -229,12 +229,12 @@ abstract final class FeedContentModes {
 abstract final class PageKinds {
   static const page = 'PAGE';
   static const recipe = 'RECIPE';
-  static const mindmap = 'MINDMAP';
+  static const pinboard = 'PINBOARD';
 }
 
-/// The `kind` of an element on a mind map. The list may grow: an element of a kind
+/// The `kind` of an element on a pinboard. The list may grow: an element of a kind
 /// this app does not know is drawn as a placeholder and kept as it is.
-abstract final class MindmapKinds {
+abstract final class PinboardKinds {
   /// Text without formatting — a snippet written anywhere on the canvas.
   static const plain = 'PLAIN';
 
@@ -255,7 +255,7 @@ abstract final class MindmapKinds {
 }
 
 /// What a link element shows of its target. An unknown one shows the title.
-abstract final class MindmapLinkViews {
+abstract final class PinboardLinkViews {
   /// The target's symbol and title.
   static const title = 'TITLE';
 
@@ -264,7 +264,7 @@ abstract final class MindmapLinkViews {
 }
 
 /// The outline of an element. An unknown one is drawn rounded.
-abstract final class MindmapShapes {
+abstract final class PinboardShapes {
   static const rectangle = 'RECTANGLE';
   static const rounded = 'ROUNDED';
   static const ellipse = 'ELLIPSE';
@@ -279,7 +279,7 @@ abstract final class MindmapShapes {
 }
 
 /// The line a connection is drawn with. An unknown one is drawn solid.
-abstract final class MindmapLines {
+abstract final class PinboardLines {
   static const solid = 'SOLID';
   static const dashed = 'DASHED';
   static const dotted = 'DOTTED';
@@ -287,7 +287,7 @@ abstract final class MindmapLines {
 
 /// Where a connection has arrow heads: at the element it goes to, the one it comes
 /// from, both or neither. An unknown one is drawn without.
-abstract final class MindmapArrows {
+abstract final class PinboardArrows {
   static const none = 'NONE';
   static const end = 'END';
   static const start = 'START';
@@ -295,7 +295,7 @@ abstract final class MindmapArrows {
 }
 
 /// Where a note's text stands inside it. An unknown one is top left.
-abstract final class MindmapTextAligns {
+abstract final class PinboardTextAligns {
   static const topLeft = 'TOP_LEFT';
   static const topCenter = 'TOP_CENTER';
   static const topRight = 'TOP_RIGHT';
@@ -321,7 +321,7 @@ abstract final class MindmapTextAligns {
 }
 
 /// What a note's lines fill. An unknown one is [box].
-abstract final class MindmapTextFlows {
+abstract final class PinboardTextFlows {
   /// The largest box inside the note's shape: every line as wide as it.
   static const box = 'BOX';
 
@@ -330,7 +330,7 @@ abstract final class MindmapTextFlows {
 }
 
 /// The size of an element's text.
-abstract final class MindmapTextSizes {
+abstract final class PinboardTextSizes {
   static const small = 'S';
   static const medium = 'M';
   static const large = 'L';

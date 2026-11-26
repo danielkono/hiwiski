@@ -831,7 +831,7 @@
   "pages": [
     {
       "title": "Willkommen in der Demo",
-      "content": "Das ist eine Demo: Alles, was du hier anlegst, änderst oder löschst, bleibt in diesem Browser-Tab. Lädst du die Seite neu, beginnt die Demo von vorn.\n\nDu bist **Anna Sonnenberg**. Mit Markus, Lena, Paul und Mia, Oma Gisela und Opa Heinz, Tante Sabine und Jonas, dem Au-pair, plant ihr hier euren Alltag.\n\nSchau dich um:\n\n- [ ] Im {{list:shopping}} etwas abhaken\n- [ ] Einen Termin in der Woche anlegen\n- [ ] Die {{page:pumpkin}} auf die Einkaufsliste setzen\n- [ ] Im {{list:aupair-plan}} eine Karte verschieben\n- [ ] Auf der Mindmap {{page:sardinia}} ein eigenes Wunschziel dazulegen\n\nWichtig für alle: {{page:emergency}} und {{page:pickup}}.\n\nDie volle App läuft mit einem eigenen Server: Dann teilt ihr Listen, Kalender und Seiten in der Familie.",
+      "content": "Das ist eine Demo: Alles, was du hier anlegst, änderst oder löschst, bleibt in diesem Browser-Tab. Lädst du die Seite neu, beginnt die Demo von vorn.\n\nDu bist **Anna Sonnenberg**. Mit Markus, Lena, Paul und Mia, Oma Gisela und Opa Heinz, Tante Sabine und Jonas, dem Au-pair, plant ihr hier euren Alltag.\n\nSchau dich um:\n\n- [ ] Im {{list:shopping}} etwas abhaken\n- [ ] Einen Termin in der Woche anlegen\n- [ ] Die {{page:pumpkin}} auf die Einkaufsliste setzen\n- [ ] Im {{list:aupair-plan}} eine Karte verschieben\n- [ ] Auf der Pinnwand {{page:sardinia}} ein eigenes Wunschziel dazulegen\n\nWichtig für alle: {{page:emergency}} und {{page:pickup}}.\n\nDie volle App läuft mit einem eigenen Server: Dann teilt ihr Listen, Kalender und Seiten in der Familie.",
       "key": "welcome"
     },
     {
@@ -1381,13 +1381,13 @@
         },
         {
           "title": "Sardinien",
-          "kind": "MINDMAP",
+          "kind": "PINBOARD",
           "key": "sardinia",
           "tags": [
             "holiday"
           ],
           "content": "Unsere Ideen für den Sommer nächstes Jahr. Jeder legt seine Wunschziele dazu, die Fotos hat Tante Sabine geschickt.",
-          "mindmap": {
+          "pinboard": {
             "nodes": [
               {
                 "key": "island",

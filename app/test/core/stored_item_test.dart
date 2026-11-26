@@ -154,10 +154,10 @@ void main() {
         WireFields.listIds: ['l2', 'l1'],
       },
     ),
-    EntityTypes.mindmapNode: (
+    EntityTypes.pinboardNode: (
       container: 'page1',
       fields: {
-        WireFields.kind: MindmapKinds.note,
+        WireFields.kind: PinboardKinds.note,
         WireFields.x: 10,
         WireFields.y: -20,
         WireFields.width: 200,
@@ -165,21 +165,21 @@ void main() {
         WireFields.layer: 2.5,
         WireFields.text: '# Plan',
         WireFields.target: 'hiwiski://todo/t1',
-        WireFields.linkView: MindmapLinkViews.content,
+        WireFields.linkView: PinboardLinkViews.content,
         WireFields.color: '#3B6939',
-        WireFields.shape: MindmapShapes.ellipse,
-        WireFields.textSize: MindmapTextSizes.large,
+        WireFields.shape: PinboardShapes.ellipse,
+        WireFields.textSize: PinboardTextSizes.large,
         WireFields.textColor: '#1F2A44',
         WireFields.points: '0,0 5000,10000 10000,0',
         WireFields.strokeWidth: 4,
         WireFields.rotation: 30,
-        WireFields.textAlign: MindmapTextAligns.bottomCenter,
-        WireFields.textFlow: MindmapTextFlows.shape,
+        WireFields.textAlign: PinboardTextAligns.bottomCenter,
+        WireFields.textFlow: PinboardTextFlows.shape,
         WireFields.calendars: 'c1 c2',
         WireFields.week: '2027-W28',
       },
     ),
-    EntityTypes.mindmapEdge: (
+    EntityTypes.pinboardEdge: (
       container: 'page1',
       fields: {
         WireFields.fromId: 'n1',
@@ -187,8 +187,8 @@ void main() {
         WireFields.text: 'und',
         WireFields.color: 'RUST',
         WireFields.strokeWidth: 6,
-        WireFields.line: MindmapLines.dashed,
-        WireFields.arrows: MindmapArrows.end,
+        WireFields.line: PinboardLines.dashed,
+        WireFields.arrows: PinboardArrows.end,
       },
     ),
   };

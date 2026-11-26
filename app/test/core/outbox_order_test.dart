@@ -45,7 +45,7 @@ void main() {
       await withClock(Clock.fixed(DateTime(2026, 11, 21, 9)), () async {
         for (final id in written) {
           await outbox.add(
-            entityType: EntityTypes.mindmapNode,
+            entityType: EntityTypes.pinboardNode,
             entityId: id,
             op: SyncOps.upsert,
           );

@@ -27,7 +27,7 @@ import '../data/tags/tag_repository.dart';
 import '../data/catalog/catalog_repository.dart';
 import '../data/todo/todo_repository.dart';
 import '../data/update/web_build_repository.dart';
-import '../data/wiki/mindmap_repository.dart';
+import '../data/wiki/pinboard_repository.dart';
 import '../data/wiki/wiki_repository.dart';
 import '../core/common/date_patterns.dart';
 import '../core/db/hiwiski_database.dart';
@@ -129,7 +129,7 @@ WikiRepository wikiRepository(Ref ref) => .new(
 );
 
 @Riverpod(keepAlive: true)
-MindmapRepository mindmapRepository(Ref ref) => .new(
+PinboardRepository pinboardRepository(Ref ref) => .new(
   db: ref.watch(databaseProvider),
   writes: ref.watch(localWritesProvider),
   currentMemberId: () => _currentMemberId(ref),

@@ -10,8 +10,8 @@ String syncItemLabel(L l, String entityType, String? label) =>
     switch (label?.trim()) {
       final String own when own.isNotEmpty => own,
       _ => switch (entityType) {
-        EntityTypes.mindmapNode => l.syncItemMindmapElement,
-        EntityTypes.mindmapEdge => l.syncItemMindmapConnection,
+        EntityTypes.pinboardNode => l.syncItemPinboardElement,
+        EntityTypes.pinboardEdge => l.syncItemPinboardConnection,
         _ => entityType,
       },
     };

@@ -9,7 +9,7 @@ import 'hiwiski_database.dart';
 /// through: a field is mapped to its column once, and all that goes over every field
 /// of an item — reading its row, writing a change, bringing it back, storing what
 /// arrives — goes over this map. A field without its column here is neither stored
-/// nor sent; `test/mindmap_fields_test.dart` names it.
+/// nor sent; `test/pinboard_fields_test.dart` names it.
 final class SyncedColumns<D> {
   const SyncedColumns(this.byField);
 
@@ -59,10 +59,10 @@ final class SyncedColumns<D> {
   };
 }
 
-/// An element of a mind map: its fields and their columns. A new field gets its
+/// An element of a pinboard: its fields and their columns. A new field gets its
 /// line here, next to its column in `tables.dart`.
-SyncedColumns<MindmapNodeRow> mindmapNodeColumns(HiwiskiDatabase db) {
-  final table = db.mindmapNodes;
+SyncedColumns<PinboardNodeRow> pinboardNodeColumns(HiwiskiDatabase db) {
+  final table = db.pinboardNodes;
   return SyncedColumns({
     WireFields.kind: table.kind,
     WireFields.x: table.x,
@@ -87,9 +87,9 @@ SyncedColumns<MindmapNodeRow> mindmapNodeColumns(HiwiskiDatabase db) {
   });
 }
 
-/// A connection of a mind map: its fields and their columns.
-SyncedColumns<MindmapEdgeRow> mindmapEdgeColumns(HiwiskiDatabase db) {
-  final table = db.mindmapEdges;
+/// A connection of a pinboard: its fields and their columns.
+SyncedColumns<PinboardEdgeRow> pinboardEdgeColumns(HiwiskiDatabase db) {
+  final table = db.pinboardEdges;
   return SyncedColumns({
     WireFields.fromId: table.fromId,
     WireFields.toId: table.toId,

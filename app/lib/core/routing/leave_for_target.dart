@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-/// A screen outside the app's frame — a mind map full screen — that makes way before
+/// A screen outside the app's frame — a pinboard full screen — that makes way before
 /// a link's target opens: the target opens in the frame, and the frame lies under the
 /// screen. Opened there, the target appeared behind the map, out of sight.
 class LeaveForTarget extends InheritedWidget {

@@ -831,7 +831,7 @@
   "pages": [
     {
       "title": "Welcome to the demo",
-      "content": "This is a demo: everything you create, change or delete here stays in this browser tab. Reload the page and the demo starts over.\n\nYou are **Anna Sonnenberg**. With Markus, Lena, Paul and Mia, Grandma Gisela and Grandpa Heinz, Aunt Sabine and Jonas, the au pair, you plan your days here.\n\nHave a look around:\n\n- [ ] Tick something off the {{list:shopping}}\n- [ ] Add an event to the week\n- [ ] Put the {{page:pumpkin}} on the shopping list\n- [ ] Move a card on the {{list:aupair-plan}}\n- [ ] Add a place you wish for to the {{page:sardinia}} mind map\n\nWorth knowing for everyone: {{page:emergency}} and {{page:pickup}}.\n\nThe full app runs with a server of your own: then the family shares lists, calendars and pages.",
+      "content": "This is a demo: everything you create, change or delete here stays in this browser tab. Reload the page and the demo starts over.\n\nYou are **Anna Sonnenberg**. With Markus, Lena, Paul and Mia, Grandma Gisela and Grandpa Heinz, Aunt Sabine and Jonas, the au pair, you plan your days here.\n\nHave a look around:\n\n- [ ] Tick something off the {{list:shopping}}\n- [ ] Add an event to the week\n- [ ] Put the {{page:pumpkin}} on the shopping list\n- [ ] Move a card on the {{list:aupair-plan}}\n- [ ] Add a place you wish for to the {{page:sardinia}} pinboard\n\nWorth knowing for everyone: {{page:emergency}} and {{page:pickup}}.\n\nThe full app runs with a server of your own: then the family shares lists, calendars and pages.",
       "key": "welcome"
     },
     {
@@ -1381,13 +1381,13 @@
         },
         {
           "title": "Sardinia",
-          "kind": "MINDMAP",
+          "kind": "PINBOARD",
           "key": "sardinia",
           "tags": [
             "holiday"
           ],
           "content": "Our ideas for next summer. Everyone adds the places they wish for; Aunt Sabine sent the photos.",
-          "mindmap": {
+          "pinboard": {
             "nodes": [
               {
                 "key": "island",
