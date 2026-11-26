@@ -2591,7 +2591,7 @@ void main() {
 
     await tester.tap(find.byKey(PinboardKeys.conflicts));
     await settle(tester);
-    expect(find.text('On the map: Position'), findsOneWidget);
+    expect(find.text('On the pinboard: Position'), findsOneWidget);
     // The map's version where it is, this device's where it was moved to.
     expect(find.text('Meer'), findsNWidgets(2));
     // Both of the position's fields go with the one decision.
@@ -2651,7 +2651,7 @@ void main() {
 
     // Decided on this map, not on a second one opened over it.
     expect(find.byType(PinboardScreen), findsOneWidget);
-    expect(find.text('On the map: Position'), findsOneWidget);
+    expect(find.text('On the pinboard: Position'), findsOneWidget);
   });
 
   testWidgets(

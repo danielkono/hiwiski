@@ -128,7 +128,7 @@ class PinboardConflictBar extends StatelessWidget {
                   Padding(
                     padding: const .only(top: HiwiskiMetrics.space8),
                     child: Text(
-                      l.pinboardConflictOnMap(seen.join(_list)),
+                      l.pinboardConflictOnBoard(seen.join(_list)),
                       style: context.texts.labelLarge,
                     ),
                   ),
