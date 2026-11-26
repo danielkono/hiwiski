@@ -144,8 +144,8 @@ class _PageBodyContent extends ConsumerWidget {
     final Widget? body = switch ((whole, page.content.trim().isEmpty)) {
       ([final single], _) => single,
       ([_, _, ...], _) => Column(crossAxisAlignment: .stretch, children: whole),
-      // A page whose text is empty but which shows something below it — a mind
-      // map — is not empty.
+      // A page whose text is empty but which shows something below it — a
+      // pinboard — is not empty.
       ([], true) when tail.isNotEmpty => null,
       ([], true) => Padding(
         padding: const .only(top: HiwiskiMetrics.space16),
