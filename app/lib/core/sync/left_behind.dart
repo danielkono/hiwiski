@@ -110,14 +110,29 @@ class LeftBehind {
   /// outbox, which takes it to the server like any change made here. Containers go
   /// first, a page after its parent page; a change to something the server has newer
   /// meanwhile is a conflict like any other.
+  ///
+  /// A mind map's connection brings back with it its elements left behind too: the
+  /// server refuses a connection to an element it does not have, and brought back
+  /// alone, it was refused for good.
   Future<void> restore({
     Set<(String, String)>? keys,
   }) => _db.transaction(() async {
+    final settled = await (_db.select(
+      _db.leftBehindItems,
+    )..where((row) => row.settled.equals(true))).get();
+    final wanted = keys == null
+        ? null
+        : {
+            ...keys,
+            for (final row in settled)
+              if (row.entityType == EntityTypes.mindmapEdge &&
+                  keys.contains((row.entityType, row.entityId)))
+                for (final end in _endsOf(row)) (EntityTypes.mindmapNode, end),
+          };
     final rows = [
-      for (final row in await (_db.select(
-        _db.leftBehindItems,
-      )..where((row) => row.settled.equals(true))).get())
-        if (keys == null || keys.contains((row.entityType, row.entityId))) row,
+      for (final row in settled)
+        if (wanted == null || wanted.contains((row.entityType, row.entityId)))
+          row,
     ];
     final ordered = _ordered(rows);
     // One second apart, ending now: the outbox goes out by `createdAt`, in whole
@@ -162,9 +177,7 @@ class LeftBehind {
                 op: left.deleted ? SyncOps.delete : SyncOps.upsert,
                 fields: left.deleted ? '{}' : left.fields,
                 baseVersion: serverVersion,
-                dependsOn: left.containerId == null
-                    ? null
-                    : queued[left.containerId],
+                dependsOn: _after(left, queued),
                 state: OutboxStates.pending,
                 attempts: 0,
                 createdAt: start.add(Duration(seconds: index)),
@@ -194,6 +207,27 @@ class LeftBehind {
           ))
           .go();
 
+  /// The elements a connection's copy joins.
+  static Set<String> _endsOf(LeftBehindRow row) => switch (jsonDecode(
+    row.fields,
+  )) {
+    {WireFields.fromId: final String from, WireFields.toId: final String to} =>
+      {from, to},
+    _ => const {},
+  };
+
+  /// The mutation brought back before [left] that it waits for: a connection's
+  /// elements brought back with it — the later of the two, which goes after the
+  /// other — or else its container.
+  static String? _after(LeftBehindRow left, Map<String, String> queued) {
+    if (left.entityType == EntityTypes.mindmapEdge) {
+      final ends = _endsOf(left);
+      final end = queued.keys.where(ends.contains).lastOrNull;
+      if (end != null) return queued[end];
+    }
+    return left.containerId == null ? null : queued[left.containerId];
+  }
+
   EntityCodec? _codec(String type) =>
       _codecs.where((codec) => codec.entityType == type).firstOrNull;
 
@@ -205,7 +239,9 @@ class LeftBehind {
           EntityTypes.todo => EntityTypes.todoList,
           EntityTypes.event ||
           EntityTypes.calendarSubscription => EntityTypes.calendar,
-          EntityTypes.wikiPage => EntityTypes.wikiPage,
+          EntityTypes.wikiPage ||
+          EntityTypes.mindmapNode ||
+          EntityTypes.mindmapEdge => EntityTypes.wikiPage,
           EntityTypes.widget => EntityTypes.board,
           _ => null,
         };

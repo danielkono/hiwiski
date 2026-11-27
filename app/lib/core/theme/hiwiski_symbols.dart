@@ -32,12 +32,44 @@ abstract final class HiwiskiSymbols {
     0xe854,
     fontFamily: fontFamily,
   );
+  static const IconData alignHorizontalCenter = IconData(
+    0xe00f,
+    fontFamily: fontFamily,
+  );
+  static const IconData alignHorizontalLeft = IconData(
+    0xe00d,
+    fontFamily: fontFamily,
+  );
+  static const IconData alignHorizontalRight = IconData(
+    0xe010,
+    fontFamily: fontFamily,
+  );
+  static const IconData alignVerticalBottom = IconData(
+    0xe015,
+    fontFamily: fontFamily,
+  );
+  static const IconData alignVerticalCenter = IconData(
+    0xe011,
+    fontFamily: fontFamily,
+  );
+  static const IconData alignVerticalTop = IconData(
+    0xe00c,
+    fontFamily: fontFamily,
+  );
   static const IconData arrowBack = IconData(0xe5c4, fontFamily: fontFamily);
+  static const IconData arrowDownward = IconData(
+    0xe5db,
+    fontFamily: fontFamily,
+  );
   static const IconData arrowDropDown = IconData(
     0xe5c5,
     fontFamily: fontFamily,
   );
   static const IconData arrowForward = IconData(0xe5c8, fontFamily: fontFamily);
+  static const IconData arrowSelectorTool = IconData(
+    0xf82f,
+    fontFamily: fontFamily,
+  );
   static const IconData arrowUpward = IconData(0xe5d8, fontFamily: fontFamily);
   static const IconData aspectRatio = IconData(0xe85b, fontFamily: fontFamily);
   static const IconData assignmentInd = IconData(
@@ -93,6 +125,7 @@ abstract final class HiwiskiSymbols {
     0xe945,
     fontFamily: fontFamily,
   );
+  static const IconData draw = IconData(0xe746, fontFamily: fontFamily);
   static const IconData edit = IconData(0xf097, fontFamily: fontFamily);
   static const IconData elderly = IconData(0xf21a, fontFamily: fontFamily);
   static const IconData errorOutline = IconData(0xf8b6, fontFamily: fontFamily);
@@ -103,21 +136,40 @@ abstract final class HiwiskiSymbols {
     0xf1a2,
     fontFamily: fontFamily,
   );
+  static const IconData fitScreen = IconData(0xea10, fontFamily: fontFamily);
+  static const IconData flipToBack = IconData(0xe882, fontFamily: fontFamily);
+  static const IconData flipToFront = IconData(0xe883, fontFamily: fontFamily);
   static const IconData folder = IconData(0xe2c7, fontFamily: fontFamily);
   static const IconData formatBold = IconData(0xe238, fontFamily: fontFamily);
+  static const IconData formatColorText = IconData(
+    0xe23c,
+    fontFamily: fontFamily,
+  );
   static const IconData formatItalic = IconData(0xe23f, fontFamily: fontFamily);
   static const IconData formatListBulleted = IconData(
     0xe241,
     fontFamily: fontFamily,
   );
   static const IconData formatQuote = IconData(0xe244, fontFamily: fontFamily);
+  static const IconData formatSize = IconData(0xe245, fontFamily: fontFamily);
   static const IconData gavel = IconData(0xe90e, fontFamily: fontFamily);
+  static const IconData grid4x4 = IconData(0xf016, fontFamily: fontFamily);
   static const IconData group = IconData(0xea21, fontFamily: fontFamily);
   static const IconData groupAdd = IconData(0xe7f0, fontFamily: fontFamily);
+  static const IconData height = IconData(0xea16, fontFamily: fontFamily);
   static const IconData help = IconData(0xe8fd, fontFamily: fontFamily);
+  static const IconData highlightAlt = IconData(0xef52, fontFamily: fontFamily);
+  static const IconData horizontalDistribute = IconData(
+    0xe014,
+    fontFamily: fontFamily,
+  );
+  static const IconData hub = IconData(0xe9f4, fontFamily: fontFamily);
+  static const IconData image = IconData(0xe3f4, fontFamily: fontFamily);
   static const IconData info = IconData(0xe88e, fontFamily: fontFamily);
+  static const IconData inkEraser = IconData(0xe6d0, fontFamily: fontFamily);
   static const IconData inventory2 = IconData(0xe1a1, fontFamily: fontFamily);
   static const IconData laptopMac = IconData(0xe320, fontFamily: fontFamily);
+  static const IconData lassoSelect = IconData(0xeb03, fontFamily: fontFamily);
   static const IconData leftPanelClose = IconData(
     0xf717,
     fontFamily: fontFamily,
@@ -127,7 +179,9 @@ abstract final class HiwiskiSymbols {
     fontFamily: fontFamily,
   );
   static const IconData lightMode = IconData(0xe518, fontFamily: fontFamily);
+  static const IconData lineWeight = IconData(0xe91a, fontFamily: fontFamily);
   static const IconData link = IconData(0xe250, fontFamily: fontFamily);
+  static const IconData linkOff = IconData(0xe16f, fontFamily: fontFamily);
   static const IconData locationOn = IconData(0xf1db, fontFamily: fontFamily);
   static const IconData lock = IconData(0xe899, fontFamily: fontFamily);
   static const IconData lockOpen = IconData(0xe898, fontFamily: fontFamily);
@@ -150,6 +204,7 @@ abstract final class HiwiskiSymbols {
   static const IconData person = IconData(0xf0d3, fontFamily: fontFamily);
   static const IconData personAdd = IconData(0xea4d, fontFamily: fontFamily);
   static const IconData policy = IconData(0xea17, fontFamily: fontFamily);
+  static const IconData polyline = IconData(0xebbb, fontFamily: fontFamily);
   static const IconData qrCode = IconData(0xef6b, fontFamily: fontFamily);
   static const IconData qrCode2 = IconData(0xe00a, fontFamily: fontFamily);
   static const IconData radioButtonChecked = IconData(
@@ -160,6 +215,7 @@ abstract final class HiwiskiSymbols {
     0xe836,
     fontFamily: fontFamily,
   );
+  static const IconData redo = IconData(0xe15a, fontFamily: fontFamily);
   static const IconData refresh = IconData(0xe5d5, fontFamily: fontFamily);
   static const IconData remove = IconData(0xe15b, fontFamily: fontFamily);
   static const IconData removeDone = IconData(0xe9d3, fontFamily: fontFamily);
@@ -177,6 +233,9 @@ abstract final class HiwiskiSymbols {
   static const IconData share = IconData(0xe80d, fontFamily: fontFamily);
   static const IconData shoppingCart = IconData(0xe8cc, fontFamily: fontFamily);
   static const IconData smartphone = IconData(0xe7ba, fontFamily: fontFamily);
+  static const IconData sort = IconData(0xe164, fontFamily: fontFamily);
+  static const IconData stickyNote2 = IconData(0xf1fc, fontFamily: fontFamily);
+  static const IconData straighten = IconData(0xe41c, fontFamily: fontFamily);
   static const IconData supervisorAccount = IconData(
     0xe8d3,
     fontFamily: fontFamily,
@@ -184,11 +243,17 @@ abstract final class HiwiskiSymbols {
   static const IconData syncSymbol = IconData(0xe627, fontFamily: fontFamily);
   static const IconData tablet = IconData(0xe32f, fontFamily: fontFamily);
   static const IconData taskAlt = IconData(0xe2e6, fontFamily: fontFamily);
+  static const IconData timeline = IconData(0xe922, fontFamily: fontFamily);
   static const IconData title = IconData(0xe264, fontFamily: fontFamily);
   static const IconData tune = IconData(0xe429, fontFamily: fontFamily);
+  static const IconData undo = IconData(0xe166, fontFamily: fontFamily);
   static const IconData unfoldLess = IconData(0xe5d6, fontFamily: fontFamily);
   static const IconData unfoldMore = IconData(0xe5d7, fontFamily: fontFamily);
   static const IconData upload = IconData(0xf09b, fontFamily: fontFamily);
+  static const IconData verticalDistribute = IconData(
+    0xe076,
+    fontFamily: fontFamily,
+  );
   static const IconData viewKanban = IconData(0xeb7f, fontFamily: fontFamily);
   static const IconData viewList = IconData(0xe8ef, fontFamily: fontFamily);
   static const IconData viewWeek = IconData(0xe8f3, fontFamily: fontFamily);
@@ -198,5 +263,6 @@ abstract final class HiwiskiSymbols {
     fontFamily: fontFamily,
   );
   static const IconData widgets = IconData(0xe1bd, fontFamily: fontFamily);
+  static const IconData width = IconData(0xf730, fontFamily: fontFamily);
   static const IconData wysiwyg = IconData(0xf1c3, fontFamily: fontFamily);
 }

@@ -20,9 +20,11 @@ class WikiSearchable implements Searchable {
     private static final int MAX_DEPTH = 32;
 
     private final DSLContext db;
+    private final MindmapTexts mindmaps;
 
-    WikiSearchable(DSLContext db) {
+    WikiSearchable(DSLContext db, MindmapTexts mindmaps) {
         this.db = db;
+        this.mindmaps = mindmaps;
     }
 
     @Override
@@ -44,16 +46,25 @@ class WikiSearchable implements Searchable {
                 .and(WIKI_PAGE.DELETED_AT.isNull())
                 .fetchOne();
 
-        return row == null
-                ? Optional.empty()
-                : Optional.of(new Entry(
-                        row.value1(),
-                        row.value2(),
-                        row.value3(),
-                        row.value4(),
-                        // Where it was found, as a path: "Recipes › Autumn cooking".
-                        breadcrumb(row.value5()),
-                        row.value6() != null));
+        if (row == null) {
+            return Optional.empty();
+        }
+        // A word on the page's mind map finds the page.
+        String map = mindmaps.of(itemId);
+        return Optional.of(new Entry(
+                row.value1(),
+                row.value2(),
+                map.isEmpty() ? row.value3() : row.value3() + "\n" + map,
+                row.value4(),
+                // Where it was found, as a path: "Recipes › Autumn cooking".
+                breadcrumb(row.value5()),
+                row.value6() != null));
+    }
+
+    /** A change on a mind map is one of its page's text. */
+    @Override
+    public List<UUID> affectedBy(String entityType, UUID entityId) {
+        return mindmaps.pageOf(entityType, entityId).stream().toList();
     }
 
     /**

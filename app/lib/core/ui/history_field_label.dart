@@ -13,7 +13,26 @@ String historyFieldLabel(L l, String field) => switch (field) {
   WireFields.description ||
   WireFields.content ||
   WireFields.note ||
-  WireFields.body => l.historyFieldText,
+  WireFields.body ||
+  WireFields.text => l.historyFieldText,
+  // A mind map's elements and connections.
+  WireFields.x || WireFields.y => l.mindmapFieldPosition,
+  WireFields.width || WireFields.height => l.mindmapFieldSize,
+  WireFields.layer => l.mindmapFieldLayer,
+  WireFields.target => l.mindmapFieldTarget,
+  WireFields.color => l.calColor,
+  WireFields.shape => l.mindmapShape,
+  WireFields.textSize => l.mindmapTextSize,
+  WireFields.textColor => l.mindmapTextColor,
+  WireFields.points => l.mindmapKindDrawing,
+  WireFields.strokeWidth => l.mindmapStrokeWidth,
+  WireFields.linkView => l.mindmapLinkView,
+  WireFields.fromId || WireFields.toId => l.mindmapFieldEnds,
+  WireFields.rotation => l.mindmapFieldRotation,
+  WireFields.textAlign => l.mindmapTextAlign,
+  WireFields.textFlow => l.mindmapTextFlow,
+  // One choice in the form: a dashed arrow is a kind of line.
+  WireFields.line || WireFields.arrows => l.mindmapEdgeStyle,
   WireFields.tags => l.tagsTitle,
   WireFields.kind => l.historyFieldKind,
   WireFields.archivedAt || WireFields.archivedBy => l.archiveTitle,

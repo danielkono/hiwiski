@@ -8,6 +8,7 @@ import 'package:hiwiski/core/db/hiwiski_database.dart';
 import 'package:hiwiski/core/sync/entity_codec.dart';
 import 'package:hiwiski/core/sync/left_behind.dart';
 import 'package:hiwiski/core/sync/outbox.dart';
+import 'package:hiwiski/data/sync/sync_repository.dart';
 
 /// **A server lost and restored from a week-old backup loses nothing the phones saw.**
 /// The mirror goes, a copy of it stays; of the copy, what the restored server does not
@@ -123,6 +124,82 @@ void main() {
     final queued = await Outbox(db).pending(limit: 10);
     expect(queued.single.op, equals(SyncOps.delete));
     expect(queued.single.baseVersion, equals(3));
+  });
+
+  group('a mind map', () {
+    Future<void> page() => const WikiPageCodec().upsert(
+      db,
+      id: 'p1',
+      ownerId: 'anna',
+      version: 2,
+      containerId: null,
+      entityKey: null,
+      fields: {
+        WireFields.title: 'Urlaub',
+        WireFields.kind: PageKinds.mindmap,
+        WireFields.position: 0,
+        WireFields.content: '',
+      },
+    );
+    Future<void> node(String id, String kind, String text) =>
+        const MindmapNodeCodec().upsert(
+          db,
+          id: id,
+          ownerId: 'anna',
+          version: 1,
+          containerId: 'p1',
+          entityKey: null,
+          fields: {
+            WireFields.kind: kind,
+            WireFields.x: 0,
+            WireFields.y: 0,
+            WireFields.width: 100,
+            WireFields.height: 40,
+            WireFields.layer: 1,
+            WireFields.text: text,
+          },
+        );
+
+    setUp(() async {
+      await page();
+      await node('n1', MindmapKinds.note, '# Packliste\n- Sonnencreme');
+      await node('n2', MindmapKinds.image, '![](hiwiski-image://i1)');
+      await const MindmapEdgeCodec().upsert(
+        db,
+        id: 'e1',
+        ownerId: 'anna',
+        version: 1,
+        containerId: 'p1',
+        entityKey: null,
+        fields: {
+          WireFields.fromId: 'n1',
+          WireFields.toId: 'n2',
+          WireFields.text: '',
+        },
+      );
+      // The backup knew the page, not its map.
+      await restoreWith(page);
+    });
+
+    test('a connection brought back brings its elements along', () async {
+      await left.restore(keys: {(EntityTypes.mindmapEdge, 'e1')});
+
+      final queued = await Outbox(db).pending(limit: 10);
+      expect([
+        for (final entry in queued) entry.entityId,
+      ], equals(['n1', 'n2', 'e1']));
+      // After both of its elements.
+      expect(queued.last.dependsOn, equals(queued[1].mutationId));
+      expect(await left.watch().first, isEmpty);
+    });
+
+    test('its items are named by their own words or their kind', () async {
+      final items = {
+        for (final row in await left.watch().first)
+          row.entityId: SyncRepository.leftBehindOf(row).label,
+      };
+      expect(items, equals({'n1': 'Packliste', 'n2': '', 'e1': ''}));
+    });
   });
 
   test('let go, it is gone', () async {

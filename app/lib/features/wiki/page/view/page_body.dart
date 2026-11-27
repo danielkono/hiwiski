@@ -135,9 +135,18 @@ class _PageBodyContent extends ConsumerWidget {
       state: state,
       writable: writable && !preview,
     );
+    final tail = kind.tail(
+      context,
+      page: page,
+      state: state,
+      actions: PageKindActions(preview: preview, writable: writable),
+    );
     final Widget? body = switch ((whole, page.content.trim().isEmpty)) {
       ([final single], _) => single,
       ([_, _, ...], _) => Column(crossAxisAlignment: .stretch, children: whole),
+      // A page whose text is empty but which shows something below it — a mind
+      // map — is not empty.
+      ([], true) when tail.isNotEmpty => null,
       ([], true) => Padding(
         padding: const .only(top: HiwiskiMetrics.space16),
         child: Text(
@@ -171,6 +180,10 @@ class _PageBodyContent extends ConsumerWidget {
                 styleSheet: styleSheet,
               ),
             ),
+          if (tail.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Column(crossAxisAlignment: .stretch, children: tail),
+            ),
         ],
       );
     }
@@ -189,6 +202,7 @@ class _PageBodyContent extends ConsumerWidget {
               writable: writable,
               styleSheet: styleSheet,
             ),
+        ...tail,
       ],
     );
   }

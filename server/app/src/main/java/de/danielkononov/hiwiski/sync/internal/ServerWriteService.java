@@ -8,6 +8,7 @@ import de.danielkononov.hiwiski.sync.ServerWrites;
 import de.danielkononov.hiwiski.sync.SyncRegistry;
 import de.danielkononov.hiwiski.sync.SyncType;
 import de.danielkononov.hiwiski.sync.SyncField;
+import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.UUID;
 import de.danielkononov.hiwiski.sync.EntityWritten;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /** Server-side writes, through the same mechanics as a push. */
@@ -66,6 +68,9 @@ class ServerWriteService implements ServerWrites {
         // be stale when this write gets its turn.
         long seq = sequence.next();
         var current = entities.load(type, entityId).orElse(null);
+        var revivedFrom = current != null && current.deleted()
+                ? entities.deletedAt(type, entityId).orElse(null)
+                : null;
 
         // Imported events get NO readable key: they belong to the source, and a holiday
         // calendar would use up five hundred numbers for something nobody cites.
@@ -94,6 +99,9 @@ class ServerWriteService implements ServerWrites {
         // Like a push: search and references follow what the server writes too --
         // otherwise imported events were never found.
         events.publishEvent(new EntityWritten(entityType, entityId, actor, false, true, seq));
+        if (revivedFrom != null) {
+            restoreAlong(type, entityId, revivedFrom, actor);
+        }
         return seq;
     }
 
@@ -121,7 +129,7 @@ class ServerWriteService implements ServerWrites {
         // removed used to stay a hit, and a server delete of a container left its
         // children alive.
         cascade.deleteAlong(type, entityId, actor, null);
-        events.publishEvent(new EntityWritten(entityType, entityId, actor, true, true));
+        events.publishEvent(new EntityWritten(entityType, entityId, actor, true, true, seq));
         return seq;
     }
 
@@ -140,6 +148,7 @@ class ServerWriteService implements ServerWrites {
             moveInto(type, entityId, targetContainerId, actor, fields);
         }
 
+        var deletedAt = entities.deletedAt(type, entityId).orElse(null);
         entities.restore(type, entityId, targetContainerId, seq, actor);
         changeLog.append(
                 seq,
@@ -161,7 +170,36 @@ class ServerWriteService implements ServerWrites {
         // Search and references dropped the item on its delete; they take it back the
         // same way they would take any other change.
         events.publishEvent(new EntityWritten(entityType, entityId, actor, false, false, seq));
+
+        if (deletedAt != null) {
+            restoreAlong(type, entityId, deletedAt, actor);
+        }
         return seq;
+    }
+
+    /**
+     * Brings back what went with an item that has just come back, and has no way back of
+     * its own -- each a change in the log with all its fields, like the item.
+     *
+     * <p>Run for every way an item comes back: a restore from the trash, and an upsert
+     * that revives it (an edit made offline after someone else deleted it). Run only for
+     * the first, a mind map page revived by an edit of its text came back with an empty
+     * map, its elements left in a trash nobody can reach them in.
+     *
+     * @param deletedAt when the item itself was deleted, read before it came back
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    void restoreAlong(SyncType type, UUID entityId, OffsetDateTime deletedAt, UUID actor) {
+        for (SyncType.Ref along : type.alsoRestored(entityId, deletedAt)) {
+            var alongType = registry.find(along.entityType()).orElse(null);
+            boolean stillDeleted = alongType != null
+                    && entities.load(alongType, along.entityId())
+                            .filter(EntityRepository.Snapshot::deleted)
+                            .isPresent();
+            if (stillDeleted) {
+                restore(along.entityType(), along.entityId(), null, actor);
+            }
+        }
     }
 
     /**

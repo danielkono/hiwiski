@@ -91,6 +91,14 @@ class EntityRepository {
         return record == null ? Optional.empty() : Optional.of(toSnapshot(type, record));
     }
 
+    /** When the item was deleted -- empty while it lives or if there is none. */
+    Optional<OffsetDateTime> deletedAt(SyncType type, UUID entityId) {
+        return Optional.ofNullable(db.select(deletedAt(type))
+                .from(type.table())
+                .where(id(type).eq(entityId))
+                .fetchOne(deletedAt(type)));
+    }
+
     private Snapshot toSnapshot(SyncType type, Record record) {
         Map<String, Object> values = new LinkedHashMap<>();
         for (SyncField<?> field : type.fields()) {

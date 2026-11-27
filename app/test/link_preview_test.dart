@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hiwiski/core/l10n/generated/app_localizations.dart';
 import 'package:hiwiski/components/links/view/link_preview.dart';
 import 'package:hiwiski/core/routing/item_navigation.dart';
+import 'package:hiwiski/core/routing/leave_for_target.dart';
 import 'package:hiwiski/core/theme/hiwiski_theme.dart';
 import 'package:hiwiski/core/ui/ui_keys.dart';
 import 'package:drift/native.dart';
@@ -254,5 +255,68 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Shopping'), findsNothing);
+  });
+
+  // A mind map full screen lies over the shell: a target opened in the shell landed
+  // behind it, out of sight. The screen makes way first.
+  testWidgets('"Open" from a screen over the shell closes that screen first', (
+    tester,
+  ) async {
+    const note = LinkItem(itemType: 'NOTE', itemId: 'n1', title: 'Shopping');
+    final root = GlobalKey<NavigatorState>();
+    final routes = GoRouter(
+      navigatorKey: root,
+      routes: [
+        ShellRoute(
+          builder: (_, _, child) => Scaffold(body: child),
+          routes: [GoRoute(path: '/', builder: (_, _) => const Text('page'))],
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        retry: noRetry,
+        child: MaterialApp.router(
+          theme: HiwiskiTheme.light(),
+          localizationsDelegates: const [
+            L.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
+          supportedLocales: L.supportedLocales,
+          locale: const Locale('en'),
+          routerConfig: routes,
+        ),
+      ),
+    );
+    final navigator = root.currentState!;
+    // The pushed screen answers nothing.
+    navigator
+        .push(
+          MaterialPageRoute<void>(
+            builder: (context) => LeaveForTarget(
+              leave: () => navigator.pop(),
+              child: Scaffold(
+                body: Consumer(
+                  builder: (context, ref, _) => TextButton(
+                    onPressed: () => openLinkTarget(context, ref, note),
+                    child: const Text('map link'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        )
+        .ignore();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('map link'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FilledButton));
+    await tester.pumpAndSettle();
+
+    expect(find.text('map link'), findsNothing);
+    expect(find.text('Shopping'), findsNothing);
+    expect(find.text('page'), findsOneWidget);
   });
 }

@@ -31,6 +31,7 @@ import '../../features/todo/detail/view/todo_detail_screen.dart';
 import '../../features/todo/list/view/todo_list_screen.dart';
 import '../../features/todo/overview/view/todo_overview_screen.dart';
 import '../../features/wiki/area/view/wiki_area_screen.dart';
+import '../../features/wiki/mindmap/view/mindmap_screen.dart';
 import '../shell/app_shell.dart';
 import '../ui/scene_frame.dart';
 
@@ -441,6 +442,24 @@ class KioskRoute extends HiwiskiRootRouteData with $KioskRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       KioskScreen(token: token);
+}
+
+/// A wiki page's mind map, full screen: the canvas to move around on, search and —
+/// for whoever may write the page — edit. Outside the shell, so the canvas has the
+/// whole screen; pushed over the page it came from, which "Back" returns to.
+///
+/// [node] is an element (or connection) to show and mark — a search hit, a conflict
+/// from the banner.
+@TypedGoRoute<MindmapRoute>(path: '/mindmap/:pageId')
+class MindmapRoute extends HiwiskiRouteData with $MindmapRoute {
+  const MindmapRoute({required this.pageId, this.node});
+
+  final String pageId;
+  final String? node;
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      MindmapScreen(pageId: pageId, focus: node);
 }
 
 /// **Not a screen you call up, but one you get stuck on**: no cancel,

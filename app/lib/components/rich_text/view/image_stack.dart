@@ -313,8 +313,11 @@ class _ImageStackState extends State<ImageStack> with TickerProviderStateMixin {
 
         return Padding(
           padding: const .symmetric(vertical: HiwiskiMetrics.space8),
+          // Only as wide as the pictures: set into a line, the line places them
+          // ([FlowingText]); on a page they stand at its start either way.
           child: Align(
             alignment: Alignment.centerLeft,
+            widthFactor: 1,
             child: single
                 ? GestureDetector(onTap: _showLarge, child: stack)
                 : MouseRegion(

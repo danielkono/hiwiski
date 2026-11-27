@@ -49,6 +49,8 @@ String failureTextForCode(
     FailureCodes.syncContainerNotFound => l.errorSyncContainerNotFound,
     FailureCodes.adminKeyPrefixTaken => l.errorAdminKeyPrefixTaken,
     FailureCodes.syncBoardGone => l.errorSyncBoardGone,
+    FailureCodes.wikiNotAMindmap => l.errorWikiNotAMindmap,
+    FailureCodes.wikiMindmapElementGone => l.errorWikiMindmapElementGone,
     FailureCodes.dashboardBoardNotFound => l.errorDashboardBoardNotFound,
     // An archived item is read-only — also for a change made offline before someone
     // archived it.

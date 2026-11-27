@@ -68,7 +68,7 @@ class LinkedMarkdown extends ConsumerWidget {
       //
       // Keyed by what this text's links show, not by the whole index: any change to
       // any linked item parsed the page again and cleared a selection in progress.
-      key: ValueKey(_shownTargets(index, data)),
+      key: ValueKey(shownTargetsOf(index, data)),
       data: data,
       styleSheet: total == 0 ? styleSheet : _withTaskColumn(context),
       checkboxBuilder: onToggleTask == null || total == 0
@@ -123,7 +123,7 @@ class LinkedMarkdown extends ConsumerWidget {
   }
 
   /// What the chips of [data] show — changing exactly when one of them would.
-  static int _shownTargets(LinkIndex index, String data) => Object.hashAll([
+  static int shownTargetsOf(LinkIndex index, String data) => Object.hashAll([
     for (final reference in parseReferences(data))
       switch (index.resolve(reference)) {
         final item? => (
@@ -153,50 +153,17 @@ class _ReferenceBuilder extends MarkdownElementBuilder {
     TextStyle? preferredStyle,
     TextStyle? parentStyle,
   ) {
-    final reference = referenceFromNormalized(
-      element.attributes[_refAttribute] ?? '',
+    final span = _referenceSpanOf(
+      element,
+      index: index,
+      style: parentStyle,
+      onOpen: onOpen,
     );
-    if (reference == null) return null;
-    final target = index.resolve(reference);
-
-    // A `Text` and not a custom widget: the Markdown builder pulls the spans out of it
-    // and inserts them into the running paragraph. A widget would instead stand next
-    // to it as a block of its own, and the sentence would break before it.
-    if (target == null) {
-      final part = ReferencePart(
-        reference,
-        raw: element.attributes[_rawAttribute] ?? '',
-        label: element.attributes[_labelAttribute],
-      );
-      return Text(part.fallback, style: parentStyle);
-    }
-    return Text.rich(
-      TextSpan(
-        children: [
-          WidgetSpan(
-            alignment: .middle,
-            child: LinkChip(target: target, onOpen: onOpen),
-          ),
-        ],
-      ),
-    );
+    return span == null ? null : _pieceOf(span);
   }
 }
 
-/// A link to somewhere else — `[label](https://…)`, a bare address, or an image from
-/// another server — and the family's own images.
-///
-/// **Images from other servers are not fetched.** The default builder loaded every
-/// `![](https://…)` as soon as someone opened the text, and the other server learned
-/// who read it and when — a read receipt and a tracker, also from an imported recipe
-/// or a subscribed school calendar, which no member wrote. On native it even read
-/// `file:` paths. Such an image reads as a link to it instead: the reader decides
-/// whether to look at it, in the browser. The family's own images come from the
-/// media store, as they do on lines of their own.
-///
-/// A `Text` with the link inside, and not the link alone: the Markdown builder pulls
-/// the spans out of a `Text` into the running paragraph, where any other widget would
-/// stand as a block of its own and break the sentence before it.
+/// A link to somewhere else and the family's own images ([_addressSpanOf]).
 class _AddressBuilder extends MarkdownElementBuilder {
   _AddressBuilder({required this.image});
 
@@ -211,42 +178,119 @@ class _AddressBuilder extends MarkdownElementBuilder {
     TextStyle? preferredStyle,
     TextStyle? parentStyle,
   ) {
-    final address =
-        element.attributes[image ? _srcAttribute : _hrefAttribute] ?? '';
-    final uri = Uri.tryParse(address);
-    if (image &&
-        uri != null &&
-        uri.scheme == UriSchemes.hiwiskiImage &&
-        uri.path.isNotEmpty) {
-      return ImageStack(imageIds: [uri.path]);
-    }
-    final written = image
-        ? element.attributes[_altAttribute] ?? ''
-        : element.textContent;
-    final label = written.trim().isEmpty ? address : written.trim();
-    // Only what a browser or the mail app opens: `javascript:` or `file:` from an
-    // imported text is shown as its label and leads nowhere.
-    if (uri == null || !_openableSchemes.contains(uri.scheme.toLowerCase())) {
-      return Text(label, style: parentStyle);
-    }
-    return Text.rich(
-      TextSpan(
-        children: [
-          WidgetSpan(
-            alignment: .baseline,
-            baseline: .alphabetic,
-            child: _WebLink(
-              uri: uri,
-              address: address,
-              label: label,
-              style: parentStyle,
-            ),
-          ),
-        ],
-      ),
-    );
+    return _pieceOf(_addressSpanOf(element, image: image, style: parentStyle));
   }
 }
+
+/// The parser a text with the family's links is read with: their syntax comes
+/// before Markdown's own link rule, as in [LinkedMarkdown].
+md.Document linkedMarkdownDocument() => .new(
+  extensionSet: taskListExtensions,
+  inlineSyntaxes: [_ReferenceSyntax()],
+  encodeHtml: false,
+);
+
+/// What [element] shows when it is a link of a text — a chip for an item of the
+/// family, a link out of the app, a picture of the family's own — as a span to set
+/// into a line; `null` for any other element. [LinkedMarkdown] shows the same.
+InlineSpan? linkSpanOf(
+  md.Element element, {
+  required LinkIndex index,
+  TextStyle? style,
+  ValueChanged<LinkItem>? onOpen,
+}) => switch (element.tag) {
+  _referenceTag => _referenceSpanOf(
+    element,
+    index: index,
+    style: style,
+    onOpen: onOpen,
+  ),
+  _linkTag => _addressSpanOf(element, image: false, style: style),
+  _imageTag => _addressSpanOf(element, image: true, style: style),
+  _ => null,
+};
+
+/// A chip for the item a reference names, or the text as it stood when the item is
+/// not here; `null` for a reference that names nothing.
+InlineSpan? _referenceSpanOf(
+  md.Element element, {
+  required LinkIndex index,
+  TextStyle? style,
+  ValueChanged<LinkItem>? onOpen,
+}) {
+  final reference = referenceFromNormalized(
+    element.attributes[_refAttribute] ?? '',
+  );
+  if (reference == null) return null;
+  final target = index.resolve(reference);
+  if (target == null) {
+    final part = ReferencePart(
+      reference,
+      raw: element.attributes[_rawAttribute] ?? '',
+      label: element.attributes[_labelAttribute],
+    );
+    return TextSpan(text: part.fallback, style: style);
+  }
+  return WidgetSpan(
+    alignment: .middle,
+    child: LinkChip(target: target, onOpen: onOpen),
+  );
+}
+
+/// A link to somewhere else — `[label](https://…)`, a bare address, or an image from
+/// another server — and the family's own images.
+///
+/// **Images from other servers are not fetched.** The default builder loaded every
+/// `![](https://…)` as soon as someone opened the text, and the other server learned
+/// who read it and when — a read receipt and a tracker, also from an imported recipe
+/// or a subscribed school calendar, which no member wrote. On native it even read
+/// `file:` paths. Such an image reads as a link to it instead: the reader decides
+/// whether to look at it, in the browser. The family's own images come from the
+/// media store, as they do on lines of their own.
+InlineSpan _addressSpanOf(
+  md.Element element, {
+  required bool image,
+  TextStyle? style,
+}) {
+  final address =
+      element.attributes[image ? _srcAttribute : _hrefAttribute] ?? '';
+  final uri = Uri.tryParse(address);
+  if (image &&
+      uri != null &&
+      uri.scheme == UriSchemes.hiwiskiImage &&
+      uri.path.isNotEmpty) {
+    return WidgetSpan(child: ImageStack(imageIds: [uri.path]));
+  }
+  final written = image
+      ? element.attributes[_altAttribute] ?? ''
+      : element.textContent;
+  final label = written.trim().isEmpty ? address : written.trim();
+  // Only what a browser or the mail app opens: `javascript:` or `file:` from an
+  // imported text is shown as its label and leads nowhere.
+  if (uri == null || !_openableSchemes.contains(uri.scheme.toLowerCase())) {
+    return TextSpan(text: label, style: style);
+  }
+  return WidgetSpan(
+    alignment: .baseline,
+    baseline: .alphabetic,
+    child: _WebLink(uri: uri, address: address, label: label, style: style),
+  );
+}
+
+/// [span] as the Markdown builder takes it: a picture as a block of its own; a link
+/// inside a `Text`, whose spans the builder pulls into the running paragraph — any
+/// other widget would stand as a block of its own and break the sentence before it.
+/// The text of a link that leads nowhere stands as its own `Text`, as it always has.
+// The markdown package's builder API: it asks for a widget.
+// ignore: many_lints/avoid_returning_widgets
+Widget _pieceOf(InlineSpan span) => switch (span) {
+  WidgetSpan(child: final ImageStack picture) => picture,
+  TextSpan(:final text?, :final style, children: null) => Text(
+    text,
+    style: style,
+  ),
+  _ => Text.rich(TextSpan(children: [span])),
+};
 
 /// A link out of the app, in a text.
 ///

@@ -385,6 +385,127 @@ class HiwiskiMetrics {
   /// From this width on a recipe shows its image and ingredients side by side.
   static const double recipeTwoColumnWidth = 660;
 
+  // --- Mind maps ---------------------------------------------------------------
+  // Canvas measurements are in the map's own units, a logical pixel at a zoom of 1.
+
+  /// A new note, as it is dropped on the canvas.
+  static const Size mindmapNoteSize = Size(220, 120);
+
+  /// A snippet of plain text is as large as its text; it wraps from this width on,
+  /// or from the width it is resized to.
+  static const double mindmapPlainWrap = 320;
+
+  /// A new picture fits into this, in the picture's own shape.
+  static const Size mindmapImageSize = Size(240, 240);
+
+  /// A new member: their picture in a circle.
+  static const Size mindmapMemberSize = Size(120, 120);
+
+  /// A new link: the target's symbol and title on one line.
+  static const Size mindmapLinkSize = Size(240, 56);
+
+  /// A link element showing its target's content grows to at least this — room to
+  /// read the preview in.
+  static const Size mindmapLinkContentSize = Size(360, 420);
+
+  /// The editing controls in the corner, on rings around the screen's corner: the
+  /// button in the middle [mindmapCornerMargin] clear of the safe area, the buttons'
+  /// ring [mindmapCornerRingGap] further out, on a larger screen the choices' ring
+  /// [mindmapCornerRingStep] beyond that.
+  static const double mindmapCornerMargin = 4;
+
+  /// How far above an element the knob to turn it stands, on screen.
+  static const double mindmapRotateReach = 28;
+
+  /// A mind map's grid: its spacing in the map's units, its dots' radius and the
+  /// least room between them on screen (more zoomed out, every other is left out);
+  /// and how long the mark at each end of an equal gap is, on screen.
+  static const double mindmapGrid = 24;
+  static const double mindmapGridDot = 1.2;
+  static const double mindmapGridMinGap = 8;
+  static const double mindmapGapTick = 5;
+
+  /// How near on screen a moved or resized element snaps to another's line.
+  static const double mindmapSnapReach = 6;
+
+  /// An arrow head on a connection, at least, on screen.
+  static const double mindmapArrowHead = 10;
+  static const double mindmapCornerRingGap = 64;
+  static const double mindmapCornerRingStep = 56;
+
+  /// One choice on a ring, the room between two, and the room the quarter leaves
+  /// around them.
+  static const double mindmapCornerOption = 44;
+  static const double mindmapCornerSpacing = 6;
+  static const double mindmapCornerPadding = 10;
+
+  /// How far around the finger the eraser takes a stroke, on screen.
+  static const double mindmapEraser = 12;
+
+  /// The pen's widths to choose from, on screen, and the widest of its own.
+  static const List<double> mindmapPenWidths = [2, 4, 8, 16];
+  static const double mindmapPenMaxWidth = 100;
+
+  /// A line's or a stroke's thickness to choose from, on the map.
+  static const List<int> mindmapLineWidths = [1, 2, 4, 8, 16];
+
+  /// The room between an element and the frame around it while it is selected or
+  /// found — on screen, at every zoom.
+  static const double mindmapFrameGap = 6;
+
+  /// The smallest an element is resized to — still large enough to grab again.
+  static const double mindmapMinElement = 32;
+
+  /// The free room around the drawn elements, in which the connection handles and the
+  /// selection's frame still take taps.
+  static const double mindmapSceneMargin = 96;
+
+  /// A mind map as a picture: the room around it, how sharp — pixels per unit —
+  /// and its longest edge at most, in pixels.
+  static const double mindmapPictureMargin = 24;
+  static const double mindmapPictureScale = 2;
+  static const double mindmapPictureMaxEdge = 4096;
+
+  /// The dot on an element that a connection is drawn from — small on screen; its tap
+  /// area is a full target around it.
+  static const double mindmapHandle = 14;
+
+  /// How far apart lines between the same two elements bend.
+  static const double mindmapEdgeSpread = 36;
+
+  /// The widest a connection's label grows before it wraps.
+  static const double mindmapLabelMaxWidth = 180;
+
+  /// The preview on the page: never taller than this, however tall the map.
+  static const double mindmapPreviewMaxHeight = 360;
+
+  /// And never flatter than this, however wide.
+  static const double mindmapPreviewMinHeight = 180;
+
+  /// The field a colour of one's own is picked in: saturation across, brightness up.
+  static const double colorFieldHeight = 180;
+
+  /// The strip of hues below it.
+  static const double hueStripHeight = 28;
+
+  /// The ring that marks the picked point on either.
+  static const double colorThumb = 22;
+
+  /// The search results beside the canvas, from the medium width on.
+  static const double mindmapResultsWidth = 320;
+
+  /// The page's title in the header over the canvas while the search fills the rest
+  /// of the line: never wider than this.
+  static const double mindmapTitleWhileSearching = 280;
+
+  /// The room the bar deciding a conflict takes at the canvas's foot, for the camera
+  /// to show the two versions above it.
+  static const double mindmapConflictBarHeight = 220;
+
+  /// How far this device's version of an element in conflict stands beside the map's
+  /// when the two differ only in their look.
+  static const double mindmapConflictGap = 24;
+
   // --- Invitations -------------------------------------------------------------
   /// The QR code of a new invitation.
   static const double qrCode = 160;

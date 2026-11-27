@@ -18,6 +18,7 @@ Usage:  python3 tool/generate_symbols.py
 """
 import pathlib
 import re
+import subprocess
 
 HERE = pathlib.Path(__file__).resolve().parent
 SOURCE = HERE / "material_symbols_rounded.codepoints"
@@ -107,6 +108,10 @@ def main() -> None:
 
     TARGET.parent.mkdir(parents=True, exist_ok=True)
     TARGET.write_text("\n".join(lines))
+    # `dart format` is the only formatting, for a generated file that is checked in
+    # too: a long name breaks its line where the formatter breaks it, and a check
+    # of the formatting would otherwise find the file wrong after every run.
+    subprocess.run(["dart", "format", str(TARGET)], check=True, capture_output=True)
     missing = wanted - set(seen)
     if missing:
         print("not in the metadata file: " + ", ".join(sorted(missing)))

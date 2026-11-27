@@ -18,14 +18,17 @@ import 'package:web/web.dart' as web;
 /// Here the input stays in the page and in [_open] until the browser answers:
 /// `change` with the files, `cancel` without. A browser that never says `cancel`
 /// leaves the pick open until the next one, which ends it empty.
+///
+/// [single]: one file only — the dialog lets no more be chosen.
 Future<List<PlatformFile>> pickFiles({
   FileType type = .any,
   List<String>? allowedExtensions,
+  bool single = false,
 }) {
   _open?.call();
   final input = web.HTMLInputElement()
     ..type = _file
-    ..multiple = true
+    ..multiple = !single
     ..accept = _accept(type, allowedExtensions)
     ..style.cssText = _offscreen;
   final chosen = Completer<web.FileList?>();

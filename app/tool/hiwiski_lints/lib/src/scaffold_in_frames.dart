@@ -19,6 +19,7 @@ import 'package:analyzer/error/error.dart';
 /// | `core/ui/hiwiski_page.dart` | every screen inside the shell |
 /// | `core/ui/auth_scaffold.dart` | the screens before sign-in |
 /// | `features/board/kiosk/view/kiosk_screen.dart` | the board on the wall tablet |
+/// | `features/wiki/mindmap/view/mindmap_screen.dart` | a mind map full screen: the canvas runs under the header and the bars |
 ///
 /// A new frame is added here on purpose, not by accident. `test/` is exempt.
 class ScaffoldInFrames extends AnalysisRule {
@@ -59,6 +60,7 @@ const frames = {
   'core/ui/hiwiski_page.dart',
   'core/ui/auth_scaffold.dart',
   'features/board/kiosk/view/kiosk_screen.dart',
+  'features/wiki/mindmap/view/mindmap_screen.dart',
 };
 
 class _Visitor extends SimpleAstVisitor<void> {

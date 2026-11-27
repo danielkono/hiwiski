@@ -1,17 +1,28 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:clock/clock.dart';
+
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hiwiski/core/api/hiwiski_api.dart';
 import 'package:hiwiski/core/api/hiwiski_failure.dart';
+import 'package:hiwiski/core/common/ids.dart';
 import 'package:hiwiski/core/db/hiwiski_database.dart';
+import 'package:hiwiski/core/common/wire.dart';
 import 'package:hiwiski/core/storage/local_image_store.dart';
+import 'package:hiwiski/core/sync/local_takeover.dart';
 import 'package:hiwiski/core/sync/local_writes.dart';
 import 'package:hiwiski/core/sync/outbox.dart';
 import 'package:hiwiski/core/sync/sync_engine.dart';
 import 'package:hiwiski/data/admin/local_trash.dart';
+import 'package:hiwiski/data/calendar/calendar_repository.dart';
 import 'package:hiwiski/data/media/media_repository.dart';
 import 'package:hiwiski/data/todo/todo_repository.dart';
+import 'package:hiwiski/data/wiki/mindmap_repository.dart';
+import 'package:hiwiski/data/wiki/wiki_repository.dart';
+import 'package:hiwiski/domain/calendar/event_draft.dart';
 
 import 'support/fakes.dart';
 
@@ -80,6 +91,219 @@ void main() {
     expect(await todos.watchTodos(other).first, hasLength(1));
   });
 
+  test('a mind map comes back with its page — and goes out in full', () async {
+    final wiki = WikiRepository(
+      db: db,
+      writes: writes,
+      api: HiwiskiApi(tokens: NoTokens()),
+      currentMemberId: () => 'anna',
+    );
+    final maps = MindmapRepository(
+      db: db,
+      writes: writes,
+      currentMemberId: () => 'anna',
+    );
+    final pageId = await wiki.createPage(
+      title: 'Urlaub',
+      kind: PageKinds.mindmap,
+    );
+    Future<String> element(String text) => maps.addNode(
+      pageId: pageId,
+      kind: MindmapKinds.plain,
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 40,
+      text: text,
+    );
+    final kept = await element('Meer');
+    final other = await element('Berge');
+    final earlier = await element('Wüste');
+    await maps.connect((await maps.node(kept))!, (await maps.node(other))!);
+    final day = DateTime.utc(2026, 11, 20, 10);
+    await withClock(
+      .fixed(day),
+      () async => maps.deleteNode((await maps.node(earlier))!),
+    );
+    await withClock(
+      .fixed(day.add(const Duration(hours: 1))),
+      () async => wiki.deletePage((await wiki.watchPage(pageId).first)!),
+    );
+    // A start without a server: what never left the device and lies in the trash
+    // goes out of the outbox.
+    await LocalTakeover(db).compact(deletedBefore: DateTime.utc(2026, 10));
+    expect(await _entriesOf(db, kept), isEmpty);
+
+    await trash.restore(EntityTypes.wikiPage, pageId);
+
+    final map = await maps.watchMap(pageId).first;
+    expect([
+      for (final node in map.nodes) node.text,
+    ], unorderedEquals(['Meer', 'Berge']));
+    expect(map.edges, hasLength(1));
+    // Deleted on its own before the page went: it stays deleted.
+    expect(await maps.node(earlier), isNull);
+    final [revived] = await _entriesOf(db, kept);
+    expect(
+      jsonDecode(revived.fields),
+      allOf(
+        containsPair(WireFields.kind, MindmapKinds.plain),
+        containsPair(WireFields.text, 'Meer'),
+      ),
+    );
+  });
+
+  group('restored after a start, it goes out in full', () {
+    // A start without a server: what never left the device and lies in the trash
+    // goes out of the outbox. Nothing is old enough to be thrown away.
+    Future<void> start() =>
+        LocalTakeover(db).compact(deletedBefore: DateTime.utc(2000));
+
+    /// What [id] sends once the device connects: after the next start, one
+    /// creation with its fields, into its container.
+    Future<Map<String, Object?>> sent(String id, {String? into}) async {
+      await start();
+      final [entry] = await _entriesOf(db, id);
+      expect(entry.op, equals(SyncOps.upsert));
+      if (into != null) expect(entry.containerId, equals(into));
+      return jsonDecode(entry.fields) as Map<String, Object?>;
+    }
+
+    test('a list, and the tasks that stayed in it', () async {
+      final listId = await todos.createList(name: 'Home', kind: 'STANDARD');
+      final taskId = await todos.createTodo(listId: listId, title: 'Bins');
+      await todos.deleteList((await todos.watchList(listId).first)!);
+      await start();
+      expect(await _entriesOf(db, taskId), isEmpty);
+
+      await trash.restore(EntityTypes.todoList, listId);
+
+      expect(
+        await sent(listId),
+        allOf(
+          containsPair(WireFields.name, 'Home'),
+          containsPair(WireFields.kind, 'STANDARD'),
+        ),
+      );
+      expect(
+        await sent(taskId, into: listId),
+        containsPair(WireFields.title, 'Bins'),
+      );
+    });
+
+    test('a task, also into another list', () async {
+      final home = await todos.createList(name: 'Home', kind: 'STANDARD');
+      final old = await todos.createList(name: 'Old', kind: 'STANDARD');
+      final kept = await todos.createTodo(listId: home, title: 'Bins');
+      final moved = await todos.createTodo(listId: old, title: 'Post');
+      await todos.deleteTodo((await todos.watchTodo(kept).first)!);
+      await todos.deleteTodo((await todos.watchTodo(moved).first)!);
+      await todos.deleteList((await todos.watchList(old).first)!);
+      await start();
+
+      await trash.restore(EntityTypes.todo, kept);
+      await trash.restore(EntityTypes.todo, moved, targetContainerId: home);
+
+      expect(
+        await sent(kept, into: home),
+        containsPair(WireFields.title, 'Bins'),
+      );
+      expect(
+        await sent(moved, into: home),
+        containsPair(WireFields.title, 'Post'),
+      );
+    });
+
+    test('a calendar and an event', () async {
+      final calendars = CalendarRepository(
+        db: db,
+        writes: writes,
+        api: HiwiskiApi(tokens: NoTokens()),
+        sync: _NoSync(),
+        currentMemberId: () => 'anna',
+        deviceTimeZone: 'Europe/Berlin',
+      );
+      final calendarId = await calendars.createCalendar(
+        name: 'Family',
+        colorToken: ColorTokens.green,
+      );
+      final otherId = await calendars.createCalendar(
+        name: 'School',
+        colorToken: ColorTokens.blue,
+      );
+      final eventId = await calendars.createEvent(
+        calendarId: calendarId,
+        draft: EventDraft(
+          title: 'Dentist',
+          time: TimedEvent(
+            DateTime.utc(2026, 12, 1, 9),
+            DateTime.utc(2026, 12, 1, 10),
+          ),
+        ),
+      );
+      await calendars.deleteEvent((await calendars.watchEvent(eventId).first)!);
+      final other = (await calendars.watchCalendars().first).singleWhere(
+        (calendar) => calendar.id == otherId,
+      );
+      await calendars.deleteCalendar(other);
+      await start();
+
+      await trash.restore(EntityTypes.event, eventId);
+      await trash.restore(EntityTypes.calendar, otherId);
+
+      expect(
+        await sent(eventId, into: calendarId),
+        containsPair(WireFields.title, 'Dentist'),
+      );
+      expect(await sent(otherId), containsPair(WireFields.name, 'School'));
+    });
+
+    test('a page, and a tag', () async {
+      final wiki = WikiRepository(
+        db: db,
+        writes: writes,
+        api: HiwiskiApi(tokens: NoTokens()),
+        currentMemberId: () => 'anna',
+      );
+      final parentId = await wiki.createPage(title: 'Rezepte');
+      final pageId = await wiki.createPage(
+        title: 'Waffeln',
+        parentId: parentId,
+        kind: 'RECIPE',
+      );
+      final tagId = newId();
+      await writes.run(
+        (write) => write.create(
+          db.tags,
+          TagsCompanion.insert(
+            id: tagId,
+            ownerId: 'anna',
+            name: const Value('Kids'),
+          ),
+          fields: {WireFields.name: 'Kids'},
+          label: 'Kids',
+        ),
+      );
+      await wiki.deletePage((await wiki.watchPage(pageId).first)!);
+      await writes.run(
+        (write) => write.delete(db.tags, id: tagId, version: 0, label: 'Kids'),
+      );
+      await start();
+
+      await trash.restore(EntityTypes.wikiPage, pageId);
+      await trash.restore(EntityTypes.tag, tagId);
+
+      expect(
+        await sent(pageId, into: parentId),
+        allOf(
+          containsPair(WireFields.title, 'Waffeln'),
+          containsPair(WireFields.kind, 'RECIPE'),
+        ),
+      );
+      expect(await sent(tagId), containsPair(WireFields.name, 'Kids'));
+    });
+  });
+
   test('an image added without a server is kept on the device', () async {
     final media = MediaRepository(
       HiwiskiApi(tokens: NoTokens()),
@@ -100,6 +324,10 @@ void main() {
     expect(await media.carryOver(), isEmpty);
   });
 }
+
+Future<List<OutboxRow>> _entriesOf(HiwiskiDatabase db, String id) => (db.select(
+  db.outboxEntries,
+)..where((row) => row.entityId.equals(id))).get();
 
 class _NoSync implements SyncTrigger {
   @override

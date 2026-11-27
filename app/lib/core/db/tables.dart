@@ -533,6 +533,92 @@ class Widgets extends Table with SyncedItem {
   IntColumn get position => integer().withDefault(const Constant(0))();
 }
 
+/// The column of an element's or a connection's text — `text`, as on the wire. The
+/// getter is called `body`: a getter `text` would hide the column builder of the same
+/// name.
+const _textColumn = 'text';
+
+/// An element on a mind map — an item of its own in its page, so that two people
+/// changing different elements never collide and a conflict names the one both changed.
+@DataClassName('MindmapNodeRow')
+class MindmapNodes extends Table with SyncedItem {
+  /// The page the map is on; its share is the element's.
+  TextColumn get pageId => text()();
+
+  /// `PLAIN`, `NOTE`, `IMAGE`, `LINK` — an unknown one is kept and drawn as a
+  /// placeholder.
+  TextColumn get kind =>
+      text().withDefault(const Constant(MindmapKinds.plain))();
+
+  IntColumn get x => integer().withDefault(const Constant(0))();
+
+  IntColumn get y => integer().withDefault(const Constant(0))();
+
+  IntColumn get width => integer().withDefault(const Constant(160))();
+
+  IntColumn get height => integer().withDefault(const Constant(80))();
+
+  /// The stacking order, higher above lower; a tie goes to the later id.
+  RealColumn get layer => real().withDefault(const Constant(0))();
+
+  TextColumn get body =>
+      text().named(_textColumn).withDefault(const Constant(''))();
+
+  /// What a link element points to, `hiwiski://<type>/<id>`.
+  TextColumn get target => text().nullable()();
+
+  /// What a link element shows of it: `TITLE` or `CONTENT`; `null` for the title.
+  TextColumn get linkView => text().nullable()();
+
+  /// An accent token or `#RRGGBB`; `null` for the theme's own.
+  TextColumn get color => text().nullable()();
+
+  TextColumn get shape => text().nullable()();
+
+  TextColumn get textSize => text().nullable()();
+
+  /// The colour of its text, as [color] is given; `null` for the theme's own.
+  TextColumn get textColor => text().nullable()();
+
+  /// A stroke drawn by hand: its points across the element, `x,y x,y …` from 0 to
+  /// 10000 — and how thick it is drawn.
+  TextColumn get points => text().nullable()();
+  IntColumn get strokeWidth => integer().nullable()();
+
+  /// Turned clockwise about its centre, in whole degrees 0–359; `null`: not turned.
+  IntColumn get rotation => integer().nullable()();
+
+  /// Where a note's text stands inside it ([MindmapTextAligns]); `null`: top left.
+  TextColumn get textAlign => text().nullable()();
+
+  /// What a note's lines fill ([MindmapTextFlows]); `null`: the box inside its shape.
+  TextColumn get textFlow => text().nullable()();
+}
+
+/// A connection between two elements of the same mind map, drawn from centre to centre.
+@DataClassName('MindmapEdgeRow')
+class MindmapEdges extends Table with SyncedItem {
+  TextColumn get pageId => text()();
+
+  TextColumn get fromId => text()();
+
+  TextColumn get toId => text()();
+
+  /// The label at the middle of the line.
+  TextColumn get body =>
+      text().named(_textColumn).withDefault(const Constant(''))();
+
+  TextColumn get color => text().nullable()();
+
+  /// How thick the line is drawn; `null` for the app's own.
+  IntColumn get strokeWidth => integer().nullable()();
+
+  /// The line drawn ([MindmapLines]) and its arrow heads ([MindmapArrows]); `null`:
+  /// solid, without heads.
+  TextColumn get line => text().nullable()();
+  TextColumn get arrows => text().nullable()();
+}
+
 /// A tag — an item of its own with owner and sharing.
 ///
 /// The assignment is stored as a `tags` column on the items. An ID whose tag is not

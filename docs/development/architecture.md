@@ -83,7 +83,7 @@ closed, and so asks the server itself — two reads, never a write
 
 | Through sync | Through REST |
 | --- | --- |
-| every item: lists, tasks, calendars, events, pages, comments, tags, boards, widgets, feeds, subscriptions, list orders | sign-in, invitations, devices, members and groups, the handshake |
+| every item: lists, tasks, calendars, events, pages, a mind map's elements and connections, comments, tags, boards, widgets, feeds, subscriptions, list orders | sign-in, invitations, devices, members and groups, the handshake |
 | | sharing (the share sheet) |
 | | wiki revisions, history, server search |
 | | the home screen widgets' reads: the agenda, a list's summary |
@@ -484,6 +484,7 @@ reaches back as far as the log does, and says so.
 | `calendar_feed` | an export: calendars, `FULL` or `BUSY`, a token in plaintext (so the address can be shown again; it can only read) |
 | `wiki_page` | `parent_id` (any depth; `null` is a root), `position`, `kind`, `title`, `content` (Markdown), `tags`, `properties` (what the kind adds), archive fields |
 | `wiki_revision` | REST only; `kind` `SAVE` or `CONFLICT` |
+| `mindmap_node`, `mindmap_edge` | a mind map's elements and the connections between them, items of their own in their page (`page_id`, the container whose share they inherit), so that each field of each element has its own conflict; they go and come back with their page and have no entry of their own in the trash. An element: `kind` (`PLAIN`, `NOTE`, `IMAGE`, `LINK`, `MEMBER`, `DRAWING` — one stroke drawn by hand), `x`, `y`, `width`, `height`, `layer` (a fraction, so a step up or down writes one element), `text` (a picture element's picture as a Markdown image, as in a page's text), `target` (a link element's item; a member element's member as `hiwiski://member/<id>`, which is no link of the page), `link_view` (`TITLE` or `CONTENT`), `color`, `shape`, `text_size`, `text_color`, `points` and `stroke_width` (a stroke's points across its element, so it scales with it, and its thickness; a stroke's `shape` names what it was drawn as — `RECTANGLE`, `ELLIPSE`, `TRIANGLE`, `DIAMOND`, `LINE`, `ARROW` — and makes it resizable, empty: freehand), `rotation` (whole degrees 0–359 clockwise about the centre; connections still meet the unturned outline), `text_align` (where a note's text stands: `TOP_LEFT` … `CENTER` … `BOTTOM_RIGHT`, nine in all; empty: top left), `text_flow` (what a note's lines fill: `BOX`, the largest box inside its shape, or `SHAPE`, the shape itself, each line as wide as the shape at its height; empty: `BOX`). `text_size` is `S`, `M`, `L`, `XL` or a size of its own in logical pixels (`"18"`, 4 to 400). A connection: `from_id`, `to_id`, `text`, `color`, `stroke_width`, `line` (`SOLID`, `DASHED`, `DOTTED`) and `arrows` (`NONE`, `END`, `START`, `BOTH`) — names in capitals, an unknown one drawn plain; both ends living elements of its page, checked on every write. |
 | `board`, `widget` | one start board and one dashboard per member, created on first open; `layout` `FLOW` or `GRID`; the dashboard's `token`. A widget kind the app does not know shows a placeholder. |
 | `product`, `aisle` | the shopping list's catalog and categories — the only domain data **without an owner**, shared by the family. Built-in categories have a `key`, own ones a `name`; built-in ones are hidden, never deleted. Over REST, not sync. |
 | `media` | images: owner, content type, size, dimensions, `sha256` (stored once), and the item they are attached to. The bytes are files under `HIWISKI_MEDIA_PATH`. |
@@ -526,6 +527,14 @@ a text.
 **Colors are tokens** (`BLUE`, `RUST`, `VIOLET`, `GREEN`, `PINK`, `OCHRE`, `TEAL`,
 `SLATE`), never color values: the client maps each to a color for the light and the dark
 theme. An unknown token falls back to `SLATE`.
+
+**The one exception is a mind map's `color` and `text_color`**: a token, or a color of
+the family's own as `#RRGGBB` — `#RRGGBBAA` where the canvas shows through it. It is content someone chose, not part of the design.
+Stored once for both themes, the app adapts it (`core/theme/mindmap_colors.dart`): on an
+element's surface it stays as chosen and the text on it is dark or light, whichever reads
+better; as a line or a text on the canvas it keeps its hue and changes its tone until it
+stands out from the canvas in either theme. A chosen text colour keeps its hue and changes
+its tone until it reads on what it stands on.
 
 ## Compatibility
 

@@ -154,6 +154,41 @@ void main() {
         WireFields.listIds: ['l2', 'l1'],
       },
     ),
+    EntityTypes.mindmapNode: (
+      container: 'page1',
+      fields: {
+        WireFields.kind: MindmapKinds.note,
+        WireFields.x: 10,
+        WireFields.y: -20,
+        WireFields.width: 200,
+        WireFields.height: 120,
+        WireFields.layer: 2.5,
+        WireFields.text: '# Plan',
+        WireFields.target: 'hiwiski://todo/t1',
+        WireFields.linkView: MindmapLinkViews.content,
+        WireFields.color: '#3B6939',
+        WireFields.shape: MindmapShapes.ellipse,
+        WireFields.textSize: MindmapTextSizes.large,
+        WireFields.textColor: '#1F2A44',
+        WireFields.points: '0,0 5000,10000 10000,0',
+        WireFields.strokeWidth: 4,
+        WireFields.rotation: 30,
+        WireFields.textAlign: MindmapTextAligns.bottomCenter,
+        WireFields.textFlow: MindmapTextFlows.shape,
+      },
+    ),
+    EntityTypes.mindmapEdge: (
+      container: 'page1',
+      fields: {
+        WireFields.fromId: 'n1',
+        WireFields.toId: 'n2',
+        WireFields.text: 'und',
+        WireFields.color: 'RUST',
+        WireFields.strokeWidth: 6,
+        WireFields.line: MindmapLines.dashed,
+        WireFields.arrows: MindmapArrows.end,
+      },
+    ),
   };
 
   for (final MapEntry(key: type, value: example) in cases.entries) {

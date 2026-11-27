@@ -37,57 +37,78 @@ class LinkPreview extends StatelessWidget {
     required this.target,
     required this.body,
     required this.onOpenFull,
+    this.inline = false,
   });
 
   final LinkItem target;
   final Widget body;
   final VoidCallback onOpenFull;
 
+  /// Shown within something else — a mind map's element — not in a sheet of its own:
+  /// without the sheet's buttons — "Close" there closed what lay under the element —
+  /// and a tap on the title does [onOpenFull].
+  final bool inline;
+
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
+    final heading = Row(
+      crossAxisAlignment: .start,
+      children: [
+        Padding(
+          padding: const .only(top: HiwiskiMetrics.space2),
+          child: Icon(
+            linkItemIcon(target.itemType),
+            size: HiwiskiMetrics.icon22,
+          ),
+        ),
+        const SizedBox(width: HiwiskiMetrics.space10),
+        Expanded(child: Text(target.title, style: context.texts.titleLarge)),
+        if (target.entityKey case final key?) ...[
+          const SizedBox(width: HiwiskiMetrics.space8),
+          Padding(
+            padding: const .only(top: HiwiskiMetrics.space6),
+            child: Text(key, style: context.tokens.text.entityKey),
+          ),
+        ],
+      ],
+    );
     return Column(
       crossAxisAlignment: .stretch,
       children: [
-        Row(
-          crossAxisAlignment: .start,
-          children: [
-            Padding(
-              padding: const .only(top: HiwiskiMetrics.space2),
-              child: Icon(
-                linkItemIcon(target.itemType),
-                size: HiwiskiMetrics.icon22,
+        if (inline)
+          Tooltip(
+            message: l.linkPreviewOpen,
+            child: InkWell(
+              key: CoreKeys.linkPreviewOpen,
+              onTap: onOpenFull,
+              borderRadius: const .all(.circular(HiwiskiMetrics.radiusChip)),
+              child: Semantics(
+                button: true,
+                hint: l.linkPreviewOpen,
+                child: heading,
               ),
             ),
-            const SizedBox(width: HiwiskiMetrics.space10),
-            Expanded(
-              child: Text(target.title, style: context.texts.titleLarge),
-            ),
-            if (target.entityKey case final key?) ...[
-              const SizedBox(width: HiwiskiMetrics.space8),
-              Padding(
-                padding: const .only(top: HiwiskiMetrics.space6),
-                child: Text(key, style: context.tokens.text.entityKey),
-              ),
-            ],
-          ],
-        ),
+          )
+        else
+          heading,
         const SizedBox(height: HiwiskiMetrics.space16),
         body,
-        SheetActions(
-          children: [
-            const Spacer(),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l.actionClose),
-            ),
-            FilledButton(
-              key: CoreKeys.linkPreviewOpen,
-              onPressed: onOpenFull,
-              child: Text(l.linkPreviewOpen),
-            ),
-          ],
-        ),
+        if (!inline)
+          SheetActions(
+            children: [
+              const Spacer(),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(l.actionClose),
+              ),
+              FilledButton(
+                key: CoreKeys.linkPreviewOpen,
+                onPressed: onOpenFull,
+                child: Text(l.linkPreviewOpen),
+              ),
+            ],
+          ),
       ],
     );
   }

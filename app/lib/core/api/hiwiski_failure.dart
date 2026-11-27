@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
 import '../common/sync_limits.dart';
@@ -78,6 +80,7 @@ abstract final class FailureCodes {
   static const mediaQuotaExceeded = 'media.quota_exceeded';
   static const mediaBusy = 'media.busy';
   static const mediaIdTaken = 'media.id_taken';
+  static const mediaImageNotFound = 'media.image_not_found';
 
   static const netUrlInvalid = 'net.url_invalid';
   static const netUrlSchemeNotAllowed = 'net.url_scheme_not_allowed';
@@ -113,6 +116,12 @@ abstract final class FailureCodes {
   /// Set by the app, not the server: a change parked for a board that never came.
   static const syncBoardGone = 'sync.board_gone';
   static const syncContainerNotFound = 'sync.container_not_found';
+
+  /// A mind map element or connection for a page that is no mind map, or is gone.
+  static const wikiNotAMindmap = 'wiki.not_a_mindmap';
+
+  /// A mind map connection whose element is gone, on another page, or at both ends.
+  static const wikiMindmapElementGone = 'wiki.mindmap_element_gone';
 
   static const trashContainerGone = 'trash.container_gone';
   static const trashItemNotFound = 'trash.item_not_found';
@@ -183,8 +192,9 @@ class HiwiskiFailure implements Exception {
         break;
     }
     final response = error.response;
-    final data = response?.data;
-    final code = switch (data) {
+    final data = _bodyOf(response?.data);
+    final body = data is Map ? data : const <Object?, Object?>{};
+    final code = switch (body) {
       {_codeField: final String code} => code,
       _ => null,
     };
@@ -200,10 +210,10 @@ class HiwiskiFailure implements Exception {
       return HiwiskiFailure(
         code: code,
         params: {
-          for (final entry in (data[_paramsField] as Map? ?? const {}).entries)
+          for (final entry in (body[_paramsField] as Map? ?? const {}).entries)
             '${entry.key}': '${entry.value}',
         },
-        correlationId: data[_correlationIdField] as String?,
+        correlationId: body[_correlationIdField] as String?,
         status: response?.statusCode,
       );
     }
@@ -211,6 +221,19 @@ class HiwiskiFailure implements Exception {
       code: FailureCodes.serverError,
       status: response?.statusCode,
     );
+  }
+
+  /// An error's body as JSON — read from bytes too: an endpoint that answers with
+  /// bytes (an image, a backup) gets its error as bytes as well. Unread, its code was
+  /// lost: a picture not uploaded yet looked like a server error, and was never asked
+  /// for again.
+  static Object? _bodyOf(Object? data) {
+    if (data is! List<int>) return data;
+    try {
+      return jsonDecode(utf8.decode(data));
+    } on FormatException {
+      return null;
+    }
   }
 
   @override

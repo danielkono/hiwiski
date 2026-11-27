@@ -11,23 +11,30 @@ import '../../../core/ui/loading_strip.dart';
 import '../../../core/ui/notice_bar.dart';
 import '../../../domain/common/item_ref.dart';
 import '../../../domain/transfer/transfer_bundle.dart';
+import '../../../domain/wiki/mindmap.dart';
 import '../export_view_model.dart';
 import 'export_keys.dart';
 
 /// "Export": what goes into the file, then the file — a download in the browser, the
 /// system's save dialog everywhere else, which on a phone also leads to the Files app
 /// or a cloud drive.
-Future<void> showExportSheet(BuildContext context, {required ItemRef item}) =>
-    showHiwiskiSheet<void>(
-      context: context,
-      title: L.of(context).exportTitle,
-      builder: (context) => _ExportBody(item: item),
-    );
+///
+/// [drawMindmap] draws a mind map among the pages as a picture, to go along.
+Future<void> showExportSheet(
+  BuildContext context, {
+  required ItemRef item,
+  MindmapDrawing Function(BuildContext context)? drawMindmap,
+}) => showHiwiskiSheet<void>(
+  context: context,
+  title: L.of(context).exportTitle,
+  builder: (context) => _ExportBody(item: item, drawMindmap: drawMindmap),
+);
 
 class _ExportBody extends ConsumerStatefulWidget {
-  const _ExportBody({required this.item});
+  const _ExportBody({required this.item, required this.drawMindmap});
 
   final ItemRef item;
+  final MindmapDrawing Function(BuildContext context)? drawMindmap;
 
   @override
   ConsumerState<_ExportBody> createState() => _ExportBodyState();
@@ -37,12 +44,15 @@ class _ExportBodyState extends ConsumerState<_ExportBody> {
   bool _withDone = true;
   bool _withSubpages = true;
   bool _withImages = true;
+  bool _withMindmaps = true;
 
   Future<void> _export() async {
     // A second tap while it ran built and offered the file twice.
     if (ref.read(exportMutation).isPending) return;
     final messenger = ScaffoldMessenger.of(context);
     final saved = L.of(context).exportSaved;
+    // Taken now: the drawing goes on should the sheet close meanwhile.
+    final draw = _withMindmaps ? widget.drawMindmap?.call(context) : null;
     final ExportedFile file;
     try {
       file = await exportMutation.run(
@@ -53,6 +63,7 @@ class _ExportBodyState extends ConsumerState<_ExportBody> {
               withDone: _withDone,
               withSubpages: _withSubpages,
               withImages: _withImages,
+              drawMindmap: draw,
             ),
       );
     } on Object {
@@ -80,6 +91,11 @@ class _ExportBodyState extends ConsumerState<_ExportBody> {
             final images = _withSubpages
                 ? state.imagesWithSubpages
                 : state.images;
+            final mindmaps = switch ((widget.drawMindmap, _withSubpages)) {
+              (null, _) => 0,
+              (_, true) => state.mindmapsWithSubpages,
+              (_, false) => state.mindmaps,
+            };
             return Column(
               crossAxisAlignment: .stretch,
               children: [
@@ -126,6 +142,15 @@ class _ExportBodyState extends ConsumerState<_ExportBody> {
                     subtitle: Text(l.exportImageCount(images)),
                     value: _withImages,
                     onChanged: (value) => setState(() => _withImages = value),
+                  ),
+                if (mindmaps > 0)
+                  SwitchListTile(
+                    key: ExportKeys.withMindmaps,
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l.exportWithMindmaps),
+                    subtitle: Text(l.exportMindmapCount(mindmaps)),
+                    value: _withMindmaps,
+                    onChanged: (value) => setState(() => _withMindmaps = value),
                   ),
                 SheetActions(
                   children: [

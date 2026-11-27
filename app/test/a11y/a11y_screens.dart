@@ -31,6 +31,7 @@ import 'package:hiwiski/features/todo/new_todo/view/new_todo_sheet.dart';
 import 'package:hiwiski/features/todo/overview/view/todo_overview_screen.dart';
 import 'package:hiwiski/features/todo/shopping/view/shopping_screen.dart';
 import 'package:hiwiski/features/wiki/area/view/wiki_area_screen.dart';
+import 'package:hiwiski/features/wiki/mindmap/view/mindmap_screen.dart';
 import 'package:hiwiski/domain/session/session_state.dart';
 
 import 'a11y_world.dart';
@@ -68,6 +69,11 @@ final screenCases = <String, (SessionState, Widget Function(A11yWorld))>{
     (w) => WikiAreaScreen(initialPageId: w.id('page')),
   ),
   'recipe': (annaSession, (w) => WikiAreaScreen(initialPageId: w.id('recipe'))),
+  'mind map page': (
+    annaSession,
+    (w) => WikiAreaScreen(initialPageId: w.id('mindmap')),
+  ),
+  'mind map': (annaSession, (w) => MindmapScreen(pageId: w.id('mindmap'))),
   'search': (annaSession, (_) => const SearchScreen()),
   'account': (annaSession, (_) => const AccountScreen()),
   'account (not the administrator)': (benSession, (_) => const AccountScreen()),

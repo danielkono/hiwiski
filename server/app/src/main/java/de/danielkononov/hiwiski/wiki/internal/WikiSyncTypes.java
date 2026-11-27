@@ -44,9 +44,13 @@ class WikiSyncTypes {
     /** The kinds of page and their fields. */
     private final List<WikiKind> kinds;
 
-    WikiSyncTypes(DSLContext db, List<WikiKind> kinds) {
+    /** A mind map's elements and connections, which go and come back with their page. */
+    private final MindmapSyncTypes mindmaps;
+
+    WikiSyncTypes(DSLContext db, List<WikiKind> kinds, MindmapSyncTypes mindmaps) {
         this.db = db;
         this.kinds = List.copyOf(kinds);
+        this.mindmaps = mindmaps;
         var names = new java.util.HashSet<String>();
         for (var kind : this.kinds) {
             for (var property : kind.properties()) {
@@ -242,14 +246,27 @@ class WikiSyncTypes {
              */
             @Override
             public List<Ref> alsoDeleted(UUID entityId) {
-                return db.select(WIKI_PAGE.ID)
+                var subpages = db.select(WIKI_PAGE.ID)
                         .from(WIKI_PAGE)
                         .where(WIKI_PAGE.PARENT_ID.eq(entityId))
                         .and(WIKI_PAGE.DELETED_AT.isNull())
                         .fetch(WIKI_PAGE.ID)
                         .stream()
-                        .map(id -> new Ref(PAGE_TYPE, id))
+                        .map(id -> new Ref(PAGE_TYPE, id));
+                // A mind map's elements and connections: left alive, they stayed on the
+                // devices and in the page's references after the page had gone.
+                return java.util.stream.Stream.concat(subpages, mindmaps.livingOn(entityId).stream())
                         .toList();
+            }
+
+            /**
+             * A mind map's elements and connections come back with their page. They have
+             * no entry of their own in the trash, and the page came back empty without
+             * them. Subpages do have one each and are restored on their own.
+             */
+            @Override
+            public List<Ref> alsoRestored(UUID entityId, java.time.OffsetDateTime deletedAt) {
+                return mindmaps.deletedWith(entityId, deletedAt);
             }
         };
     }

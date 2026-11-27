@@ -1090,8 +1090,14 @@ class SyncEngine implements SyncTrigger {
     };
     await _db.transaction(() async {
       final version = await codec.localVersion(_db, id);
-      if (version == null) {
-        return; // Deleted or no longer shared in the meantime.
+      // Deleted on this device since, or no longer shared: there is nothing left to
+      // apply it to, and the conflict is settled. Applied all the same, the upsert
+      // brought the deleted item back — here and, once it went out, on the server.
+      if (version == null || !await codec.livesLocally(_db, id)) {
+        await (_db.delete(
+          _db.conflicts,
+        )..where((row) => row.id.equals(conflict.id))).go();
+        return;
       }
       await codec.upsert(
         _db,

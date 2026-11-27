@@ -6,5 +6,6 @@ abstract final class ExportKeys {
   static const withDone = ValueKey('export-with-done');
   static const withSubpages = ValueKey('export-with-subpages');
   static const withImages = ValueKey('export-with-images');
+  static const withMindmaps = ValueKey('export-with-mindmaps');
   static const run = ValueKey('export-run');
 }

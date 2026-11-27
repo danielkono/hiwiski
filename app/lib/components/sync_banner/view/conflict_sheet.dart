@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/common/wire.dart';
 import '../../../core/l10n/generated/app_localizations.dart';
+import '../../../core/routing/routes.dart';
 import '../../../core/theme/hiwiski_metrics.dart';
+import '../../../core/theme/hiwiski_symbols.dart';
 import '../../../core/theme/hiwiski_tokens.dart';
 import '../../../core/ui/history_field_label.dart';
 import '../../../core/ui/hiwiski_sheet.dart';
 import '../../../domain/common/word_diff.dart';
 import '../../../domain/sync/conflict_values.dart';
 import '../../../domain/sync/sync_items.dart';
+import '../../../domain/wiki/mindmap.dart';
 import '../sync_banner_view_model.dart';
 
 /// **A conflict, resolved by looking at it** — what it was, what the server has now,
@@ -17,35 +22,57 @@ import '../sync_banner_view_model.dart';
 /// The banner used to show "old → new" in half a line, and for a page's text only a
 /// link into the version history. Whoever has to choose needs to see what each side
 /// changed.
-Future<void> showConflictSheet(BuildContext context, SyncConflict conflict) {
+///
+/// [onMindmap] decides a mind map's conflict where it is shown already — the map
+/// open under the banner — and says whether it did.
+Future<void> showConflictSheet(
+  BuildContext context,
+  SyncConflict conflict, {
+  MindmapConflictHandler? onMindmap,
+}) {
   final l = L.of(context);
   return showHiwiskiSheet<void>(
     context: context,
     title: l.conflictTitle(historyFieldLabel(l, conflict.field)),
-    builder: (context) => _ConflictBody(conflict: conflict),
+    builder: (context) =>
+        _ConflictBody(conflict: conflict, onMindmap: onMindmap),
   );
 }
 
+/// Shows an element's conflict on its map — `false` when that map is not the one
+/// open here.
+typedef MindmapConflictHandler = bool Function(String pageId, String entityId);
+
 class _ConflictBody extends ConsumerWidget {
-  const _ConflictBody({required this.conflict});
+  const _ConflictBody({required this.conflict, required this.onMindmap});
 
   final SyncConflict conflict;
+  final MindmapConflictHandler? onMindmap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = L.of(context);
+    final state = ref.watch(syncBannerViewModelProvider).value;
     // The columns a card's column id is looked up in: the board's now, and those any
     // side of a board's own conflict carries.
-    final board = [
-      ...?ref.watch(syncBannerViewModelProvider).value?.boards[conflict.id],
-    ];
+    final board = [...?state?.boards[conflict.id]];
+    final index = state?.index;
 
     /// The stored value as a person reads it: names, not ids.
-    String text(String? json) => switch (readConflictValue(
-      conflict.field,
+    String text(SyncConflict of, String? json) => switch (readConflictValue(
+      of.field,
       json,
       board: board,
     )) {
+      // A link element's target by its title and number, a member element's by
+      // their name — not by its address.
+      TextValue(:final text)
+          when of.field == WireFields.target &&
+              of.entityType == EntityTypes.mindmapNode &&
+              index != null =>
+        targetLabelOf(text, index) ??
+            state?.members[memberIdOf(text)] ??
+            l.mindmapLinkGone,
       TextValue(:final text) => text,
       ColumnsValue(:final columns) => [
         for (final column in columns)
@@ -55,9 +82,18 @@ class _ConflictBody extends ConsumerWidget {
       StatusValue(:final done) => done ? l.conflictTicked : l.conflictUnticked,
     };
 
-    final base = conflict.base == null ? null : text(conflict.base);
-    final theirs = text(conflict.theirs);
-    final mine = text(conflict.mine);
+    // An element's position or size: both of its values, as one — a size width by
+    // height, whichever of its two conflicts was found first.
+    final group = inReadingOrder([conflict, ...?state?.partners[conflict.id]]);
+    final size = mindmapConflictGroup(conflict.field) == WireFields.width;
+    String side(String? Function(SyncConflict conflict) of) =>
+        [for (final each in group) text(each, of(each))]
+            .join(size ? _by : _and);
+
+    final mindmap = state?.mindmaps[conflict.id];
+    final base = conflict.base == null ? null : side((each) => each.base);
+    final theirs = side((each) => each.theirs);
+    final mine = side((each) => each.mine);
 
     return Column(
       crossAxisAlignment: .stretch,
@@ -82,6 +118,35 @@ class _ConflictBody extends ConsumerWidget {
           label: l.conflictMine,
           child: _Diff(before: base ?? theirs, after: mine),
         ),
+        // An element of a mind map is decided on its map, where it can be seen among
+        // the others.
+        if (mindmap != null)
+          Align(
+            alignment: .centerLeft,
+            child: TextButton.icon(
+              icon: const Icon(HiwiskiSymbols.hub),
+              label: Text(l.mindmapConflictShow),
+              onPressed: () {
+                // Looked up now: the sheet is gone in a moment.
+                final router = GoRouter.maybeOf(context);
+                // Every sheet over the page goes — this one and the list it may
+                // have been opened from: the map is where it is decided now.
+                Navigator.of(context).popUntil((route) => route is! PopupRoute);
+                if (onMindmap?.call(mindmap, conflict.entityId) ?? false) {
+                  return;
+                }
+                // The pushed route answers nothing here.
+                router
+                    ?.push<void>(
+                      MindmapRoute(
+                        pageId: mindmap,
+                        node: conflict.entityId,
+                      ).location,
+                    )
+                    .ignore();
+              },
+            ),
+          ),
         SheetActions(
           children: [
             TextButton(
@@ -108,6 +173,10 @@ class _ConflictBody extends ConsumerWidget {
     );
   }
 }
+
+/// Between the two values of a position, and of a size.
+const _and = ', ';
+const _by = ' × ';
 
 class _Version extends StatelessWidget {
   const _Version({required this.label, required this.child});

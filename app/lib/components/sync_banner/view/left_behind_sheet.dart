@@ -11,6 +11,7 @@ import '../../../core/theme/hiwiski_tokens.dart';
 import '../../../core/ui/hiwiski_sheet.dart';
 import '../../../core/ui/loading_strip.dart';
 import '../../../core/ui/notice_bar.dart';
+import '../../../core/ui/sync_item_label.dart';
 import '../../../domain/sync/sync_items.dart';
 import '../sync_banner_view_model.dart';
 
@@ -56,6 +57,7 @@ class _LeftBehindList extends ConsumerWidget {
     EntityTypes.wikiPage => HiwiskiSymbols.description,
     EntityTypes.tag => HiwiskiSymbols.sell,
     EntityTypes.board || EntityTypes.widget => HiwiskiSymbols.dashboard,
+    EntityTypes.mindmapNode || EntityTypes.mindmapEdge => HiwiskiSymbols.hub,
     _ => HiwiskiSymbols.backup,
   };
 
@@ -111,7 +113,7 @@ class _LeftBehindList extends ConsumerWidget {
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: Icon(_icon(item.entityType)),
-            title: Text(item.label.isEmpty ? item.entityType : item.label),
+            title: Text(syncItemLabel(l, item.entityType, item.label)),
             subtitle: item.deleted
                 ? Text(l.leftBehindDeleted, style: context.texts.bodySmall)
                 : null,

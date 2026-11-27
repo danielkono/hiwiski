@@ -1,6 +1,6 @@
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +9,7 @@ import '../../../core/theme/hiwiski_symbols.dart';
 import '../../../core/theme/hiwiski_tokens.dart';
 import '../../../core/ui/bounded_image.dart';
 import '../rich_text_view_model.dart';
+import 'still_images.dart';
 
 /// An image of the media store as it arrives — from the device's cache or the server —
 /// filling its space as [fit] says.
@@ -75,6 +76,9 @@ class _RichImageBodyState extends ConsumerState<_RichImageBody> {
   /// The original was refused by [checkDecodable]: the preview stands in.
   bool _tooLarge = false;
 
+  /// The drawing this image is part of, if it is drawn into a file.
+  StillImages? _still;
+
   @override
   void didUpdateWidget(_RichImageBody oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -82,28 +86,40 @@ class _RichImageBodyState extends ConsumerState<_RichImageBody> {
   }
 
   @override
+  void dispose() {
+    _still?.mark(this, waiting: false);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final image = widget.image;
     final preview = image.preview || _tooLarge;
-    return ref
-        .watch(richImageViewModelProvider(image.imageId, preview))
-        .when(
-          skipLoadingOnReload: true,
-          loading: () => image.placeholder
-              ? const Center(child: CircularProgressIndicator())
-              : const SizedBox.shrink(),
-          error: (_, _) => _failed(context),
-          data: (bytes) => _Decoded(
-            bytes: bytes,
-            fit: image.fit,
-            decodeWidth: image.decodeWidth,
-            onAspect: image.onAspect,
-            radius: image.radius,
-            // Already the preview: then it is an image that failed.
-            onTooLarge: preview ? null : () => setState(() => _tooLarge = true),
-            failed: _failed(context),
-          ),
-        );
+    final fetched = ref.watch(
+      richImageViewModelProvider(image.imageId, preview),
+    );
+    // Once fetched — or failed — it no longer holds a drawing up; while it is
+    // decoded, [_Decoded] does.
+    _still = StillImageScope.of(context)
+      ?..mark(this, waiting: !fetched.hasValue && !fetched.hasError);
+    return fetched.when(
+      skipLoadingOnReload: true,
+      // Drawn into a file, a spinner would stay there as it stands.
+      loading: () => image.placeholder && _still == null
+          ? const Center(child: CircularProgressIndicator())
+          : const SizedBox.shrink(),
+      error: (_, _) => _failed(context),
+      data: (bytes) => _Decoded(
+        bytes: bytes,
+        fit: image.fit,
+        decodeWidth: image.decodeWidth,
+        onAspect: image.onAspect,
+        radius: image.radius,
+        // Already the preview: then it is an image that failed.
+        onTooLarge: preview ? null : () => setState(() => _tooLarge = true),
+        failed: _failed(context),
+      ),
+    );
   }
 
   Widget _failed(BuildContext context) => widget.image.placeholder
@@ -150,11 +166,17 @@ class _DecodedState extends State<_Decoded> {
   ImageStream? _stream;
   ImageInfo? _info;
   bool _failed = false;
+
+  /// The drawing this image is part of, if it is drawn into a file.
+  StillImages? _still;
   late final _listener = ImageStreamListener(_loaded, onError: _error);
 
   void _error(Object error, StackTrace? _) {
     if (!mounted) return;
-    if (error is ImageTooLargeError && widget.onTooLarge != null) {
+    // In the browser no header is read before decoding ([checkDecodable]): an
+    // original too large for it fails in the decoder itself — the preview stands in
+    // there for any original that could not be decoded.
+    if ((error is ImageTooLargeError || kIsWeb) && widget.onTooLarge != null) {
       widget.onTooLarge?.call();
       return;
     }
@@ -215,21 +237,27 @@ class _DecodedState extends State<_Decoded> {
 
   @override
   void dispose() {
+    _still?.mark(this, waiting: false);
     _stream?.removeListener(_listener);
     _info?.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) => SizedBox.expand(
-    child: switch ((_info?.image, widget.radius)) {
-      (null, _) when _failed => widget.failed,
-      (final image?, final radius?) => CustomPaint(
-        painter: _RoundedImage(image: image, fit: widget.fit, radius: radius),
-      ),
-      (final image, _) => RawImage(image: image, fit: widget.fit),
-    },
-  );
+  Widget build(BuildContext context) {
+    // Decoded or failed, it no longer holds a drawing up.
+    _still = StillImageScope.of(context)
+      ?..mark(this, waiting: _info == null && !_failed);
+    return SizedBox.expand(
+      child: switch ((_info?.image, widget.radius)) {
+        (null, _) when _failed => widget.failed,
+        (final image?, final radius?) => CustomPaint(
+          painter: _RoundedImage(image: image, fit: widget.fit, radius: radius),
+        ),
+        (final image, _) => RawImage(image: image, fit: widget.fit),
+      },
+    );
+  }
 }
 
 /// The image filling a rounded rectangle — drawn as a shape with the image as its

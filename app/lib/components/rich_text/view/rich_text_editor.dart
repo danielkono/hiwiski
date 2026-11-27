@@ -28,6 +28,7 @@ class RichTextEditor extends ConsumerStatefulWidget {
     this.hint,
     this.minLines = 6,
     this.autofocus = false,
+    this.scrollsField = false,
   });
 
   final MarkdownTextController controller;
@@ -41,6 +42,11 @@ class RichTextEditor extends ConsumerStatefulWidget {
   final String? hint;
   final int minLines;
   final bool autofocus;
+
+  /// Whether the field scrolls under the bar instead of growing with the text — in a
+  /// sheet that does not scroll itself, so the bar stays in view however long the
+  /// text gets. The editor then takes the height it is given.
+  final bool scrollsField;
 
   @override
   ConsumerState<RichTextEditor> createState() => _RichTextEditorState();
@@ -98,8 +104,21 @@ class _RichTextEditorState extends ConsumerState<RichTextEditor> {
     // Watched so that the carrier's ViewModel lives while the editor does — the
     // upload runs through it.
     if (carrier != null) ref.watch(richTextViewModelProvider(carrier));
+    final field = MarkdownField(
+      controller: widget.controller,
+      focusNode: _focus,
+      fieldKey: widget.fieldKey,
+      autofocus: widget.autofocus,
+      minLines: widget.minLines,
+      decoration: InputDecoration(
+        labelText: widget.label,
+        hintText: widget.hint,
+        alignLabelWithHint: true,
+      ),
+    );
     return Column(
       crossAxisAlignment: .stretch,
+      mainAxisSize: widget.scrollsField ? .min : .max,
       children: [
         MarkdownToolbar(
           controller: widget.controller,
@@ -112,18 +131,10 @@ class _RichTextEditorState extends ConsumerState<RichTextEditor> {
           imagesBusy: ref.watch(addRichImagesMutation).isPending,
         ),
         const SizedBox(height: HiwiskiMetrics.space4),
-        MarkdownField(
-          controller: widget.controller,
-          focusNode: _focus,
-          fieldKey: widget.fieldKey,
-          autofocus: widget.autofocus,
-          minLines: widget.minLines,
-          decoration: InputDecoration(
-            labelText: widget.label,
-            hintText: widget.hint,
-            alignLabelWithHint: true,
-          ),
-        ),
+        if (widget.scrollsField)
+          Flexible(child: SingleChildScrollView(child: field))
+        else
+          field,
       ],
     );
   }

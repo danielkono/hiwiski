@@ -1,10 +1,15 @@
-import 'package:drift/drift.dart' show OrderingTerm;
+import 'dart:convert';
 
+import 'package:drift/drift.dart' show OrderingTerm;
+import 'package:meta/meta.dart';
+
+import '../../core/common/wire.dart';
 import '../../core/db/hiwiski_database.dart';
 import '../../core/sync/outbox.dart';
 import '../../core/sync/sync_engine.dart';
 import '../../core/sync/sync_status.dart';
 import '../../domain/sync/sync_items.dart';
+import '../../domain/wiki/mindmap.dart';
 
 /// Where the sync stands, and what the member decides about it: the conflicts nobody
 /// has seen yet and the changes the server refused.
@@ -69,19 +74,31 @@ class SyncRepository {
   }
 
   /// What a backup restore left behind on this device, for the member to decide on.
-  Stream<List<LeftBehindItem>> watchLeftBehind() =>
-      _engine.leftBehind.watch().map(
-        (rows) => [
-          for (final row in rows)
-            LeftBehindItem(
-              entityType: row.entityType,
-              entityId: row.entityId,
-              label: row.label,
-              deleted: row.deleted,
-              leftAt: row.leftAt,
-            ),
-        ],
-      );
+  Stream<List<LeftBehindItem>> watchLeftBehind() => _engine.leftBehind
+      .watch()
+      .map((rows) => [for (final row in rows) leftBehindOf(row)]);
+
+  /// [row] as the member decides on it. A mind map's element is named by its own
+  /// words, as in the list of what did not sync — its copy keeps a note's Markdown
+  /// and a picture's as its label.
+  @visibleForTesting
+  static LeftBehindItem leftBehindOf(LeftBehindRow row) => .new(
+    entityType: row.entityType,
+    entityId: row.entityId,
+    label: switch (row.entityType) {
+      EntityTypes.mindmapNode => mindmapLabelOf(_kindOf(row.fields), row.label),
+      EntityTypes.mindmapEdge => mindmapLabelOf(MindmapKinds.plain, row.label),
+      _ => row.label,
+    },
+    deleted: row.deleted,
+    leftAt: row.leftAt,
+  );
+
+  /// The kind in a mind map element's copy, its [fields] as JSON.
+  static String _kindOf(String fields) => switch (jsonDecode(fields)) {
+    {WireFields.kind: final String kind} => kind,
+    _ => MindmapKinds.plain,
+  };
 
   /// Brings [items] back to the server — every one if `null` — through the outbox,
   /// like any change made here.

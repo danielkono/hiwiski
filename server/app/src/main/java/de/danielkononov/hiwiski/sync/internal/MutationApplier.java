@@ -51,6 +51,7 @@ class MutationApplier {
     private final SyncJson json;
     private final org.springframework.context.ApplicationEventPublisher events;
     private final Cascade cascade;
+    private final ServerWriteService serverWrites;
 
     MutationApplier(
             SyncRegistry registry,
@@ -62,7 +63,8 @@ class MutationApplier {
             DSLContext db,
             SyncJson json,
             org.springframework.context.ApplicationEventPublisher events,
-            Cascade cascade) {
+            Cascade cascade,
+            ServerWriteService serverWrites) {
         this.registry = registry;
         this.entities = entities;
         this.changeLog = changeLog;
@@ -73,6 +75,7 @@ class MutationApplier {
         this.json = json;
         this.events = events;
         this.cascade = cascade;
+        this.serverWrites = serverWrites;
     }
 
     /**
@@ -230,7 +233,7 @@ class MutationApplier {
             // stay as it is and find something that no longer exists -- and the
             // references would keep pointing to an item that is gone.
             events.publishEvent(new de.danielkononov.hiwiski.sync.EntityWritten(
-                    type.entityType(), entityId, principal.memberId(), true));
+                    type.entityType(), entityId, principal.memberId(), true, false, seq));
             return applied(mutation, seq, null);
         }
 
@@ -291,6 +294,11 @@ class MutationApplier {
             return conflict(mutation, principal, type, entityId, current.version(), refused, entityKey);
         }
 
+        // Read before the write clears it: what went with the item when it was deleted
+        // comes back with it (ServerWriteService.restoreAlong).
+        var revivedFrom = current != null && current.deleted()
+                ? entities.deletedAt(type, entityId).orElse(null)
+                : null;
         entities.write(
                 type, entityId, current, upsert.accepted(), seq, principal.memberId(), containerId, entityKey);
 
@@ -319,6 +327,11 @@ class MutationApplier {
                 principal.deviceId(),
                 seq,
                 entityKey);
+
+        // After the item's own entry: a mind map's elements need their page alive.
+        if (revivedFrom != null) {
+            serverWrites.restoreAlong(type, entityId, revivedFrom, principal.memberId());
+        }
 
         if (refused.isEmpty()) {
             return applied(mutation, seq, entityKey);

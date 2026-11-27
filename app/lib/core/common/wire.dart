@@ -24,6 +24,11 @@ abstract final class EntityTypes {
 
   /// A member's own order of the task lists — owned by them, shared with no one.
   static const listOrder = 'LIST_ORDER';
+
+  /// An element on a mind map, and a connection between two — items of their own in
+  /// their page, so that each conflicts on its own.
+  static const mindmapNode = 'MINDMAP_NODE';
+  static const mindmapEdge = 'MINDMAP_EDGE';
 }
 
 /// The `op` of a mutation.
@@ -106,6 +111,29 @@ abstract final class WireFields {
   static const itemType = 'itemType';
   static const itemId = 'itemId';
   static const body = 'body';
+
+  // A mind map's elements and connections.
+  static const x = 'x';
+  static const y = 'y';
+  static const width = 'width';
+  static const height = 'height';
+  static const layer = 'layer';
+  static const text = 'text';
+  static const target = 'target';
+  static const linkView = 'linkView';
+  static const color = 'color';
+  static const shape = 'shape';
+  static const textSize = 'textSize';
+  static const textColor = 'textColor';
+  static const points = 'points';
+  static const strokeWidth = 'strokeWidth';
+  static const line = 'line';
+  static const rotation = 'rotation';
+  static const textAlign = 'textAlign';
+  static const textFlow = 'textFlow';
+  static const arrows = 'arrows';
+  static const fromId = 'fromId';
+  static const toId = 'toId';
 
   // Boards and widgets.
   static const layout = 'layout';
@@ -196,6 +224,113 @@ abstract final class FeedContentModes {
 abstract final class PageKinds {
   static const page = 'PAGE';
   static const recipe = 'RECIPE';
+  static const mindmap = 'MINDMAP';
+}
+
+/// The `kind` of an element on a mind map. The list may grow: an element of a kind
+/// this app does not know is drawn as a placeholder and kept as it is.
+abstract final class MindmapKinds {
+  /// Text without formatting — a snippet written anywhere on the canvas.
+  static const plain = 'PLAIN';
+
+  /// Markdown, written in the same editor as a page.
+  static const note = 'NOTE';
+  static const image = 'IMAGE';
+  static const link = 'LINK';
+
+  /// A member of the family, shown by their picture — its `target` names them
+  /// (`hiwiski://member/<id>`).
+  static const member = 'MEMBER';
+
+  /// A stroke drawn by hand — its `points` across the element.
+  static const drawing = 'DRAWING';
+
+  /// The kinds a new element of which takes the size the last one of its kind was
+  /// given: not a snippet, as large as its text, nor a stroke, as large as drawn.
+  static const sized = {note, image, link, member};
+}
+
+/// What a link element shows of its target. An unknown one shows the title.
+abstract final class MindmapLinkViews {
+  /// The target's symbol and title.
+  static const title = 'TITLE';
+
+  /// The target as its preview shows it.
+  static const content = 'CONTENT';
+}
+
+/// The outline of an element. An unknown one is drawn rounded.
+abstract final class MindmapShapes {
+  static const rectangle = 'RECTANGLE';
+  static const rounded = 'ROUNDED';
+  static const ellipse = 'ELLIPSE';
+  static const pill = 'PILL';
+  static const diamond = 'DIAMOND';
+
+  /// What a stroke may have been drawn as, besides [rectangle], [ellipse] and
+  /// [diamond].
+  static const triangle = 'TRIANGLE';
+  static const line = 'LINE';
+  static const arrow = 'ARROW';
+}
+
+/// The line a connection is drawn with. An unknown one is drawn solid.
+abstract final class MindmapLines {
+  static const solid = 'SOLID';
+  static const dashed = 'DASHED';
+  static const dotted = 'DOTTED';
+}
+
+/// Where a connection has arrow heads: at the element it goes to, the one it comes
+/// from, both or neither. An unknown one is drawn without.
+abstract final class MindmapArrows {
+  static const none = 'NONE';
+  static const end = 'END';
+  static const start = 'START';
+  static const both = 'BOTH';
+}
+
+/// Where a note's text stands inside it. An unknown one is top left.
+abstract final class MindmapTextAligns {
+  static const topLeft = 'TOP_LEFT';
+  static const topCenter = 'TOP_CENTER';
+  static const topRight = 'TOP_RIGHT';
+  static const middleLeft = 'MIDDLE_LEFT';
+  static const center = 'CENTER';
+  static const middleRight = 'MIDDLE_RIGHT';
+  static const bottomLeft = 'BOTTOM_LEFT';
+  static const bottomCenter = 'BOTTOM_CENTER';
+  static const bottomRight = 'BOTTOM_RIGHT';
+
+  /// Row by row, from the top left.
+  static const all = [
+    topLeft,
+    topCenter,
+    topRight,
+    middleLeft,
+    center,
+    middleRight,
+    bottomLeft,
+    bottomCenter,
+    bottomRight,
+  ];
+}
+
+/// What a note's lines fill. An unknown one is [box].
+abstract final class MindmapTextFlows {
+  /// The largest box inside the note's shape: every line as wide as it.
+  static const box = 'BOX';
+
+  /// The shape itself: each line as wide as the shape is at its height.
+  static const shape = 'SHAPE';
+}
+
+/// The size of an element's text.
+abstract final class MindmapTextSizes {
+  static const small = 'S';
+  static const medium = 'M';
+  static const large = 'L';
+  static const xLarge = 'XL';
 }
 
 /// The `kind` of a board.

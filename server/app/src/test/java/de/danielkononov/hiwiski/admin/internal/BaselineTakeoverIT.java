@@ -31,6 +31,13 @@ class BaselineTakeoverIT {
 
             assertThat(flyway.validateWithResult().validationSuccessful).isTrue();
             assertThat(flyway.migrate().migrationsExecuted).isZero();
+            // And what came after the baseline runs on it as on any other server.
+            var current = Flyway.configure()
+                    .dataSource(postgres.getJdbcUrl(), "hiwiski", "secret")
+                    .locations("classpath:db/migration")
+                    .load();
+            assertThat(current.migrate().success).isTrue();
+            assertThat(current.validateWithResult().validationSuccessful).isTrue();
         }
     }
 
@@ -73,12 +80,20 @@ class BaselineTakeoverIT {
                 .withPassword("secret");
     }
 
+    /**
+     * A server at the baseline: migrations after it are not part of what is taken over
+     * -- applied first, they took the ranks the history from before the baseline needs,
+     * and after the takeover they run as on any other server.
+     */
     private static Flyway flyway(PostgreSQLContainer postgres) {
         return Flyway.configure()
                 .dataSource(postgres.getJdbcUrl(), "hiwiski", "secret")
                 .locations("classpath:db/migration")
+                .target(BASELINE)
                 .load();
     }
+
+    private static final String BASELINE = "036";
 
     private static void execute(PostgreSQLContainer postgres, String sql) throws SQLException {
         try (var db = DriverManager.getConnection(postgres.getJdbcUrl(), "hiwiski", "secret")) {
