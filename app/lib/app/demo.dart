@@ -11,6 +11,7 @@ import '../core/common/wire.dart';
 import '../core/theme/hiwiski_metrics.dart';
 import '../domain/board/widget_kinds.dart';
 import '../domain/calendar/event_draft.dart';
+import '../domain/common/calendar_days.dart';
 import '../domain/links/link_text.dart';
 import '../domain/todo/kanban.dart';
 import '../domain/wiki/pinboard.dart';
@@ -83,6 +84,9 @@ class Demo {
   static const _description = 'description';
   static const _linkKey = 'key';
   static const _pageLink = 'page:';
+  static const _calendarLink = 'calendar:';
+  static const _stroke = 'stroke';
+  static const _week = 'week';
   static const _listLink = 'list:';
   static const _pinboard = 'pinboard';
   static const _nodes = 'nodes';
@@ -251,6 +255,13 @@ class Demo {
         name: _text(entry, _name),
         colorToken: _text(entry, _color),
       );
+      if (entry[_linkKey] case final String key) {
+        _targets['$_calendarLink$key'] = (
+          type: EntityTypes.calendar,
+          id: calendarId,
+          title: _text(entry, _name),
+        );
+      }
       for (final event in _list(entry[_events])) {
         final day = _dayOf(event, today);
         final rrule = event[_rrule] as String?;
@@ -330,8 +341,9 @@ class Demo {
   /// connections — placed as the map's screen places them. An element names what it
   /// shows by the sample data's own words: a picture by its file in
   /// `assets/demo/images/`, a link by `page:<key>` or `list:<key>`, a member by their
-  /// place in the family; a stroke by its points on the map, or a shape the pen draws
-  /// by its two corners.
+  /// place in the family, a calendar week by its calendars' keys and a week after this
+  /// one or after the next `date`; a stroke by its points on the pinboard, a shape the pen draws by its two
+  /// corners, or one copied from a pinboard as it keeps it (`stroke`).
   Future<void> _seedPinboard(
     String pageId,
     Map<String, dynamic> map,
@@ -368,6 +380,23 @@ class Demo {
         if (members([index]).firstOrNull case final member?) {
           look[WireFields.target] = memberAddressOf(member);
         }
+      }
+      if (node[_calendars] case final List<dynamic> keys) {
+        look[WireFields.calendars] = calendarsOf([
+          for (final key in keys.cast<String>())
+            ?_targets['$_calendarLink$key']?.id,
+        ]);
+      }
+      // A week after this one, or after the next `date`: the demo shows the same
+      // whenever it is opened.
+      if (node[_week] case final int weeks) {
+        look[WireFields.week] = isoWeekOf(
+          addDays(_weekOf(node, _today()), weeks * DateTime.daysPerWeek),
+        );
+      }
+      // A stroke as a pinboard keeps it — across its element, as drawn there.
+      if (node[_stroke] case final String stored) {
+        look[WireFields.points] = stored;
       }
       if (node[_points] case final List<dynamic> given) {
         final strokeWidth = look[WireFields.strokeWidth] as int? ?? 1;
@@ -493,17 +522,20 @@ class Demo {
   /// demo looks the same whenever it is opened:
   ///
   /// - `date`: `MM-DD`, the next such day from today on — birthdays, holidays;
+  /// - `week` and `weekday`: that weekday (1, Monday, if none) of the week that many
+  ///   weeks after this one — or, with `date` as well, after the week of the next such
+  ///   day: the days a calendar week on a pinboard shows, in the season they are for;
   /// - `weekday`: 1 (Monday) to 7, the next such weekday from today on — a weekly
   ///   series starts on a day its rule holds;
   /// - `day`: that many days from today.
   static DateTime _dayOf(Map<String, dynamic> event, DateTime today) {
-    if (event[_date] case final String date) {
-      final [month, day] = date.split(_dateSeparator).map(int.parse).toList();
-      final thisYear = DateTime(today.year, month, day);
-      return thisYear.isBefore(today)
-          ? DateTime(today.year + 1, month, day)
-          : thisYear;
+    if (event[_week] case final int weeks) {
+      return addDays(
+        _weekOf(event, today),
+        weeks * DateTime.daysPerWeek + (event[_weekday] as int? ?? 1) - 1,
+      );
     }
+    if (event[_date] case final String date) return _next(date, today);
     if (event[_weekday] case final int weekday) {
       return DateTime(
         today.year,
@@ -517,6 +549,23 @@ class Demo {
       today.day + (event[_day] as int? ?? 0),
     );
   }
+
+  /// The next `MM-DD` [date] from [today] on.
+  static DateTime _next(String date, DateTime today) {
+    final [month, day] = date.split(_dateSeparator).map(int.parse).toList();
+    final thisYear = DateTime(today.year, month, day);
+    return thisYear.isBefore(today)
+        ? DateTime(today.year + 1, month, day)
+        : thisYear;
+  }
+
+  /// The Monday weeks are counted from: of the next `date` an [entry] names, or of
+  /// this week.
+  static DateTime _weekOf(Map<String, dynamic> entry, DateTime today) =>
+      startOfWeek(switch (entry[_date]) {
+        final String date => _next(date, today),
+        _ => today,
+      });
 
   /// [day] at `HH:MM`.
   static DateTime _at(DateTime day, String time) {

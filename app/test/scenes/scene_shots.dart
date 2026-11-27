@@ -105,6 +105,21 @@ final sceneShots = [
   SceneShot('wiki-edit', 560, (demo, _) async => _page(demo, 'page:wifi')),
   SceneShot('recipe', 600, (demo, _) async => _page(demo, 'page:spaetzle')),
   SceneShot('start-board', 560, (_, _) async => const HomeRoute().location),
+  // The holiday's pinboard, full screen — its photos decoded before the picture.
+  SceneShot(
+    'pinboard',
+    600,
+    (demo, _) async =>
+        PinboardRoute(pageId: demo.idOf('page:sardinia') ?? '').location,
+    open: (tester, _, _) async {
+      for (int i = 0; i < 6; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 400)),
+        );
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    },
+  ),
   SceneShot('search', 520, (_, _) async => const SearchRoute().location),
   SceneShot(
     'archive',

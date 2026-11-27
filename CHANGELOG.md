@@ -53,7 +53,8 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
   is synced on its own, so a conflict names the one element two people changed and is
   decided for it alone, right on the pinboard. Links on a pinboard count as links from
   its page, and the search finds a page by the words on its pinboard. The demo has one
-  to try: the sample family's ideas for a summer on Sardinia.
+  to try: the sample family's summer on Sardinia — the places they wish for, their
+  to-dos and shopping, and two weeks of holiday dates.
 
   *Upgrade notes:* update the server before the apps. An older app shows a pinboard as
   an ordinary page and leaves its canvas alone; an older server refuses the elements

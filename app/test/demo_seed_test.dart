@@ -235,6 +235,9 @@ void main() {
     final memberIds = {
       for (final member in await db.select(db.members).get()) member.id,
     };
+    final calendarIds = {
+      for (final calendar in await db.select(db.calendars).get()) calendar.id,
+    };
     for (final node in placed) {
       switch (node.kind) {
         case PinboardKinds.image:
@@ -246,11 +249,32 @@ void main() {
             reason: node.body,
           );
         case PinboardKinds.link:
-          expect(node.target, startsWith('hiwiski://wiki_page/'));
+          expect(
+            node.target,
+            anyOf(
+              startsWith('hiwiski://wiki_page/'),
+              startsWith('hiwiski://todo_list/'),
+            ),
+          );
         case PinboardKinds.member:
           expect(memberIds, contains(memberIdOf(node.target)));
         case PinboardKinds.drawing:
           expect(node.points, isNotEmpty);
+        case PinboardKinds.calendar:
+          // Calendars the demo has, and a week that holds their events.
+          expect(calendarIds, containsAll(calendarIdsOf(node.calendars)));
+          final monday = mondayOfIsoWeek(node.week ?? '');
+          expect(monday, isNotNull, reason: node.week);
+          final inWeek = [
+            for (final event in events)
+              if (calendarIdsOf(node.calendars).contains(event.calendarId))
+                if (event.startsAt?.toLocal() ?? event.startDate
+                    case final start?)
+                  if (!start.isBefore(monday!) &&
+                      start.isBefore(addDays(monday, DateTime.daysPerWeek)))
+                    event,
+          ];
+          expect(inWeek, isNotEmpty, reason: node.week);
       }
     }
     expect(

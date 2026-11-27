@@ -128,14 +128,24 @@ plain data (`PinboardCornerOption`: a key, a symbol, a name, what a tap does), b
 the screen from what the selection's kind allows. Another way to offer them — a bar,
 a panel — draws the same lists.
 
-## The demo's map
+## The demo's pinboard
 
 The demo has a pinboard (`app/assets/demo/demo-<lang>.json`, the page whose entry has
 `pinboard`): its elements in the order they lie on each other, each with its kind, box,
 `text` and `look` — fields by their names on the wire — and its connections by the
 `key`s of their ends. What an element shows is named in the sample data's own words:
-`image` a picture in `app/assets/demo/images/` (without its location and camera data),
-`target` a page or list by `page:<key>` or `list:<key>`, `member` a member by their
-place in the family, `points` a stroke on the map — with `pen`, the two corners of a
-shape the pen draws. `Demo` places them as the map's screen does; a new kind or field
-can be shown there, and `demo_seed_test.dart` checks that every element arrives.
+
+- `image`: a picture in `app/assets/demo/images/`, without its location and camera
+  data; `text` is its name.
+- `target`: a page or a list, by `page:<key>` or `list:<key>`.
+- `member`: a member, by their place in the family.
+- `calendars`: the calendars of a calendar week, by their `key`s; `week` the week, that
+  many after this one — or, with `date` (`MM-DD`), after the week of the next such day,
+  so a summer holiday stays in summer. Its events are placed the same way (`week`,
+  `weekday`, `date`).
+- `points`: a stroke on the pinboard — with `pen`, the two corners of a shape the pen
+  draws; or `stroke`, the points as a pinboard keeps them, for a stroke copied from one.
+
+`Demo` places them as the pinboard's screen does; a new kind or field can be shown
+there, and `demo_seed_test.dart` checks that every element arrives. The pinboard is the
+website's scene `pinboard` too ([website.md](website.md)).

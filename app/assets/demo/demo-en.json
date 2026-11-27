@@ -826,6 +826,134 @@
           "column": 0
         }
       ]
+    },
+    {
+      "key": "sardinia-plan",
+      "name": "Sardinia to-dos",
+      "kind": "KANBAN",
+      "color": "BLUE",
+      "columns": [
+        {
+          "name": "Open",
+          "color": "BLUE"
+        },
+        {
+          "name": "In progress",
+          "color": "OCHRE"
+        },
+        {
+          "name": "Done",
+          "color": "GREEN",
+          "done": true
+        }
+      ],
+      "items": [
+        {
+          "title": "Upgrade the hire car",
+          "column": 0,
+          "assignees": [
+            1
+          ]
+        },
+        {
+          "title": "Restock the travel first-aid kit",
+          "column": 0,
+          "assignees": [
+            0
+          ],
+          "due": 20
+        },
+        {
+          "title": "Borrow a snorkel for Paul",
+          "column": 0,
+          "assignees": [
+            1
+          ]
+        },
+        {
+          "title": "Ask the neighbours to water the plants",
+          "column": 0
+        },
+        {
+          "title": "Book the flights",
+          "column": 1,
+          "assignees": [
+            0
+          ],
+          "due": 3
+        },
+        {
+          "title": "Book the holiday flat in Porto Pino",
+          "column": 1,
+          "assignees": [
+            1
+          ],
+          "due": 5
+        },
+        {
+          "title": "Apply for leave",
+          "column": 2,
+          "assignees": [
+            0
+          ],
+          "done": true
+        },
+        {
+          "title": "Book a hire car",
+          "column": 2,
+          "assignees": [
+            1
+          ],
+          "done": true
+        },
+        {
+          "title": "Check the passports",
+          "column": 2,
+          "assignees": [
+            0
+          ],
+          "done": true
+        },
+        {
+          "title": "Ask Aunt Sabine for tips",
+          "column": 2,
+          "assignees": [
+            0
+          ],
+          "done": true
+        }
+      ],
+      "tags": [
+        "holiday"
+      ]
+    },
+    {
+      "key": "sardinia-shopping",
+      "name": "Sardinia shopping",
+      "kind": "SHOPPING",
+      "color": "BLUE",
+      "items": [
+        {
+          "title": "Sunscreen",
+          "amount": 2,
+          "unit": "bottles"
+        },
+        {
+          "title": "Travel sickness tablets"
+        },
+        {
+          "title": "Beach bag"
+        },
+        {
+          "title": "Swimming trunks for Paul"
+        },
+        {
+          "title": "Armbands for Mia"
+        }
+      ],
+      "tags": [
+        "holiday"
+      ]
     }
   ],
   "pages": [
@@ -1362,7 +1490,7 @@
     },
     {
       "title": "Travel",
-      "content": "{{page:packing}} and memories. The next holiday: {{list:holiday}}. And for next year: {{page:sardinia}}.",
+      "content": "{{page:packing}} and memories. Soon we are off to {{page:sardinia}}, and in summer to the Baltic coast: {{list:holiday}}.",
       "children": [
         {
           "title": "Packing list",
@@ -1378,652 +1506,6 @@
           "tags": [
             "holiday"
           ]
-        },
-        {
-          "title": "Sardinia",
-          "kind": "PINBOARD",
-          "key": "sardinia",
-          "tags": [
-            "holiday"
-          ],
-          "content": "Our ideas for next summer. Everyone adds the places they wish for; Aunt Sabine sent the photos.",
-          "pinboard": {
-            "nodes": [
-              {
-                "key": "island",
-                "kind": "DRAWING",
-                "text": "",
-                "look": {
-                  "color": "TEAL",
-                  "strokeWidth": 3
-                },
-                "points": [
-                  [519.5, 43.7],
-                  [528.9, 44.9],
-                  [536.4, 41.2],
-                  [565.5, 59.5],
-                  [572.1, 62.0],
-                  [593.7, 70.5],
-                  [616.2, 103.5],
-                  [602.1, 115.7],
-                  [617.1, 126.7],
-                  [631.2, 143.8],
-                  [622.7, 158.4],
-                  [649.0, 218.3],
-                  [631.2, 254.9],
-                  [613.4, 279.3],
-                  [611.5, 292.7],
-                  [631.2, 328.2],
-                  [627.4, 364.8],
-                  [617.1, 386.8],
-                  [613.4, 445.4],
-                  [609.6, 489.3],
-                  [612.4, 518.6],
-                  [590.8, 567.5],
-                  [574.0, 557.7],
-                  [528.9, 543.1],
-                  [513.9, 541.8],
-                  [497.0, 574.8],
-                  [495.1, 594.3],
-                  [470.7, 618.8],
-                  [464.2, 622.4],
-                  [455.7, 619.2],
-                  [441.7, 610.2],
-                  [426.6, 624.9],
-                  [415.4, 601.7],
-                  [403.2, 584.6],
-                  [381.6, 602.9],
-                  [373.2, 577.2],
-                  [375.0, 565.0],
-                  [390.1, 572.4],
-                  [376.9, 541.8],
-                  [384.4, 527.2],
-                  [383.5, 511.3],
-                  [380.7, 494.2],
-                  [377.9, 482.0],
-                  [390.1, 460.0],
-                  [390.1, 403.9],
-                  [405.1, 418.5],
-                  [403.2, 369.7],
-                  [387.2, 381.9],
-                  [380.7, 357.5],
-                  [376.9, 337.9],
-                  [395.7, 322.1],
-                  [393.8, 276.9],
-                  [363.8, 210.9],
-                  [335.6, 209.7],
-                  [343.1, 181.6],
-                  [330.9, 168.2],
-                  [343.1, 109.6],
-                  [347.8, 119.4],
-                  [380.7, 142.6],
-                  [439.8, 124.2],
-                  [468.9, 101.1],
-                  [506.4, 74.2],
-                  [519.5, 43.7]
-                ]
-              },
-              {
-                "key": "island-name",
-                "kind": "PLAIN",
-                "x": 409,
-                "y": 172,
-                "width": 150,
-                "height": 44,
-                "text": "Sardinia",
-                "look": {
-                  "textSize": "XL",
-                  "textColor": "TEAL"
-                }
-              },
-              {
-                "key": "dot-cagliari",
-                "kind": "NOTE",
-                "x": 507,
-                "y": 531,
-                "width": 14,
-                "height": 14,
-                "text": "",
-                "look": {
-                  "color": "RUST",
-                  "shape": "ELLIPSE"
-                }
-              },
-              {
-                "key": "dot-chia",
-                "kind": "NOTE",
-                "x": 463,
-                "y": 611,
-                "width": 14,
-                "height": 14,
-                "text": "",
-                "look": {
-                  "color": "RUST",
-                  "shape": "ELLIPSE"
-                }
-              },
-              {
-                "key": "dot-teulada",
-                "kind": "NOTE",
-                "x": 432,
-                "y": 603,
-                "width": 14,
-                "height": 14,
-                "text": "",
-                "look": {
-                  "color": "RUST",
-                  "shape": "ELLIPSE"
-                }
-              },
-              {
-                "key": "dot-pino",
-                "kind": "NOTE",
-                "x": 409,
-                "y": 595,
-                "width": 14,
-                "height": 14,
-                "text": "",
-                "look": {
-                  "color": "RUST",
-                  "shape": "ELLIPSE"
-                }
-              },
-              {
-                "key": "dot-paglia",
-                "kind": "NOTE",
-                "x": 378,
-                "y": 520,
-                "width": 14,
-                "height": 14,
-                "text": "",
-                "look": {
-                  "color": "RUST",
-                  "shape": "ELLIPSE"
-                }
-              },
-              {
-                "key": "dot-marmilla",
-                "kind": "NOTE",
-                "x": 469,
-                "y": 416,
-                "width": 14,
-                "height": 14,
-                "text": "",
-                "look": {
-                  "color": "RUST",
-                  "shape": "ELLIPSE"
-                }
-              },
-              {
-                "key": "pic-dunes",
-                "kind": "IMAGE",
-                "x": 40,
-                "y": 690,
-                "width": 150,
-                "height": 200,
-                "text": "Dunes of Porto Pino",
-                "look": {
-                  "rotation": 358
-                },
-                "image": "sardinia-porto-pino-dunes"
-              },
-              {
-                "key": "pic-evening",
-                "kind": "IMAGE",
-                "x": 206,
-                "y": 696,
-                "width": 150,
-                "height": 200,
-                "text": "Porto Pino beach in the evening",
-                "look": {},
-                "image": "sardinia-porto-pino-evening"
-              },
-              {
-                "key": "pic-boats",
-                "kind": "IMAGE",
-                "x": 372,
-                "y": 690,
-                "width": 150,
-                "height": 200,
-                "text": "Fishing boats in the canal of Porto Pino",
-                "look": {
-                  "rotation": 2
-                },
-                "image": "sardinia-porto-pino-boats"
-              },
-              {
-                "key": "pic-teulada",
-                "kind": "IMAGE",
-                "x": 560,
-                "y": 694,
-                "width": 150,
-                "height": 200,
-                "text": "Rocks and Isola Rossa near Teulada",
-                "look": {
-                  "rotation": 359
-                },
-                "image": "sardinia-isola-rossa"
-              },
-              {
-                "key": "pic-chia",
-                "kind": "IMAGE",
-                "x": 730,
-                "y": 690,
-                "width": 150,
-                "height": 200,
-                "text": "Chia beach with Torre di Chia",
-                "look": {
-                  "rotation": 2
-                },
-                "image": "sardinia-chia"
-              },
-              {
-                "key": "pic-paglia",
-                "kind": "IMAGE",
-                "x": 60,
-                "y": 380,
-                "width": 150,
-                "height": 200,
-                "text": "Steps down to the tonnara of Porto Paglia",
-                "look": {
-                  "rotation": 357
-                },
-                "image": "sardinia-porto-paglia"
-              },
-              {
-                "key": "pic-marmilla",
-                "kind": "IMAGE",
-                "x": 700,
-                "y": 330,
-                "width": 150,
-                "height": 200,
-                "text": "Mural in a village of the Marmilla",
-                "look": {
-                  "rotation": 3
-                },
-                "image": "sardinia-marmilla"
-              },
-              {
-                "key": "cap-pino",
-                "kind": "PLAIN",
-                "x": 40,
-                "y": 904,
-                "width": 480,
-                "height": 22,
-                "text": "Porto Pino: white dunes, the beach at dusk and fishing boats in the canal",
-                "look": {
-                  "textSize": "S"
-                }
-              },
-              {
-                "key": "cap-teulada",
-                "kind": "PLAIN",
-                "x": 560,
-                "y": 904,
-                "width": 150,
-                "height": 40,
-                "text": "Teulada: snorkelling off Isola Rossa",
-                "look": {
-                  "textSize": "S"
-                }
-              },
-              {
-                "key": "cap-chia",
-                "kind": "PLAIN",
-                "x": 730,
-                "y": 904,
-                "width": 150,
-                "height": 40,
-                "text": "Chia: the beach below Torre di Chia",
-                "look": {
-                  "textSize": "S"
-                }
-              },
-              {
-                "key": "cap-paglia",
-                "kind": "PLAIN",
-                "x": 60,
-                "y": 590,
-                "width": 150,
-                "height": 40,
-                "text": "Porto Paglia: the old tonnara",
-                "look": {
-                  "textSize": "S"
-                }
-              },
-              {
-                "key": "cap-marmilla",
-                "kind": "PLAIN",
-                "x": 700,
-                "y": 540,
-                "width": 150,
-                "height": 40,
-                "text": "Marmilla: murals and Su Nuraxi",
-                "look": {
-                  "textSize": "S"
-                }
-              },
-              {
-                "key": "who-lena",
-                "kind": "MEMBER",
-                "x": 150,
-                "y": 672,
-                "width": 56,
-                "height": 56,
-                "text": "",
-                "look": {},
-                "member": 2
-              },
-              {
-                "key": "who-anna",
-                "kind": "MEMBER",
-                "x": 316,
-                "y": 678,
-                "width": 56,
-                "height": 56,
-                "text": "",
-                "look": {},
-                "member": 0
-              },
-              {
-                "key": "who-paul",
-                "kind": "MEMBER",
-                "x": 670,
-                "y": 676,
-                "width": 56,
-                "height": 56,
-                "text": "",
-                "look": {},
-                "member": 3
-              },
-              {
-                "key": "who-mia",
-                "kind": "MEMBER",
-                "x": 840,
-                "y": 672,
-                "width": 56,
-                "height": 56,
-                "text": "",
-                "look": {},
-                "member": 4
-              },
-              {
-                "key": "who-markus",
-                "kind": "MEMBER",
-                "x": 810,
-                "y": 312,
-                "width": 56,
-                "height": 56,
-                "text": "",
-                "look": {},
-                "member": 1
-              },
-              {
-                "key": "arrival",
-                "kind": "PLAIN",
-                "x": 612,
-                "y": 598,
-                "width": 130,
-                "height": 40,
-                "text": "Arriving by plane",
-                "look": {
-                  "textSize": "S",
-                  "textColor": "RUST"
-                }
-              },
-              {
-                "key": "arrival-arrow",
-                "kind": "DRAWING",
-                "text": "",
-                "pen": "ARROW",
-                "look": {
-                  "color": "RUST",
-                  "strokeWidth": 2
-                },
-                "points": [
-                  [606, 612],
-                  [524.9, 541.2]
-                ]
-              },
-              {
-                "key": "hub",
-                "kind": "NOTE",
-                "x": 1010,
-                "y": 285,
-                "width": 280,
-                "height": 150,
-                "text": "## Summer holiday\nthe five of us, two weeks",
-                "look": {
-                  "color": "TEAL",
-                  "shape": "ELLIPSE",
-                  "textAlign": "CENTER",
-                  "textFlow": "SHAPE"
-                }
-              },
-              {
-                "key": "when",
-                "kind": "NOTE",
-                "x": 1050,
-                "y": 40,
-                "width": 200,
-                "height": 170,
-                "text": "### When?\nJuly or September",
-                "look": {
-                  "color": "OCHRE",
-                  "shape": "DIAMOND",
-                  "textAlign": "CENTER",
-                  "textFlow": "SHAPE"
-                }
-              },
-              {
-                "key": "sabine",
-                "kind": "NOTE",
-                "x": 1330,
-                "y": 50,
-                "width": 230,
-                "height": 130,
-                "text": "*Aunt Sabine:* In September the sea is still warm and the beaches are empty.",
-                "look": {
-                  "color": "PINK",
-                  "rotation": 357,
-                  "textAlign": "CENTER"
-                }
-              },
-              {
-                "key": "who-sabine",
-                "kind": "MEMBER",
-                "x": 1526,
-                "y": 24,
-                "width": 56,
-                "height": 56,
-                "text": "",
-                "look": {},
-                "member": 7
-              },
-              {
-                "key": "todo",
-                "kind": "NOTE",
-                "x": 1380,
-                "y": 250,
-                "width": 250,
-                "height": 180,
-                "text": "### Before we go\n- [x] Check passports\n- [x] Compare flights to Cagliari\n- [ ] Holiday flat in Porto Pino\n- [ ] Hire car with child seat\n- [ ] Snorkel for Paul",
-                "look": {
-                  "color": "GREEN"
-                }
-              },
-              {
-                "key": "route",
-                "kind": "NOTE",
-                "x": 1380,
-                "y": 460,
-                "width": 250,
-                "height": 190,
-                "text": "### Route\n1. Cagliari: pick up the car\n2. Chia\n3. Teulada\n4. Porto Pino, one week\n5. Porto Paglia\n6. Marmilla",
-                "look": {
-                  "color": "BLUE"
-                }
-              },
-              {
-                "key": "packing",
-                "kind": "LINK",
-                "x": 1020,
-                "y": 500,
-                "width": 260,
-                "height": 290,
-                "text": "",
-                "look": {
-                  "linkView": "CONTENT"
-                },
-                "target": "page:packing"
-              },
-              {
-                "key": "cabinet",
-                "kind": "LINK",
-                "x": 1030,
-                "y": 850,
-                "width": 240,
-                "height": 56,
-                "text": "",
-                "look": {
-                  "linkView": "TITLE"
-                },
-                "target": "page:cabinet"
-              }
-            ],
-            "edges": [
-              {
-                "from": "dot-pino",
-                "to": "pic-dunes",
-                "text": "",
-                "look": {
-                  "color": "RUST",
-                  "line": "DOTTED",
-                  "strokeWidth": 2
-                }
-              },
-              {
-                "from": "dot-pino",
-                "to": "pic-evening",
-                "text": "",
-                "look": {
-                  "color": "RUST",
-                  "line": "DOTTED",
-                  "strokeWidth": 2
-                }
-              },
-              {
-                "from": "dot-pino",
-                "to": "pic-boats",
-                "text": "",
-                "look": {
-                  "color": "RUST",
-                  "line": "DOTTED",
-                  "strokeWidth": 2
-                }
-              },
-              {
-                "from": "dot-teulada",
-                "to": "pic-teulada",
-                "text": "",
-                "look": {
-                  "color": "RUST",
-                  "line": "DOTTED",
-                  "strokeWidth": 2
-                }
-              },
-              {
-                "from": "dot-chia",
-                "to": "pic-chia",
-                "text": "",
-                "look": {
-                  "color": "RUST",
-                  "line": "DOTTED",
-                  "strokeWidth": 2
-                }
-              },
-              {
-                "from": "dot-paglia",
-                "to": "pic-paglia",
-                "text": "",
-                "look": {
-                  "color": "RUST",
-                  "line": "DOTTED",
-                  "strokeWidth": 2
-                }
-              },
-              {
-                "from": "dot-marmilla",
-                "to": "pic-marmilla",
-                "text": "",
-                "look": {
-                  "color": "RUST",
-                  "line": "DOTTED",
-                  "strokeWidth": 2
-                }
-              },
-              {
-                "from": "hub",
-                "to": "island-name",
-                "text": "where?",
-                "look": {
-                  "color": "TEAL",
-                  "strokeWidth": 2,
-                  "arrows": "END"
-                }
-              },
-              {
-                "from": "hub",
-                "to": "when",
-                "text": "decide",
-                "look": {
-                  "line": "DASHED",
-                  "arrows": "END"
-                }
-              },
-              {
-                "from": "hub",
-                "to": "todo",
-                "text": "to do",
-                "look": {
-                  "arrows": "END"
-                }
-              },
-              {
-                "from": "hub",
-                "to": "route",
-                "text": "order",
-                "look": {
-                  "arrows": "END"
-                }
-              },
-              {
-                "from": "hub",
-                "to": "packing",
-                "text": "pack",
-                "look": {
-                  "arrows": "END"
-                }
-              },
-              {
-                "from": "packing",
-                "to": "cabinet",
-                "text": "on the way",
-                "look": {
-                  "line": "DASHED"
-                }
-              },
-              {
-                "from": "sabine",
-                "to": "when",
-                "text": "tip",
-                "look": {
-                  "color": "PINK",
-                  "arrows": "END"
-                }
-              }
-            ]
-          }
         }
       ],
       "tags": [
@@ -2061,6 +1543,331 @@
           "content": "In 1974, at the funfair in Bergheim. Grandpa Heinz won Grandma Gisela a rose at the shooting stall — on his third go."
         }
       ]
+    },
+    {
+      "title": "Sardinia",
+      "kind": "PINBOARD",
+      "key": "sardinia",
+      "tags": [
+        "holiday"
+      ],
+      "content": "Our holiday on Sardinia: places we wish for, things to do, things to buy and dates at a glance.",
+      "pinboard": {
+        "nodes": [
+          {
+            "key": "e1",
+            "kind": "IMAGE",
+            "x": -9,
+            "y": -574,
+            "width": 180,
+            "height": 320,
+            "text": "Mural in a village of the Marmilla",
+            "look": {},
+            "image": "sardinia-marmilla"
+          },
+          {
+            "key": "e2",
+            "kind": "IMAGE",
+            "x": -676,
+            "y": -185,
+            "width": 135,
+            "height": 239,
+            "text": "Porto Pino beach in the evening",
+            "look": {},
+            "image": "sardinia-porto-pino-evening"
+          },
+          {
+            "key": "e3",
+            "kind": "IMAGE",
+            "x": -318,
+            "y": 25,
+            "width": 135,
+            "height": 240,
+            "text": "Rocks and Isola Rossa near Teulada",
+            "look": {},
+            "image": "sardinia-isola-rossa"
+          },
+          {
+            "key": "e4",
+            "kind": "IMAGE",
+            "x": -118,
+            "y": -40,
+            "width": 135,
+            "height": 240,
+            "text": "Chia beach with Torre di Chia",
+            "look": {},
+            "image": "sardinia-chia"
+          },
+          {
+            "key": "e5",
+            "kind": "IMAGE",
+            "x": -718,
+            "y": -15,
+            "width": 135,
+            "height": 240,
+            "text": "Dunes of Porto Pino",
+            "look": {},
+            "image": "sardinia-porto-pino-dunes"
+          },
+          {
+            "key": "e6",
+            "kind": "IMAGE",
+            "x": -694,
+            "y": -494,
+            "width": 135,
+            "height": 240,
+            "text": "Steps down to the tonnara of Porto Paglia",
+            "look": {},
+            "image": "sardinia-porto-paglia"
+          },
+          {
+            "key": "e7",
+            "kind": "DRAWING",
+            "x": -477,
+            "y": -713,
+            "width": 393,
+            "height": 712,
+            "text": "",
+            "look": {
+              "strokeWidth": 6
+            },
+            "stroke": "5454,415 5113,549 4869,754 4599,896 4404,1091 4181,1230 3944,1312 3536,1400 3090,1602 2759,1694 1799,1707 1354,1656 1201,1622 901,1507 549,1248 660,1489 680,1627 299,2098 224,2453 76,2632 604,2667 1104,2778 1358,2882 1578,3087 1578,3125 1737,3334 1747,3514 1691,3649 1701,3765 1988,4149 2055,4347 2008,4896 1942,5010 1712,5220 1681,5417 1702,5464 1794,5514 2165,5581 2324,5627 2439,5708 2532,5842 2557,6125 2523,6210 2502,6238 2462,6243 2092,6243 2027,6350 1899,6725 1854,6936 1843,7268 1631,7811 1650,7860 1808,7922 1871,8031 1871,8115 1670,8366 1735,8595 1784,8649 2108,8767 2206,8821 2265,8897 2254,9109 2337,9166 2587,9233 2678,9521 2959,9640 2969,9694 3067,9775 3263,9830 3651,9802 3841,9859 3941,9921 4107,9949 4710,9958 4974,9834 5218,9645 5387,9467 5475,9302 5485,9186 5430,9023 5451,8864 5750,8619 5838,8581 6039,8541 6158,8695 6482,8652 6693,8652 7194,8697 7820,8791 8096,8813 8463,8726 8708,8542 8813,8320 8756,7976 8768,7869 8814,7739 8948,7548 9088,7107 9162,6727 9339,6409 9339,6357 9279,6260 9058,6100 9028,6022 9180,5746 9303,5345 9515,5013 9505,4927 9222,4816 8939,4669 8851,4516 8851,4368 9091,4050 9792,3550 9880,3475 9924,3361 9924,3241 9836,3030 9727,2890 9538,2748 9430,2588 9442,2035 9340,1815 9360,1587 9296,1527 8834,1286 8688,938 8300,875 8313,759 8425,508 8392,394 8204,405 7892,457 7793,451 7693,345 7520,261 7310,107 7129,176 6927,216 6784,98 6341,42 6216,59 6123,98 6137,211 6257,291 6225,318 5867,371 5480,400"
+          },
+          {
+            "key": "e8",
+            "kind": "PLAIN",
+            "x": -400,
+            "y": -570,
+            "width": 275,
+            "height": 76,
+            "text": "Sardinia",
+            "look": {
+              "textSize": "65"
+            }
+          },
+          {
+            "key": "e9",
+            "kind": "PLAIN",
+            "x": -895,
+            "y": -422,
+            "width": 192,
+            "height": 16,
+            "text": "Porto Paglia: the old tonnara",
+            "look": {}
+          },
+          {
+            "key": "e10",
+            "kind": "CALENDAR",
+            "x": 760,
+            "y": -200,
+            "width": 640,
+            "height": 400,
+            "text": "",
+            "look": {},
+            "calendars": [
+              "holiday-trip"
+            ],
+            "week": 0,
+            "date": "07-20"
+          },
+          {
+            "key": "e11",
+            "kind": "IMAGE",
+            "x": -608,
+            "y": -48,
+            "width": 192,
+            "height": 341,
+            "text": "Fishing boats in the canal of Porto Pino",
+            "look": {},
+            "image": "sardinia-porto-pino-boats"
+          },
+          {
+            "key": "e12",
+            "kind": "NOTE",
+            "x": -377,
+            "y": -61,
+            "width": 24,
+            "height": 24,
+            "text": "",
+            "look": {
+              "color": "BLUE",
+              "shape": "ELLIPSE"
+            }
+          },
+          {
+            "key": "e13",
+            "kind": "NOTE",
+            "x": -290,
+            "y": -302,
+            "width": 24,
+            "height": 24,
+            "text": "",
+            "look": {
+              "color": "BLUE",
+              "shape": "ELLIPSE"
+            }
+          },
+          {
+            "key": "e14",
+            "kind": "NOTE",
+            "x": -298,
+            "y": -25,
+            "width": 24,
+            "height": 24,
+            "text": "",
+            "look": {
+              "color": "BLUE",
+              "shape": "ELLIPSE"
+            }
+          },
+          {
+            "key": "e15",
+            "kind": "NOTE",
+            "x": -337,
+            "y": -28,
+            "width": 24,
+            "height": 24,
+            "text": "",
+            "look": {
+              "color": "BLUE",
+              "shape": "ELLIPSE"
+            }
+          },
+          {
+            "key": "e16",
+            "kind": "NOTE",
+            "x": -399,
+            "y": -216,
+            "width": 25,
+            "height": 25,
+            "text": "",
+            "look": {
+              "color": "BLUE",
+              "shape": "ELLIPSE"
+            }
+          },
+          {
+            "key": "e17",
+            "kind": "PLAIN",
+            "x": 740,
+            "y": -254,
+            "width": 224,
+            "height": 38,
+            "text": "Holiday dates",
+            "look": {
+              "textSize": "32"
+            }
+          },
+          {
+            "key": "e18",
+            "kind": "LINK",
+            "x": -629,
+            "y": 351,
+            "width": 939,
+            "height": 443,
+            "text": "",
+            "look": {
+              "linkView": "CONTENT"
+            },
+            "target": "list:sardinia-plan"
+          },
+          {
+            "key": "e19",
+            "kind": "LINK",
+            "x": 340,
+            "y": 25,
+            "width": 372,
+            "height": 443,
+            "text": "",
+            "look": {
+              "linkView": "CONTENT"
+            },
+            "target": "list:sardinia-shopping"
+          },
+          {
+            "key": "e20",
+            "kind": "PLAIN",
+            "x": 340,
+            "y": -14,
+            "width": 173,
+            "height": 28,
+            "text": "Still to buy",
+            "look": {
+              "textSize": "XL"
+            }
+          },
+          {
+            "key": "e21",
+            "kind": "PLAIN",
+            "x": -110,
+            "y": -830,
+            "width": 640,
+            "height": 80,
+            "text": "Our summer holiday",
+            "look": {
+              "textSize": "64",
+              "textColor": "VIOLET"
+            }
+          },
+          {
+            "key": "week-2",
+            "kind": "CALENDAR",
+            "x": 760,
+            "y": 240,
+            "width": 640,
+            "height": 400,
+            "text": "",
+            "look": {},
+            "calendars": [
+              "holiday-trip"
+            ],
+            "week": 1,
+            "date": "07-20"
+          }
+        ],
+        "edges": [
+          {
+            "from": "e4",
+            "to": "e14",
+            "text": "",
+            "look": {
+              "line": "DASHED"
+            }
+          },
+          {
+            "from": "e3",
+            "to": "e15",
+            "text": "",
+            "look": {
+              "line": "DASHED"
+            }
+          },
+          {
+            "from": "e12",
+            "to": "e11",
+            "text": "",
+            "look": {
+              "line": "DASHED"
+            }
+          },
+          {
+            "from": "e1",
+            "to": "e13",
+            "text": "",
+            "look": {
+              "line": "DASHED"
+            }
+          },
+          {
+            "from": "e16",
+            "to": "e6",
+            "text": "",
+            "look": {
+              "line": "DASHED"
+            }
+          }
+        ]
+      }
     }
   ],
   "calendars": [
@@ -2951,6 +2758,199 @@
           "date": "12-31",
           "allDay": true,
           "rrule": "FREQ=YEARLY"
+        }
+      ]
+    },
+    {
+      "key": "holiday-trip",
+      "name": "Holiday",
+      "color": "BLUE",
+      "events": [
+        {
+          "title": "Flight to Cagliari",
+          "date": "07-20",
+          "week": 0,
+          "weekday": 1,
+          "start": "07:15",
+          "end": "09:15",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Pick up the hire car",
+          "date": "07-20",
+          "week": 0,
+          "weekday": 1,
+          "start": "10:00",
+          "end": "10:30",
+          "location": "Cagliari airport",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Horse ride",
+          "date": "07-20",
+          "week": 0,
+          "weekday": 2,
+          "start": "12:45",
+          "end": "14:15",
+          "location": "Porto Pino",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Snorkelling off Isola Rossa",
+          "date": "07-20",
+          "week": 0,
+          "weekday": 3,
+          "start": "10:00",
+          "end": "12:00",
+          "location": "Teulada",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Dinner at the harbour",
+          "date": "07-20",
+          "week": 0,
+          "weekday": 4,
+          "start": "19:00",
+          "end": "21:00",
+          "location": "Porto Pino",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Beach day in Chia",
+          "date": "07-20",
+          "week": 0,
+          "weekday": 5,
+          "allDay": true,
+          "location": "Chia",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Visit Su Nuraxi",
+          "date": "07-20",
+          "week": 1,
+          "weekday": 1,
+          "start": "10:00",
+          "end": "12:00",
+          "location": "Barumini",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Murals of the Marmilla",
+          "date": "07-20",
+          "week": 1,
+          "weekday": 2,
+          "start": "14:00",
+          "end": "16:00",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Porto Paglia and its tonnara",
+          "date": "07-20",
+          "week": 1,
+          "weekday": 3,
+          "start": "10:00",
+          "end": "12:00",
+          "location": "Gonnesa",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Beach day in Porto Pino",
+          "date": "07-20",
+          "week": 1,
+          "weekday": 4,
+          "allDay": true,
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Return the hire car",
+          "date": "07-20",
+          "week": 1,
+          "weekday": 6,
+          "start": "10:00",
+          "end": "10:30",
+          "location": "Cagliari airport",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Flight home",
+          "date": "07-20",
+          "week": 1,
+          "weekday": 6,
+          "start": "13:00",
+          "end": "15:00",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
         }
       ]
     }
