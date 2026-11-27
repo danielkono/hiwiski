@@ -11,7 +11,7 @@ import '../../../core/ui/loading_strip.dart';
 import '../../../core/ui/notice_bar.dart';
 import '../../../domain/common/item_ref.dart';
 import '../../../domain/transfer/transfer_bundle.dart';
-import '../../../domain/wiki/mindmap.dart';
+import '../../../domain/wiki/pinboard.dart';
 import '../export_view_model.dart';
 import 'export_keys.dart';
 
@@ -19,22 +19,22 @@ import 'export_keys.dart';
 /// system's save dialog everywhere else, which on a phone also leads to the Files app
 /// or a cloud drive.
 ///
-/// [drawMindmap] draws a mind map among the pages as a picture, to go along.
+/// [drawPinboard] draws a pinboard among the pages as a picture, to go along.
 Future<void> showExportSheet(
   BuildContext context, {
   required ItemRef item,
-  MindmapDrawing Function(BuildContext context)? drawMindmap,
+  PinboardDrawing Function(BuildContext context)? drawPinboard,
 }) => showHiwiskiSheet<void>(
   context: context,
   title: L.of(context).exportTitle,
-  builder: (context) => _ExportBody(item: item, drawMindmap: drawMindmap),
+  builder: (context) => _ExportBody(item: item, drawPinboard: drawPinboard),
 );
 
 class _ExportBody extends ConsumerStatefulWidget {
-  const _ExportBody({required this.item, required this.drawMindmap});
+  const _ExportBody({required this.item, required this.drawPinboard});
 
   final ItemRef item;
-  final MindmapDrawing Function(BuildContext context)? drawMindmap;
+  final PinboardDrawing Function(BuildContext context)? drawPinboard;
 
   @override
   ConsumerState<_ExportBody> createState() => _ExportBodyState();
@@ -44,7 +44,7 @@ class _ExportBodyState extends ConsumerState<_ExportBody> {
   bool _withDone = true;
   bool _withSubpages = true;
   bool _withImages = true;
-  bool _withMindmaps = true;
+  bool _withPinboards = true;
 
   Future<void> _export() async {
     // A second tap while it ran built and offered the file twice.
@@ -52,7 +52,7 @@ class _ExportBodyState extends ConsumerState<_ExportBody> {
     final messenger = ScaffoldMessenger.of(context);
     final saved = L.of(context).exportSaved;
     // Taken now: the drawing goes on should the sheet close meanwhile.
-    final draw = _withMindmaps ? widget.drawMindmap?.call(context) : null;
+    final draw = _withPinboards ? widget.drawPinboard?.call(context) : null;
     final ExportedFile file;
     try {
       file = await exportMutation.run(
@@ -63,7 +63,7 @@ class _ExportBodyState extends ConsumerState<_ExportBody> {
               withDone: _withDone,
               withSubpages: _withSubpages,
               withImages: _withImages,
-              drawMindmap: draw,
+              drawPinboard: draw,
             ),
       );
     } on Object {
@@ -91,10 +91,10 @@ class _ExportBodyState extends ConsumerState<_ExportBody> {
             final images = _withSubpages
                 ? state.imagesWithSubpages
                 : state.images;
-            final mindmaps = switch ((widget.drawMindmap, _withSubpages)) {
+            final pinboards = switch ((widget.drawPinboard, _withSubpages)) {
               (null, _) => 0,
-              (_, true) => state.mindmapsWithSubpages,
-              (_, false) => state.mindmaps,
+              (_, true) => state.pinboardsWithSubpages,
+              (_, false) => state.pinboards,
             };
             return Column(
               crossAxisAlignment: .stretch,
@@ -143,14 +143,15 @@ class _ExportBodyState extends ConsumerState<_ExportBody> {
                     value: _withImages,
                     onChanged: (value) => setState(() => _withImages = value),
                   ),
-                if (mindmaps > 0)
+                if (pinboards > 0)
                   SwitchListTile(
-                    key: ExportKeys.withMindmaps,
+                    key: ExportKeys.withPinboards,
                     contentPadding: EdgeInsets.zero,
-                    title: Text(l.exportWithMindmaps),
-                    subtitle: Text(l.exportMindmapCount(mindmaps)),
-                    value: _withMindmaps,
-                    onChanged: (value) => setState(() => _withMindmaps = value),
+                    title: Text(l.exportWithPinboards),
+                    subtitle: Text(l.exportPinboardCount(pinboards)),
+                    value: _withPinboards,
+                    onChanged: (value) =>
+                        setState(() => _withPinboards = value),
                   ),
                 SheetActions(
                   children: [

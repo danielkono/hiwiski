@@ -384,17 +384,17 @@ class WikiRepository {
             where: (row) => row.id.equals(id),
           );
         }
-        // A mind map goes with its page — and comes back with it from the trash.
+        // A pinboard goes with its page — and comes back with it from the trash.
         await write.cascade(
           deleted,
-          _db.mindmapEdges,
-          MindmapEdgesCompanion(deletedAt: Value(now)),
+          _db.pinboardEdges,
+          PinboardEdgesCompanion(deletedAt: Value(now)),
           where: (row) => row.pageId.equals(id) & row.deletedAt.isNull(),
         );
         await write.cascade(
           deleted,
-          _db.mindmapNodes,
-          MindmapNodesCompanion(deletedAt: Value(now)),
+          _db.pinboardNodes,
+          PinboardNodesCompanion(deletedAt: Value(now)),
           where: (row) => row.pageId.equals(id) & row.deletedAt.isNull(),
         );
         final children = await (_db.select(

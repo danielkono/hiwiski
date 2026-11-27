@@ -826,12 +826,140 @@
           "column": 0
         }
       ]
+    },
+    {
+      "key": "sardinia-plan",
+      "name": "Sardinien Todos",
+      "kind": "KANBAN",
+      "color": "BLUE",
+      "columns": [
+        {
+          "name": "Offen",
+          "color": "BLUE"
+        },
+        {
+          "name": "In Arbeit",
+          "color": "OCHRE"
+        },
+        {
+          "name": "Erledigt",
+          "color": "GREEN",
+          "done": true
+        }
+      ],
+      "items": [
+        {
+          "title": "Mietwagen upgraden",
+          "column": 0,
+          "assignees": [
+            1
+          ]
+        },
+        {
+          "title": "Reiseapotheke auffüllen",
+          "column": 0,
+          "assignees": [
+            0
+          ],
+          "due": 20
+        },
+        {
+          "title": "Schnorchel für Paul leihen",
+          "column": 0,
+          "assignees": [
+            1
+          ]
+        },
+        {
+          "title": "Nachbarn fragen, ob sie die Blumen gießen",
+          "column": 0
+        },
+        {
+          "title": "Flugtickets buchen",
+          "column": 1,
+          "assignees": [
+            0
+          ],
+          "due": 3
+        },
+        {
+          "title": "Ferienwohnung in Porto Pino buchen",
+          "column": 1,
+          "assignees": [
+            1
+          ],
+          "due": 5
+        },
+        {
+          "title": "Urlaub beantragen",
+          "column": 2,
+          "assignees": [
+            0
+          ],
+          "done": true
+        },
+        {
+          "title": "Mietwagen buchen",
+          "column": 2,
+          "assignees": [
+            1
+          ],
+          "done": true
+        },
+        {
+          "title": "Ausweise prüfen",
+          "column": 2,
+          "assignees": [
+            0
+          ],
+          "done": true
+        },
+        {
+          "title": "Tante Sabine nach Tipps fragen",
+          "column": 2,
+          "assignees": [
+            0
+          ],
+          "done": true
+        }
+      ],
+      "tags": [
+        "holiday"
+      ]
+    },
+    {
+      "key": "sardinia-shopping",
+      "name": "Sardinien Einkauf",
+      "kind": "SHOPPING",
+      "color": "BLUE",
+      "items": [
+        {
+          "title": "Sonnencreme",
+          "amount": 2,
+          "unit": "Flaschen"
+        },
+        {
+          "title": "Reisetabletten"
+        },
+        {
+          "title": "Strandtasche"
+        },
+        {
+          "title": "Badehose für Paul"
+        },
+        {
+          "title": "Schwimmflügel für Mia"
+        }
+      ],
+      "tags": [
+        "holiday"
+      ]
     }
   ],
   "pages": [
     {
       "title": "Willkommen in der Demo",
-      "content": "Das ist eine Demo: Alles, was du hier anlegst, änderst oder löschst, bleibt in diesem Browser-Tab. Lädst du die Seite neu, beginnt die Demo von vorn.\n\nDu bist **Anna Sonnenberg**. Mit Markus, Lena, Paul und Mia, Oma Gisela und Opa Heinz, Tante Sabine und Jonas, dem Au-pair, plant ihr hier euren Alltag.\n\nSchau dich um:\n\n- [ ] Im {{list:shopping}} etwas abhaken\n- [ ] Einen Termin in der Woche anlegen\n- [ ] Die {{page:pumpkin}} auf die Einkaufsliste setzen\n- [ ] Im {{list:aupair-plan}} eine Karte verschieben\n\nWichtig für alle: {{page:emergency}} und {{page:pickup}}.\n\nDie volle App läuft mit einem eigenen Server: Dann teilt ihr Listen, Kalender und Seiten in der Familie.",
+      "content": "Das ist eine Demo: Alles, was du hier anlegst, änderst oder löschst, bleibt in diesem Browser-Tab. Lädst du die Seite neu, beginnt die Demo von vorn.\n\nDu bist **Anna Sonnenberg**. Mit Markus, Lena, Paul und Mia, Oma Gisela und Opa Heinz, Tante Sabine und Jonas, dem Au-pair, plant ihr hier euren Alltag.\n\nSchau dich um:\n\n- [ ] Im {{list:shopping}} etwas abhaken\n- [ ] Einen Termin in der Woche anlegen\n- [ ] Die {{page:pumpkin}} auf die Einkaufsliste setzen\n- [ ] Im {{list:aupair-plan}} eine Karte verschieben\n- [ ] Auf der Pinnwand {{page:sardinia}} ein eigenes Wunschziel dazulegen\n\nWichtig für alle: {{page:emergency}} und {{page:pickup}}.\n\nDie volle App läuft mit einem eigenen Server: Dann teilt ihr Listen, Kalender und Seiten in der Familie.",
       "key": "welcome"
     },
     {
@@ -1362,7 +1490,7 @@
     },
     {
       "title": "Reisen",
-      "content": "{{page:packing}} und Erinnerungen. Der nächste Urlaub: {{list:holiday}}.",
+      "content": "{{page:packing}} und Erinnerungen. Bald geht es nach {{page:sardinia}}, im Sommer an die Ostsee: {{list:holiday}}.",
       "children": [
         {
           "title": "Packliste",
@@ -1415,6 +1543,331 @@
           "content": "1974 auf dem Schützenfest in Bergheim. Opa Heinz hat Oma Gisela eine Rose geschossen — beim dritten Versuch."
         }
       ]
+    },
+    {
+      "title": "Sardinien",
+      "kind": "PINBOARD",
+      "key": "sardinia",
+      "tags": [
+        "holiday"
+      ],
+      "content": "Unser Urlaub auf Sardinien: Wunschziele, Aufgaben, Einkäufe und Termine auf einen Blick.",
+      "pinboard": {
+        "nodes": [
+          {
+            "key": "e1",
+            "kind": "IMAGE",
+            "x": -9,
+            "y": -574,
+            "width": 180,
+            "height": 320,
+            "text": "Wandbild in einem Dorf der Marmilla",
+            "look": {},
+            "image": "sardinia-marmilla"
+          },
+          {
+            "key": "e2",
+            "kind": "IMAGE",
+            "x": -676,
+            "y": -185,
+            "width": 135,
+            "height": 239,
+            "text": "Strand von Porto Pino am Abend",
+            "look": {},
+            "image": "sardinia-porto-pino-evening"
+          },
+          {
+            "key": "e3",
+            "kind": "IMAGE",
+            "x": -318,
+            "y": 25,
+            "width": 135,
+            "height": 240,
+            "text": "Felsen und die Isola Rossa bei Teulada",
+            "look": {},
+            "image": "sardinia-isola-rossa"
+          },
+          {
+            "key": "e4",
+            "kind": "IMAGE",
+            "x": -118,
+            "y": -40,
+            "width": 135,
+            "height": 240,
+            "text": "Strand von Chia mit der Torre di Chia",
+            "look": {},
+            "image": "sardinia-chia"
+          },
+          {
+            "key": "e5",
+            "kind": "IMAGE",
+            "x": -718,
+            "y": -15,
+            "width": 135,
+            "height": 240,
+            "text": "Dünen von Porto Pino",
+            "look": {},
+            "image": "sardinia-porto-pino-dunes"
+          },
+          {
+            "key": "e6",
+            "kind": "IMAGE",
+            "x": -694,
+            "y": -494,
+            "width": 135,
+            "height": 240,
+            "text": "Treppe zur Tonnara von Porto Paglia",
+            "look": {},
+            "image": "sardinia-porto-paglia"
+          },
+          {
+            "key": "e7",
+            "kind": "DRAWING",
+            "x": -477,
+            "y": -713,
+            "width": 393,
+            "height": 712,
+            "text": "",
+            "look": {
+              "strokeWidth": 6
+            },
+            "stroke": "5454,415 5113,549 4869,754 4599,896 4404,1091 4181,1230 3944,1312 3536,1400 3090,1602 2759,1694 1799,1707 1354,1656 1201,1622 901,1507 549,1248 660,1489 680,1627 299,2098 224,2453 76,2632 604,2667 1104,2778 1358,2882 1578,3087 1578,3125 1737,3334 1747,3514 1691,3649 1701,3765 1988,4149 2055,4347 2008,4896 1942,5010 1712,5220 1681,5417 1702,5464 1794,5514 2165,5581 2324,5627 2439,5708 2532,5842 2557,6125 2523,6210 2502,6238 2462,6243 2092,6243 2027,6350 1899,6725 1854,6936 1843,7268 1631,7811 1650,7860 1808,7922 1871,8031 1871,8115 1670,8366 1735,8595 1784,8649 2108,8767 2206,8821 2265,8897 2254,9109 2337,9166 2587,9233 2678,9521 2959,9640 2969,9694 3067,9775 3263,9830 3651,9802 3841,9859 3941,9921 4107,9949 4710,9958 4974,9834 5218,9645 5387,9467 5475,9302 5485,9186 5430,9023 5451,8864 5750,8619 5838,8581 6039,8541 6158,8695 6482,8652 6693,8652 7194,8697 7820,8791 8096,8813 8463,8726 8708,8542 8813,8320 8756,7976 8768,7869 8814,7739 8948,7548 9088,7107 9162,6727 9339,6409 9339,6357 9279,6260 9058,6100 9028,6022 9180,5746 9303,5345 9515,5013 9505,4927 9222,4816 8939,4669 8851,4516 8851,4368 9091,4050 9792,3550 9880,3475 9924,3361 9924,3241 9836,3030 9727,2890 9538,2748 9430,2588 9442,2035 9340,1815 9360,1587 9296,1527 8834,1286 8688,938 8300,875 8313,759 8425,508 8392,394 8204,405 7892,457 7793,451 7693,345 7520,261 7310,107 7129,176 6927,216 6784,98 6341,42 6216,59 6123,98 6137,211 6257,291 6225,318 5867,371 5480,400"
+          },
+          {
+            "key": "e8",
+            "kind": "PLAIN",
+            "x": -400,
+            "y": -570,
+            "width": 275,
+            "height": 76,
+            "text": "Sardinien",
+            "look": {
+              "textSize": "65"
+            }
+          },
+          {
+            "key": "e9",
+            "kind": "PLAIN",
+            "x": -895,
+            "y": -422,
+            "width": 192,
+            "height": 16,
+            "text": "Porto Paglia: die alte Tonnara",
+            "look": {}
+          },
+          {
+            "key": "e10",
+            "kind": "CALENDAR",
+            "x": 760,
+            "y": -200,
+            "width": 640,
+            "height": 400,
+            "text": "",
+            "look": {},
+            "calendars": [
+              "holiday-trip"
+            ],
+            "week": 0,
+            "date": "07-20"
+          },
+          {
+            "key": "e11",
+            "kind": "IMAGE",
+            "x": -608,
+            "y": -48,
+            "width": 192,
+            "height": 341,
+            "text": "Fischerboote im Kanal von Porto Pino",
+            "look": {},
+            "image": "sardinia-porto-pino-boats"
+          },
+          {
+            "key": "e12",
+            "kind": "NOTE",
+            "x": -377,
+            "y": -61,
+            "width": 24,
+            "height": 24,
+            "text": "",
+            "look": {
+              "color": "BLUE",
+              "shape": "ELLIPSE"
+            }
+          },
+          {
+            "key": "e13",
+            "kind": "NOTE",
+            "x": -290,
+            "y": -302,
+            "width": 24,
+            "height": 24,
+            "text": "",
+            "look": {
+              "color": "BLUE",
+              "shape": "ELLIPSE"
+            }
+          },
+          {
+            "key": "e14",
+            "kind": "NOTE",
+            "x": -298,
+            "y": -25,
+            "width": 24,
+            "height": 24,
+            "text": "",
+            "look": {
+              "color": "BLUE",
+              "shape": "ELLIPSE"
+            }
+          },
+          {
+            "key": "e15",
+            "kind": "NOTE",
+            "x": -337,
+            "y": -28,
+            "width": 24,
+            "height": 24,
+            "text": "",
+            "look": {
+              "color": "BLUE",
+              "shape": "ELLIPSE"
+            }
+          },
+          {
+            "key": "e16",
+            "kind": "NOTE",
+            "x": -399,
+            "y": -216,
+            "width": 25,
+            "height": 25,
+            "text": "",
+            "look": {
+              "color": "BLUE",
+              "shape": "ELLIPSE"
+            }
+          },
+          {
+            "key": "e17",
+            "kind": "PLAIN",
+            "x": 740,
+            "y": -254,
+            "width": 224,
+            "height": 38,
+            "text": "Urlaubstermine",
+            "look": {
+              "textSize": "32"
+            }
+          },
+          {
+            "key": "e18",
+            "kind": "LINK",
+            "x": -629,
+            "y": 351,
+            "width": 939,
+            "height": 443,
+            "text": "",
+            "look": {
+              "linkView": "CONTENT"
+            },
+            "target": "list:sardinia-plan"
+          },
+          {
+            "key": "e19",
+            "kind": "LINK",
+            "x": 340,
+            "y": 25,
+            "width": 372,
+            "height": 443,
+            "text": "",
+            "look": {
+              "linkView": "CONTENT"
+            },
+            "target": "list:sardinia-shopping"
+          },
+          {
+            "key": "e20",
+            "kind": "PLAIN",
+            "x": 340,
+            "y": -14,
+            "width": 173,
+            "height": 28,
+            "text": "Noch zu kaufen",
+            "look": {
+              "textSize": "XL"
+            }
+          },
+          {
+            "key": "e21",
+            "kind": "PLAIN",
+            "x": -110,
+            "y": -830,
+            "width": 640,
+            "height": 80,
+            "text": "Unser Sommerurlaub",
+            "look": {
+              "textSize": "64",
+              "textColor": "VIOLET"
+            }
+          },
+          {
+            "key": "week-2",
+            "kind": "CALENDAR",
+            "x": 760,
+            "y": 240,
+            "width": 640,
+            "height": 400,
+            "text": "",
+            "look": {},
+            "calendars": [
+              "holiday-trip"
+            ],
+            "week": 1,
+            "date": "07-20"
+          }
+        ],
+        "edges": [
+          {
+            "from": "e4",
+            "to": "e14",
+            "text": "",
+            "look": {
+              "line": "DASHED"
+            }
+          },
+          {
+            "from": "e3",
+            "to": "e15",
+            "text": "",
+            "look": {
+              "line": "DASHED"
+            }
+          },
+          {
+            "from": "e12",
+            "to": "e11",
+            "text": "",
+            "look": {
+              "line": "DASHED"
+            }
+          },
+          {
+            "from": "e1",
+            "to": "e13",
+            "text": "",
+            "look": {
+              "line": "DASHED"
+            }
+          },
+          {
+            "from": "e16",
+            "to": "e6",
+            "text": "",
+            "look": {
+              "line": "DASHED"
+            }
+          }
+        ]
+      }
     }
   ],
   "calendars": [
@@ -2305,6 +2758,199 @@
           "date": "12-31",
           "allDay": true,
           "rrule": "FREQ=YEARLY"
+        }
+      ]
+    },
+    {
+      "key": "holiday-trip",
+      "name": "Urlaub",
+      "color": "BLUE",
+      "events": [
+        {
+          "title": "Flug nach Cagliari",
+          "date": "07-20",
+          "week": 0,
+          "weekday": 1,
+          "start": "07:15",
+          "end": "09:15",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Mietwagen abholen",
+          "date": "07-20",
+          "week": 0,
+          "weekday": 1,
+          "start": "10:00",
+          "end": "10:30",
+          "location": "Flughafen Cagliari",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Pferdetour",
+          "date": "07-20",
+          "week": 0,
+          "weekday": 2,
+          "start": "12:45",
+          "end": "14:15",
+          "location": "Porto Pino",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Schnorcheln an der Isola Rossa",
+          "date": "07-20",
+          "week": 0,
+          "weekday": 3,
+          "start": "10:00",
+          "end": "12:00",
+          "location": "Teulada",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Abendessen am Hafen",
+          "date": "07-20",
+          "week": 0,
+          "weekday": 4,
+          "start": "19:00",
+          "end": "21:00",
+          "location": "Porto Pino",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Badetag in Chia",
+          "date": "07-20",
+          "week": 0,
+          "weekday": 5,
+          "allDay": true,
+          "location": "Chia",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Su Nuraxi besichtigen",
+          "date": "07-20",
+          "week": 1,
+          "weekday": 1,
+          "start": "10:00",
+          "end": "12:00",
+          "location": "Barumini",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Wandbilder in der Marmilla",
+          "date": "07-20",
+          "week": 1,
+          "weekday": 2,
+          "start": "14:00",
+          "end": "16:00",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Porto Paglia und die Tonnara",
+          "date": "07-20",
+          "week": 1,
+          "weekday": 3,
+          "start": "10:00",
+          "end": "12:00",
+          "location": "Gonnesa",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Strandtag in Porto Pino",
+          "date": "07-20",
+          "week": 1,
+          "weekday": 4,
+          "allDay": true,
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Mietwagen zurückgeben",
+          "date": "07-20",
+          "week": 1,
+          "weekday": 6,
+          "start": "10:00",
+          "end": "10:30",
+          "location": "Flughafen Cagliari",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "title": "Flug nach Hause",
+          "date": "07-20",
+          "week": 1,
+          "weekday": 6,
+          "start": "13:00",
+          "end": "15:00",
+          "attendees": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
         }
       ]
     }

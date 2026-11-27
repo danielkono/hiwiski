@@ -438,15 +438,15 @@ void main() {
     });
   });
 
-  test('a mind map goes along as its picture, and comes back as a page', () {
+  test('a pinboard goes along as its picture, and comes back as a page', () {
     final file = packExport(
       pageExportFiles(
         branch: [
-          page('map', 'Urlaub [Ideen]', kind: 'MINDMAP', content: 'Notizen'),
+          page('map', 'Urlaub [Ideen]', kind: 'PINBOARD', content: 'Notizen'),
         ],
         tagNames: const {},
         images: const {},
-        mindmaps: {'map': png},
+        pinboards: {'map': png},
       ),
       name: 'Urlaub',
     );
@@ -461,7 +461,7 @@ void main() {
       TransferFile(file.name, file.bytes),
     ], place: .wiki);
     final imported = plan.pages.single;
-    // Not a mind map again — its elements are not in the file — but a page that
+    // Not a pinboard again — its elements are not in the file — but a page that
     // shows it.
     expect(imported.kind, equals('PAGE'));
     expect(plan.images.keys, equals(['0/media/map.png']));

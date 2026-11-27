@@ -12,7 +12,7 @@ import '../../../../core/theme/hiwiski_symbols.dart';
 import '../../../../core/theme/hiwiski_tokens.dart';
 import '../../../../core/ui/failure_text.dart';
 import '../../../../core/ui/page_header.dart';
-import '../../../../core/ui/pick_files.dart';
+import '../../../../components/rich_text/view/image_files.dart';
 import '../../../../core/ui/hiwiski_page.dart';
 import '../../view/account_keys.dart';
 import '../my_account_view_model.dart';
@@ -60,13 +60,12 @@ class _MyAccountScreenState extends ConsumerState<MyAccountScreen> {
 
   Future<void> _pickPicture() async {
     final l = L.of(context);
-    final picked = await pickFiles(type: .image);
-    if (picked.isEmpty || !mounted) return;
-    final file = picked.first;
+    final file = (await pickImageFiles(single: true)).firstOrNull;
+    if (file == null || !mounted) return;
     await _run(
-      () async => ref
+      () => ref
           .read(myAccountViewModelProvider.notifier)
-          .setPicture(await file.xFile.readAsBytes(), file.name),
+          .setPicture(file.bytes, file.filename),
       l.myAccountPictureSaved,
     );
   }

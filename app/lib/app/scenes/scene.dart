@@ -14,7 +14,8 @@ enum Scene {
   wikiEdit('wiki-edit'),
   recipe('recipe'),
   startBoard('start-board'),
-  search('search');
+  search('search'),
+  pinboard('pinboard');
 
   const Scene(this.id);
 
@@ -27,6 +28,7 @@ enum Scene {
   static const _router = 'page:router';
   static const _wifi = 'page:wifi';
   static const _spaetzle = 'page:spaetzle';
+  static const _sardinia = 'page:sardinia';
 
   /// The scene named [id], or `null` for a name this build does not know.
   static Scene? byId(Object? id) {
@@ -47,6 +49,7 @@ enum Scene {
     recipe => WikiRoute(pageId: demo.idOf(_spaetzle)).location,
     startBoard => const HomeRoute().location,
     search => const SearchRoute().location,
+    pinboard => PinboardRoute(pageId: demo.idOf(_sardinia) ?? '').location,
   };
 
   static String _list(Demo demo, String key) =>

@@ -43,9 +43,9 @@ TransferPage parsePage(String markdown, {required String path}) {
         ? title.trim()
         : p.posix.basenameWithoutExtension(path),
     kind: switch (kind) {
-      // A mind map's elements are not in its file — at most its picture, which
+      // A pinboard's elements are not in its file — at most its picture, which
       // the page keeps as an image: it comes in as an ordinary page.
-      String() when kind.trim() == PageKinds.mindmap => PageKinds.page,
+      String() when kind.trim() == PageKinds.pinboard => PageKinds.page,
       String() when kind.trim().isNotEmpty => kind.trim(),
       _ => PageKinds.page,
     },

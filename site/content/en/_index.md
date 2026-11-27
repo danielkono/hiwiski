@@ -20,6 +20,12 @@ features:
       title: Wiki
       text: A simple wiki with Markdown.
       page: /features/wiki
+pinboard:
+  title: Pinboard
+  text: Notes, photos, lists and calendar weeks placed freely, connected and drawn on with a pen — for holiday plans, projects and ideas that have no order yet.
+  button: To the pinboard
+  page: /features/pinboard
+  alt: A pinboard — a family's summer holiday on Sardinia
 connect:
   title: Links and tags
   text: Tag items that belong together, or link items that are directly related. Information stays in the right place, and the connection is not lost.

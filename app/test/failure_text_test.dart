@@ -37,10 +37,10 @@ void main() {
     return texts;
   }
 
-  testWidgets('a mind map change the server refuses says why', (tester) async {
+  testWidgets('a pinboard change the server refuses says why', (tester) async {
     const codes = [
-      FailureCodes.wikiNotAMindmap,
-      FailureCodes.wikiMindmapElementGone,
+      FailureCodes.wikiNotAPinboard,
+      FailureCodes.wikiPinboardElementGone,
     ];
     for (final locale in const [Locale('en'), Locale('de')]) {
       final texts = await textsOf(tester, locale, codes);

@@ -183,7 +183,7 @@ class ServerWriteService implements ServerWrites {
      *
      * <p>Run for every way an item comes back: a restore from the trash, and an upsert
      * that revives it (an edit made offline after someone else deleted it). Run only for
-     * the first, a mind map page revived by an edit of its text came back with an empty
+     * the first, a pinboard page revived by an edit of its text came back with an empty
      * map, its elements left in a trash nobody can reach them in.
      *
      * @param deletedAt when the item itself was deleted, read before it came back

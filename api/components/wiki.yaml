@@ -128,11 +128,11 @@ ParsedRecipe:
       items:
         $ref: '#/ParsedIngredient'
 
-MindmapNodeFields:
+PinboardNodeFields:
   type: object
   description: |
-    Entity type `MINDMAP_NODE`. An element on the canvas of a page of the kind
-    `MINDMAP`; its container is the page (`containerType` `WIKI_PAGE`), whose share it
+    Entity type `PINBOARD_NODE`. An element on the canvas of a page of the kind
+    `PINBOARD`; its container is the page (`containerType` `WIKI_PAGE`), whose share it
     inherits.
 
     An item of its own rather than a property of the page, so that two people changing
@@ -144,7 +144,8 @@ MindmapNodeFields:
       description: |
         `PLAIN` (text without formatting), `NOTE` (Markdown), `IMAGE`, `LINK`, `MEMBER`
         (a member of the family, shown by their picture), `DRAWING` (a stroke drawn by
-        hand). The list may grow; an app shows a kind it does not know as a placeholder.
+        hand), `CALENDAR` (a week of calendars, side by side). The list may grow; an app
+        shows a kind it does not know as a placeholder.
       example: NOTE
     x:
       type: integer
@@ -243,15 +244,29 @@ MindmapNodeFields:
         at its height — round in an ellipse, pointed in a diamond. Empty: `BOX`. Other
         names in capitals are taken and shown as `BOX` by an app that does not know
         them.
+    calendars:
+      type: string
+      description: |
+        The calendars a `CALENDAR` element shows: their ids, separated by spaces, at
+        most 50. Where it is shown, a calendar its reader cannot see is left out, as is
+        one that is gone — the element shows what the calendar's own page would.
+      example: 0190c1d4-7a1b-7c3d-9e8f-123456789abc 0190c1d4-7a1b-7c3d-9e8f-123456789abd
+    week:
+      type: string
+      description: |
+        The week a `CALENDAR` element shows, Monday to Sunday, as ISO 8601 `YYYY-Www`
+        (`2027-W28`). Empty: the week it is for whoever looks — it moves on with the
+        days.
+      example: 2027-W28
 
-MindmapEdgeFields:
+PinboardEdgeFields:
   type: object
   description: |
-    Entity type `MINDMAP_EDGE`. A connection between two elements of the same mind map,
+    Entity type `PINBOARD_EDGE`. A connection between two elements of the same pinboard,
     drawn from centre to centre; its container is the page.
 
     Both ends have to be living elements of the page, on every write: a connection whose
-    element is gone is refused with `wiki.mindmap_element_gone`. The ends never change.
+    element is gone is refused with `wiki.pinboard_element_gone`. The ends never change.
     A connection goes with either of its elements.
   properties:
     fromId:

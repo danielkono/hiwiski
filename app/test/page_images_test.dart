@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hiwiski/domain/wiki/pinboard.dart';
 import 'package:hiwiski/domain/wiki/page_images.dart';
 
 /// **Images in a page's text** — on lines of their own, consecutive ones a group.
@@ -43,6 +44,17 @@ void main() {
   test('an image within a sentence stays text', () {
     final line = 'See ${imageMarkdown('a')} here';
     expect(pageSegments(line), equals([TextSegment(line)]));
+  });
+
+  test('an image keeps its name, without what would end it early', () {
+    final named = imageMarkdown('a', name: 'Chia [Torre]');
+    expect(
+      pageSegments(named),
+      equals([
+        const ImageGroup(['a']),
+      ]),
+    );
+    expect(pictureNameOf(named), equals('Chia Torre'));
   });
 
   test('inserting puts the images on lines of their own', () {

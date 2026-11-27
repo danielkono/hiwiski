@@ -5,6 +5,7 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:markdown/markdown.dart' as md;
 
+import '../../../core/l10n/generated/app_localizations.dart';
 import '../../../core/theme/hiwiski_metrics.dart';
 import '../../../core/theme/hiwiski_symbols.dart';
 import '../../../core/ui/flowing_text.dart';
@@ -17,7 +18,7 @@ import 'linked_markdown.dart';
 
 /// A text with link chips and pictures that fills an outline line by line — a box,
 /// or a circle whose lines are short at its top and long in its middle
-/// ([FlowingText]). Read-only, as a note on a mind map is.
+/// ([FlowingText]). Read-only, as a note on a pinboard is.
 ///
 /// Everything in it stands where [place] puts it, lists and pictures too: a list's
 /// marker leads its line wherever the line stands. Markdown's blocks become lines of
@@ -31,6 +32,7 @@ class LinkedFlow extends ConsumerStatefulWidget {
     this.outline = const FlowBox(),
     this.place = AlignmentDirectional.topStart,
     this.onOpen,
+    this.onToggleTask,
   });
 
   final String data;
@@ -38,6 +40,11 @@ class LinkedFlow extends ConsumerStatefulWidget {
   final FlowOutline outline;
   final AlignmentGeometry place;
   final ValueChanged<LinkItem>? onOpen;
+
+  /// Ticks or unticks the n-th checkbox of the text, counted in document order
+  /// (`toggleTask`) — a packing list worked through where it is shown. `null`: the
+  /// boxes are shown, not tappable.
+  final ValueChanged<int>? onToggleTask;
 
   @override
   ConsumerState<LinkedFlow> createState() => _LinkedFlowState();
@@ -62,6 +69,7 @@ class _LinkedFlowState extends ConsumerState<LinkedFlow> {
       base,
       rule,
       LinkedMarkdown.shownTargetsOf(index, widget.data),
+      widget.onToggleTask != null,
     );
     if (madeOf != _madeOf) {
       _madeOf = madeOf;
@@ -71,6 +79,7 @@ class _LinkedFlowState extends ConsumerState<LinkedFlow> {
         rule: rule,
         index: index,
         onOpen: _open,
+        onToggleTask: widget.onToggleTask == null ? null : _toggle,
       ).of(widget.data);
     }
     return FlowingText(
@@ -82,6 +91,8 @@ class _LinkedFlowState extends ConsumerState<LinkedFlow> {
 
   /// Through the widget as it is now: the chips are made once and outlive a build.
   void _open(LinkItem target) => widget.onOpen?.call(target);
+
+  void _toggle(int task) => widget.onToggleTask?.call(task);
 }
 
 /// A text's paragraphs as lines of spans.
@@ -92,6 +103,7 @@ class _Paragraphs {
     required this.rule,
     required this.index,
     required this.onOpen,
+    this.onToggleTask,
   });
 
   final MarkdownStyleSheet sheet;
@@ -99,8 +111,13 @@ class _Paragraphs {
   final Color rule;
   final LinkIndex index;
   final ValueChanged<LinkItem> onOpen;
+  final ValueChanged<int>? onToggleTask;
 
   final _made = <FlowParagraph>[];
+
+  /// The checkboxes so far, in document order — the next one's number for
+  /// `toggleTask`. List items are made in that order, a nested list after its item.
+  int _tasks = 0;
 
   /// The room between two blocks, as a page leaves it.
   double get _gap => sheet.blockSpacing ?? HiwiskiMetrics.space8;
@@ -260,13 +277,14 @@ class _Paragraphs {
         null => TextSpan(text: ordered ? '${number++}.' : '•', style: bullet),
         final ticked => WidgetSpan(
           alignment: .middle,
-          child: Icon(
-            ticked
-                ? HiwiskiSymbols.checkBox
-                : HiwiskiSymbols.checkBoxOutlineBlank,
+          child: _TaskBox(
+            ticked: ticked,
             size: bullet.fontSize,
-            fill: ticked ? 1 : 0,
             color: bullet.color,
+            onToggle: switch ((onToggleTask, _tasks++)) {
+              (final toggle?, final task) => () => toggle(task),
+              _ => null,
+            },
           ),
         ),
       };
@@ -357,6 +375,49 @@ class _Paragraphs {
       default:
         yield* _inline(node.children, style);
     }
+  }
+}
+
+/// A list item's box, ticked or not — and ticked or unticked with a tap where the
+/// text may be changed, as on a page. As large as the text it stands in: a box a
+/// finger's width large would make its line that high.
+class _TaskBox extends StatelessWidget {
+  const _TaskBox({
+    required this.ticked,
+    required this.size,
+    required this.color,
+    this.onToggle,
+  });
+
+  final bool ticked;
+  final double? size;
+  final Color? color;
+  final VoidCallback? onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final box = Icon(
+      ticked ? HiwiskiSymbols.checkBox : HiwiskiSymbols.checkBoxOutlineBlank,
+      size: size,
+      fill: ticked ? 1 : 0,
+      color: color,
+    );
+    final toggle = onToggle;
+    if (toggle == null) return box;
+    return Semantics(
+      checked: ticked,
+      label: L.of(context).wikiTaskToggle,
+      onTap: toggle,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: .opaque,
+          excludeFromSemantics: true,
+          onTap: toggle,
+          child: box,
+        ),
+      ),
+    );
   }
 }
 

@@ -111,7 +111,7 @@ class LeftBehind {
   /// first, a page after its parent page; a change to something the server has newer
   /// meanwhile is a conflict like any other.
   ///
-  /// A mind map's connection brings back with it its elements left behind too: the
+  /// A pinboard's connection brings back with it its elements left behind too: the
   /// server refuses a connection to an element it does not have, and brought back
   /// alone, it was refused for good.
   Future<void> restore({
@@ -125,9 +125,9 @@ class LeftBehind {
         : {
             ...keys,
             for (final row in settled)
-              if (row.entityType == EntityTypes.mindmapEdge &&
+              if (row.entityType == EntityTypes.pinboardEdge &&
                   keys.contains((row.entityType, row.entityId)))
-                for (final end in _endsOf(row)) (EntityTypes.mindmapNode, end),
+                for (final end in _endsOf(row)) (EntityTypes.pinboardNode, end),
           };
     final rows = [
       for (final row in settled)
@@ -220,7 +220,7 @@ class LeftBehind {
   /// elements brought back with it — the later of the two, which goes after the
   /// other — or else its container.
   static String? _after(LeftBehindRow left, Map<String, String> queued) {
-    if (left.entityType == EntityTypes.mindmapEdge) {
+    if (left.entityType == EntityTypes.pinboardEdge) {
       final ends = _endsOf(left);
       final end = queued.keys.where(ends.contains).lastOrNull;
       if (end != null) return queued[end];
@@ -240,8 +240,8 @@ class LeftBehind {
           EntityTypes.event ||
           EntityTypes.calendarSubscription => EntityTypes.calendar,
           EntityTypes.wikiPage ||
-          EntityTypes.mindmapNode ||
-          EntityTypes.mindmapEdge => EntityTypes.wikiPage,
+          EntityTypes.pinboardNode ||
+          EntityTypes.pinboardEdge => EntityTypes.wikiPage,
           EntityTypes.widget => EntityTypes.board,
           _ => null,
         };

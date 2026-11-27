@@ -45,9 +45,9 @@ class LocalSettings {
   static const _localMemberKey = 'hiwiski.local.member';
   static const _catalogCarryoverKey = 'hiwiski.local.catalog_carryover';
   static const _homeWidgetsKey = 'hiwiski.home_widgets';
-  static const _mindmapSnapKey = 'hiwiski.mindmap.snap';
-  static const _mindmapGridKey = 'hiwiski.mindmap.grid';
-  static const _mindmapSizesKey = 'hiwiski.mindmap.sizes';
+  static const _pinboardSnapKey = 'hiwiski.pinboard.snap';
+  static const _pinboardGridKey = 'hiwiski.pinboard.grid';
+  static const _pinboardSizesKey = 'hiwiski.pinboard.sizes';
 
   static Future<LocalSettings> open() async =>
       LocalSettings(await SharedPreferences.getInstance());
@@ -233,27 +233,27 @@ class LocalSettings {
   Future<void> setShareSheets(Map<String, String> value) =>
       _preferences.setString(_shareSheetsKey, jsonEncode(value));
 
-  /// Whether a mind map's elements snap to one another while they are moved or
+  /// Whether a pinboard's elements snap to one another while they are moved or
   /// resized. On by default.
-  bool get mindmapSnap => _preferences.getBool(_mindmapSnapKey) ?? true;
+  bool get pinboardSnap => _preferences.getBool(_pinboardSnapKey) ?? true;
 
-  Future<void> setMindmapSnap(bool value) =>
-      _preferences.setBool(_mindmapSnapKey, value);
+  Future<void> setPinboardSnap(bool value) =>
+      _preferences.setBool(_pinboardSnapKey, value);
 
-  /// Whether a mind map shows its grid, and what is moved snaps to it. Off by
+  /// Whether a pinboard shows its grid, and what is moved snaps to it. Off by
   /// default.
-  bool get mindmapGrid => _preferences.getBool(_mindmapGridKey) ?? false;
+  bool get pinboardGrid => _preferences.getBool(_pinboardGridKey) ?? false;
 
-  Future<void> setMindmapGrid(bool value) =>
-      _preferences.setBool(_mindmapGridKey, value);
+  Future<void> setPinboardGrid(bool value) =>
+      _preferences.setBool(_pinboardGridKey, value);
 
-  /// The size an element of each kind was placed or resized at last, by mind map,
+  /// The size an element of each kind was placed or resized at last, by pinboard,
   /// newest first: `<page> <kind> <width> <height>`.
-  List<String> get mindmapSizes =>
-      _preferences.getStringList(_mindmapSizesKey) ?? const [];
+  List<String> get pinboardSizes =>
+      _preferences.getStringList(_pinboardSizesKey) ?? const [];
 
-  Future<void> setMindmapSizes(List<String> value) =>
-      _preferences.setStringList(_mindmapSizesKey, value);
+  Future<void> setPinboardSizes(List<String> value) =>
+      _preferences.setStringList(_pinboardSizesKey, value);
 
   /// The tags used last, newest first — filtering by one or putting one on an item.
   /// Repeated: a tag used often appears often. The filter bar ranks by it.
@@ -328,7 +328,7 @@ class LocalSettings {
     await _preferences.remove(_shareSheetsKey);
     await _preferences.remove(_tagUsesKey);
     // Named by the pages they were used on.
-    await _preferences.remove(_mindmapSizesKey);
+    await _preferences.remove(_pinboardSizesKey);
   }
 }
 

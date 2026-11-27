@@ -20,6 +20,12 @@ features:
       title: Wiki
       text: Ein einfaches Wiki mit Markdown.
       page: /features/wiki
+pinboard:
+  title: Pinnwand
+  text: Notizen, Fotos, Listen und Kalenderwochen frei angeordnet, verbunden und mit dem Stift bemalt – für Urlaubspläne, Projekte und Ideen, die noch keine Ordnung haben.
+  button: Zur Pinnwand
+  page: /features/pinboard
+  alt: Eine Pinnwand – der Sommerurlaub einer Familie auf Sardinien
 connect:
   title: Links und Tags
   text: Tagge zusammengehörige Einträge oder verlinke Einträge, die direkt zusammenhängen. So bleiben Informationen im richtigen Bereich, und der Zusammenhang geht nicht verloren.

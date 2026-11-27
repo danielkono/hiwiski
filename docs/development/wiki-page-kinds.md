@@ -84,7 +84,7 @@ name the field in words.
 | `icon(parent)`, `treeIcon(node)` | its symbol in "New page" and in the tree |
 | `body(…)` | the page while read; empty: it reads as Markdown text |
 | `head(…)` | what stands above the text (a collection's recipe cards) |
-| `tail(…)` | what stands below the text (a mind map's preview) |
+| `tail(…)` | what stands below the text (a pinboard's preview) |
 | `properties(…)` | the info bar's first rows — where the page sits, what the kind adds |
 | `dock(…)` | what stays docked below the page ("Add to shopping list") |
 | `draft(page)` | a `PageKindDraft`: the fields editing adds above the text, and `save` |
@@ -112,15 +112,15 @@ its view and its editor.
 
 Properties are fields of the page: a `json` property is replaced as a whole, and two
 people changing different parts of it collide over all of it. A kind whose content
-several people change in parts at once — the mind map's elements and connections —
+several people change in parts at once — the pinboard's elements and connections —
 keeps that content in **items of its own** whose container is the page:
 
 - On the server, a table with the standard columns and a `page_id`, a `SyncType` with
   `container()` the page and a `refusal` that checks the page is of the kind and not
   archived, a `JooqOwnable` with the page as container, and the page's `alsoDeleted`
-  and `alsoRestored` taking the items along (`MindmapSyncTypes`, `MindmapOwnables`).
+  and `alsoRestored` taking the items along (`PinboardSyncTypes`, `PinboardOwnables`).
   What the items say counts as the page's for references and search
-  (`MindmapTexts`); images they name are the page's (`MediaReferences`,
+  (`PinboardTexts`); images they name are the page's (`MediaReferences`,
   `OrphanedImagesJob`).
 - In the app, Drift tables with `SyncedItem`, a schema step, a codec for each in
   `entityCodecs`, a repository writing through `LocalWrites` with the page as

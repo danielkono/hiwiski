@@ -9,7 +9,7 @@ import '../../core/sync/outbox.dart';
 import '../../core/sync/sync_engine.dart';
 import '../../core/sync/sync_status.dart';
 import '../../domain/sync/sync_items.dart';
-import '../../domain/wiki/mindmap.dart';
+import '../../domain/wiki/pinboard.dart';
 
 /// Where the sync stands, and what the member decides about it: the conflicts nobody
 /// has seen yet and the changes the server refused.
@@ -78,7 +78,7 @@ class SyncRepository {
       .watch()
       .map((rows) => [for (final row in rows) leftBehindOf(row)]);
 
-  /// [row] as the member decides on it. A mind map's element is named by its own
+  /// [row] as the member decides on it. A pinboard's element is named by its own
   /// words, as in the list of what did not sync — its copy keeps a note's Markdown
   /// and a picture's as its label.
   @visibleForTesting
@@ -86,18 +86,24 @@ class SyncRepository {
     entityType: row.entityType,
     entityId: row.entityId,
     label: switch (row.entityType) {
-      EntityTypes.mindmapNode => mindmapLabelOf(_kindOf(row.fields), row.label),
-      EntityTypes.mindmapEdge => mindmapLabelOf(MindmapKinds.plain, row.label),
+      EntityTypes.pinboardNode => pinboardLabelOf(
+        _kindOf(row.fields),
+        row.label,
+      ),
+      EntityTypes.pinboardEdge => pinboardLabelOf(
+        PinboardKinds.plain,
+        row.label,
+      ),
       _ => row.label,
     },
     deleted: row.deleted,
     leftAt: row.leftAt,
   );
 
-  /// The kind in a mind map element's copy, its [fields] as JSON.
+  /// The kind in a pinboard element's copy, its [fields] as JSON.
   static String _kindOf(String fields) => switch (jsonDecode(fields)) {
     {WireFields.kind: final String kind} => kind,
-    _ => MindmapKinds.plain,
+    _ => PinboardKinds.plain,
   };
 
   /// Brings [items] back to the server — every one if `null` — through the outbox,

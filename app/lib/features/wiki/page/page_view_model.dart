@@ -18,7 +18,7 @@ import '../../../domain/common/change.dart';
 import '../../../domain/common/item_ref.dart';
 import '../../../domain/links/link_index.dart';
 import '../../../domain/tags/tag.dart';
-import '../../../domain/wiki/mindmap.dart';
+import '../../../domain/wiki/pinboard.dart';
 import '../../../domain/wiki/wiki_models.dart';
 import '../../../domain/wiki/wiki_page.dart';
 
@@ -46,17 +46,17 @@ class PageState {
     required this.tags,
     required this.servings,
     this.me,
-    Mindmap? mindmap,
-    this.mindmapTargets = const {},
-  }) : mindmap = mindmap ?? .empty;
+    Pinboard? pinboard,
+    this.pinboardTargets = const {},
+  }) : pinboard = pinboard ?? .empty;
 
   final WikiPage page;
 
-  /// The page's mind map — empty on a page of another kind.
-  final Mindmap mindmap;
+  /// The page's pinboard — empty on a page of another kind.
+  final Pinboard pinboard;
 
   /// What the map's link elements point to, by their address — what they show.
-  final Map<String, LinkItem> mindmapTargets;
+  final Map<String, LinkItem> pinboardTargets;
 
   /// Every page, archived ones included — the breadcrumb, the recipes below, where
   /// it may move.
@@ -162,8 +162,8 @@ Stream<List<WikiPage>> _pages(Ref ref) =>
     ref.watch(wikiRepositoryProvider).watchPages();
 
 @riverpod
-Stream<Mindmap> _mindmap(Ref ref, String pageId) =>
-    ref.watch(mindmapRepositoryProvider).watchMap(pageId);
+Stream<Pinboard> _pinboard(Ref ref, String pageId) =>
+    ref.watch(pinboardRepositoryProvider).watchMap(pageId);
 
 @riverpod
 Stream<ShareSheet> _shares(Ref ref, String pageId) => ref
@@ -197,18 +197,18 @@ class PageViewModel extends _$PageViewModel {
     final pages = await pageList;
     final page = pages.where((page) => page.id == pageId).firstOrNull;
     if (page == null) return null;
-    // A mind map and what it links to, only on a mind map's page: watched on every
+    // A pinboard and what it links to, only on a pinboard's page: watched on every
     // page, a page was built anew whenever anything anywhere that can be linked to
     // changed — a task's title, a list's name.
-    final mindmap = page.kind == PageKinds.mindmap
-        ? await ref.watch(_mindmapProvider(pageId).future)
+    final pinboard = page.kind == PageKinds.pinboard
+        ? await ref.watch(_pinboardProvider(pageId).future)
         : null;
     return PageState(
       page: page,
-      mindmap: mindmap,
-      mindmapTargets: mindmap == null
+      pinboard: pinboard,
+      pinboardTargets: pinboard == null
           ? const {}
-          : mindmapTargetsOf(mindmap, ref.watch(linkIndexProvider)),
+          : pinboardTargetsOf(pinboard, ref.watch(linkIndexProvider)),
       pages: pages,
       level: level,
       members: {for (final member in members) member.id: member},

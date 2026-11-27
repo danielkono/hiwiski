@@ -20,9 +20,9 @@ class Preferences {
     this.pullHint,
     this.pullHintPulls = 0,
     this.formattedEditor = true,
-    this.mindmapSnap = true,
-    this.mindmapGrid = false,
-    this.mindmapSizes = const {},
+    this.pinboardSnap = true,
+    this.pinboardGrid = false,
+    this.pinboardSizes = const {},
   });
 
   /// After this many pulls the hint has done its job: the member knows the bar is
@@ -80,16 +80,16 @@ class Preferences {
   /// Customize); the editor switches either way.
   final bool formattedEditor;
 
-  /// Whether a mind map's elements snap to one another, and whether its grid shows
+  /// Whether a pinboard's elements snap to one another, and whether its grid shows
   /// and is snapped to (the map's Tools).
-  final bool mindmapSnap;
-  final bool mindmapGrid;
+  final bool pinboardSnap;
+  final bool pinboardGrid;
 
-  /// The size an element was placed or resized at last, by [mindmapSizeKey] of its
+  /// The size an element was placed or resized at last, by [pinboardSizeKey] of its
   /// page and kind — a new one of the kind takes it.
-  final Map<String, ({int width, int height})> mindmapSizes;
+  final Map<String, ({int width, int height})> pinboardSizes;
 
-  static String mindmapSizeKey(String pageId, String kind) => '$pageId $kind';
+  static String pinboardSizeKey(String pageId, String kind) => '$pageId $kind';
 
   /// Whether the hint ("Pull for filters") shows above a filter bar on the phone.
   bool get showsPullHint => pullHint ?? pullHintPulls < pullHintLearned;
@@ -110,9 +110,9 @@ class Preferences {
     bool? pullHint,
     int? pullHintPulls,
     bool? formattedEditor,
-    bool? mindmapSnap,
-    bool? mindmapGrid,
-    Map<String, ({int width, int height})>? mindmapSizes,
+    bool? pinboardSnap,
+    bool? pinboardGrid,
+    Map<String, ({int width, int height})>? pinboardSizes,
   }) => .new(
     themeMode: themeMode ?? this.themeMode,
     keepFilters: keepFilters ?? this.keepFilters,
@@ -129,8 +129,8 @@ class Preferences {
     pullHint: pullHint ?? this.pullHint,
     pullHintPulls: pullHintPulls ?? this.pullHintPulls,
     formattedEditor: formattedEditor ?? this.formattedEditor,
-    mindmapSnap: mindmapSnap ?? this.mindmapSnap,
-    mindmapGrid: mindmapGrid ?? this.mindmapGrid,
-    mindmapSizes: mindmapSizes ?? this.mindmapSizes,
+    pinboardSnap: pinboardSnap ?? this.pinboardSnap,
+    pinboardGrid: pinboardGrid ?? this.pinboardGrid,
+    pinboardSizes: pinboardSizes ?? this.pinboardSizes,
   );
 }

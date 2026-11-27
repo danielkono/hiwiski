@@ -14,59 +14,66 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
 
 ### Added
 
-- **Mind maps.** A new kind of wiki page: its text as on any page, and below it a
-  picture of a canvas that opens full screen. There you move around and zoom with
-  fingers, trackpad or mouse wheel, search the canvas, and — with **Edit** — place
-  text, notes, pictures, links and members of the family, connect them with labelled
-  lines — the **Connection** tool draws a line, an arrow, a double arrow, a dashed
-  or dotted line in a colour and thickness chosen beforehand, from one element to
-  the next and on from there — give them a colour of the eight or of your own — see-through too — a text
-  colour, a shape and a text size — one of four or a number of your own —, a note
-  also the place of its text — top, middle or bottom, left, centre or right — and
-  lines that fill the box inside its shape or follow the shape itself, round in an
-  ellipse, pointed in a diamond — and bring
-  them forward or send them back; a line can be as thick as you like. **Undo** and
-  **Redo** take changes back and do them again. A snippet of text is written right
-  on the canvas and is just as large as its words; a picture keeps its own shape; a
-  member shows as their picture in a circle; a link shows its target's title or its
-  content, as its preview does. A **pen** draws on the map in a colour and thickness
-  of your choice — freehand or as a rectangle, ellipse, triangle, diamond, line or
-  arrow, which can be resized afterwards — and the **eraser** takes away every stroke it is swiped over; one tap
-  hides the drawings to see what lies under them. A **lasso** or a **rectangle**
-  selects several elements at once, to move, colour or delete together — or to
-  align, distribute evenly or give the same width, height or size. What is moved
-  or resized snaps to the edges, middles, gaps and sizes of the elements around
-  it, a thin guide showing where; a new picture, note, link or member takes the
-  size of the last one of its kind; an optional grid snaps everything to its dots.
-  Snapping and the grid are switched under Tools, on each device; ⌘ or Ctrl held
-  while dragging places freely. Every element can be turned by the knob above it. While
-  editing, everything to add, draw and do lies in three buttons in a quarter circle
-  in the bottom right corner; their choices come out of the button tapped onto a
-  ring that turns to show more — on a phone in the buttons' own place — with a
-  button back in the middle. On a touch screen, tapping twice and dragging up or
-  down zooms with one finger. The search's hits are put in order as they lie on
-  the map, alphabetically or by when they were made.
-  **Save as picture** saves the whole map as a PNG, and a page's export can take its
-  mind maps along as pictures; an import makes ordinary pages of them, with the
-  picture.
-  Several people can work on one map at once, offline too; each element is synced on
-  its own, so a conflict names the one element two people changed and is decided for
-  it alone — on the map, your version drawn beside the one everyone sees. Links on a
-  map count as links from its page, and the search finds a page by the words on its
-  map.
+- **Pinboards.** A new kind of wiki page: its text as on any page, and below it a
+  pinboard that opens full screen. You move around and zoom with fingers, trackpad or
+  mouse wheel — on a touch screen also by tapping twice and dragging — and search
+  what is on it, the hits in order as they lie, alphabetically or by when they were
+  made. With **Edit**, three buttons in a quarter circle in the bottom right corner
+  hold what there is to add, draw and do:
+  - **Elements:** text written right on the board; notes in Markdown, their text
+    placed top, middle or bottom, left, centre or right, their lines filling the box
+    inside the shape or following the shape itself; pictures in their own shape,
+    several chosen at once side by side; links showing their target's title or its
+    content; members of the family in a circle; and **calendar weeks** — one or more
+    calendars side by side, the current week moving on with the days or a week of the
+    year, an event opening into its card on hover or a long press. Whoever cannot see
+    a calendar sees nothing of it there. A note's checklist is ticked off with a tap
+    where the pinboard is read.
+  - **Look:** a colour of the eight or of your own, see-through too; a text colour, a
+    shape and a text size, one of four or of your own; turned by the knob above;
+    brought forward or sent back where elements lie on each other.
+  - **Connections** with a label: a line, an arrow, a double arrow, dashed or dotted,
+    in a colour and thickness chosen beforehand, from one element to the next and on
+    from there.
+  - **Pen and eraser:** strokes freehand or as a rectangle, ellipse, triangle,
+    diamond, line or arrow, which can be resized; the eraser takes away every stroke
+    it is swiped over, and one tap hides the drawings.
+  - **Groups:** a lasso or a rectangle selects several elements to move, colour or
+    delete together, to align them, put them side by side or one below the other a
+    gap apart, distribute them evenly or give them one width, height or size.
+  - **Placing:** what is moved or resized snaps to the edges, middles, gaps and sizes
+    around it, a thin guide showing where, or to an optional grid; ⌘ or Ctrl held
+    while dragging places freely. A new picture, note, link or member takes the size
+    of the last one of its kind. **Undo** and **Redo** take changes back and do them
+    again.
 
-  *Upgrade notes:* update the server before the apps. An older app shows a mind map as
+  **Save as picture** saves the whole pinboard as a PNG, and a page's export can take
+  its pinboards along as pictures; an import makes ordinary pages of them, with the
+  picture. Several people can work on one pinboard at once, offline too: each element
+  is synced on its own, so a conflict names the one element two people changed and is
+  decided for it alone, right on the pinboard. Links on a pinboard count as links from
+  its page, and the search finds a page by the words on its pinboard. The demo has one
+  to try: the sample family's summer on Sardinia — the places they wish for, their
+  to-dos and shopping, and two weeks of holiday dates.
+
+  *Upgrade notes:* update the server before the apps. An older app shows a pinboard as
   an ordinary page and leaves its canvas alone; an older server refuses the elements
   an app places, and they wait in the app's list of changes that could not sync.
 
 ### Fixed
 
+- **A picture in a format the server does not take is no longer lost.** A HEIC
+  chosen from the files — in the browser, on a Mac, on Android — showed in a page or
+  on a pinboard at first, was refused by the server and then given up; in the
+  browser it was gone with the next reload. The app now draws such a picture, and
+  one larger than an upload may be, again before it is kept — in the browser as a
+  JPEG, by the browser itself, which leaves the photo's location and camera data
+  out; in the apps as a PNG. A profile picture and a recipe's picture go the same
+  way and are picked one at a time.
 - Changes made in the same instant — an element and its connections brought back
   together, say — reach the server in the order they were made. Before, a connection
   could arrive ahead of its element and was refused.
-- A conflict over where something stands or how large it is shows as one, not as two
-  (across and down, or wide and high), and the list of conflicts closes once the last
-  one is decided.
+- The list of conflicts closes once the last one in it is decided.
 - A picture added on another device shows as soon as its upload is through, instead of
   an error until the app was reloaded; and a picture or a backup that cannot be loaded
   says why, instead of "The server had a problem".

@@ -1,15 +1,21 @@
 import 'dart:convert';
-import 'dart:ui' show PlatformDispatcher;
+import 'dart:math' as math;
+import 'dart:ui' show Offset, PlatformDispatcher;
 
 import 'package:clock/clock.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/api/image_client.dart';
 import '../core/common/wire.dart';
+import '../core/theme/hiwiski_metrics.dart';
 import '../domain/board/widget_kinds.dart';
 import '../domain/calendar/event_draft.dart';
+import '../domain/common/calendar_days.dart';
 import '../domain/links/link_text.dart';
 import '../domain/todo/kanban.dart';
+import '../domain/wiki/pinboard.dart';
+import '../domain/wiki/page_images.dart';
 import '../domain/wiki/wiki_models.dart';
 import 'repositories.dart';
 import 'stores.dart';
@@ -78,7 +84,28 @@ class Demo {
   static const _description = 'description';
   static const _linkKey = 'key';
   static const _pageLink = 'page:';
+  static const _calendarLink = 'calendar:';
+  static const _stroke = 'stroke';
+  static const _week = 'week';
   static const _listLink = 'list:';
+  static const _pinboard = 'pinboard';
+  static const _nodes = 'nodes';
+  static const _edges = 'edges';
+  static const _x = 'x';
+  static const _y = 'y';
+  static const _width = 'width';
+  static const _height = 'height';
+  static const _words = 'text';
+  static const _look = 'look';
+  static const _image = 'image';
+  static const _target = 'target';
+  static const _member = 'member';
+  static const _points = 'points';
+  static const _pen = 'pen';
+  static const _from = 'from';
+  static const _to = 'to';
+  static const _images = 'assets/demo/images/';
+  static const _imageExtension = '.jpg';
 
   /// `{{page:recipes}}`, `{{list:shopping}}`: a link to what the sample data
   /// names by that key — written as the link picker writes it, once the target
@@ -149,7 +176,7 @@ class Demo {
 
     await _seedLists(data, members, tags);
     await _seedCalendars(data, members, tags);
-    await _seedPages(data, tags);
+    await _seedPages(data, members, tags);
     await _seedStartBoard(data);
   }
 
@@ -228,6 +255,13 @@ class Demo {
         name: _text(entry, _name),
         colorToken: _text(entry, _color),
       );
+      if (entry[_linkKey] case final String key) {
+        _targets['$_calendarLink$key'] = (
+          type: EntityTypes.calendar,
+          id: calendarId,
+          title: _text(entry, _name),
+        );
+      }
       for (final event in _list(entry[_events])) {
         final day = _dayOf(event, today);
         final rrule = event[_rrule] as String?;
@@ -262,9 +296,11 @@ class Demo {
     }
   }
 
-  /// All pages first, then their texts: a text links to pages further down.
+  /// All pages first, then their texts and pinboards: a text links to pages further
+  /// down.
   Future<void> _seedPages(
     Map<String, dynamic> data,
+    List<String> Function(Object?) members,
     List<String> Function(Object?) tags,
   ) async {
     final created = <(String, Map<String, dynamic>)>[];
@@ -294,6 +330,126 @@ class Demo {
                 Ingredient.fromJson(item).toJson(),
             ],
         },
+      );
+      if (entry[_pinboard] case final Map<String, dynamic> map) {
+        await _seedPinboard(id, map, members);
+      }
+    }
+  }
+
+  /// The elements of a pinboard, in the order they lie on each other, and then their
+  /// connections — placed as the map's screen places them. An element names what it
+  /// shows by the sample data's own words: a picture by its file in
+  /// `assets/demo/images/`, a link by `page:<key>` or `list:<key>`, a member by their
+  /// place in the family, a calendar week by its calendars' keys and a week after this
+  /// one or after the next `date`; a stroke by its points on the pinboard, a shape the pen draws by its two
+  /// corners, or one copied from a pinboard as it keeps it (`stroke`).
+  Future<void> _seedPinboard(
+    String pageId,
+    Map<String, dynamic> map,
+    List<String> Function(Object?) members,
+  ) async {
+    final maps = _ref.read(pinboardRepositoryProvider);
+    final media = _ref.read(mediaRepositoryProvider);
+    final ids = <String, String>{};
+    for (final node in _list(map[_nodes])) {
+      final kind = _text(node, _kind);
+      final look = <String, Object?>{...?node[_look] as Map<String, dynamic>?};
+      String text = _text(node, _words);
+      int x = node[_x] as int? ?? 0, y = node[_y] as int? ?? 0;
+      int width = node[_width] as int? ?? 0,
+          height = node[_height] as int? ?? 0;
+      if (node[_image] case final String file) {
+        final bytes = await rootBundle.load('$_images$file$_imageExtension');
+        // Kept on the device, as a picture placed on the map is: the demo has no
+        // server to take it.
+        final imageId = await media.keep(
+          ownerType: ImageOwnerTypes.wikiPage,
+          ownerItemId: pageId,
+          bytes: bytes.buffer.asUint8List(),
+          filename: '$file$_imageExtension',
+        );
+        text = imageMarkdown(imageId, name: text);
+      }
+      if (_targets[node[_target]] case final target?) {
+        look[WireFields.target] = linkAddressOf(
+          UriReference.markdown(target.type, target.id, target.title),
+        );
+      }
+      if (node[_member] case final int index) {
+        if (members([index]).firstOrNull case final member?) {
+          look[WireFields.target] = memberAddressOf(member);
+        }
+      }
+      if (node[_calendars] case final List<dynamic> keys) {
+        look[WireFields.calendars] = calendarsOf([
+          for (final key in keys.cast<String>())
+            ?_targets['$_calendarLink$key']?.id,
+        ]);
+      }
+      // A week after this one, or after the next `date`: the demo shows the same
+      // whenever it is opened.
+      if (node[_week] case final int weeks) {
+        look[WireFields.week] = isoWeekOf(
+          addDays(_weekOf(node, _today()), weeks * DateTime.daysPerWeek),
+        );
+      }
+      // A stroke as a pinboard keeps it — across its element, as drawn there.
+      if (node[_stroke] case final String stored) {
+        look[WireFields.points] = stored;
+      }
+      if (node[_points] case final List<dynamic> given) {
+        final strokeWidth = look[WireFields.strokeWidth] as int? ?? 1;
+        final points = [
+          for (final point in given.cast<List<dynamic>>())
+            Offset((point[0] as num).toDouble(), (point[1] as num).toDouble()),
+        ];
+        final pen = PinboardPenShape.values
+            .where((shape) => penShapeName(shape) == node[_pen])
+            .firstOrNull;
+        // As the pen draws it: a shape along its outline, as thick as on the screen.
+        final stroke = strokeOf(
+          pen == null || points.length < 2
+              ? points
+              : penShapeOutline(
+                  pen,
+                  points.first,
+                  points.last,
+                  head: penArrowHead(
+                    strokeWidth.toDouble(),
+                    least: HiwiskiMetrics.pinboardArrowHead * 2,
+                  ),
+                ),
+          strokeWidth.toDouble(),
+        );
+        x = stroke.bounds.left.round();
+        y = stroke.bounds.top.round();
+        width = math.max(1, stroke.bounds.width.round());
+        height = math.max(1, stroke.bounds.height.round());
+        look[WireFields.points] = stroke.points;
+        look[WireFields.shape] = pen == null ? null : penShapeName(pen);
+      }
+      final id = await maps.addNode(
+        pageId: pageId,
+        kind: kind,
+        x: x,
+        y: y,
+        width: width,
+        height: height,
+        text: text,
+        look: look,
+      );
+      if (node[_linkKey] case final String key) ids[key] = id;
+    }
+    for (final edge in _list(map[_edges])) {
+      final from = await maps.node(ids[edge[_from]] ?? '');
+      final to = await maps.node(ids[edge[_to]] ?? '');
+      if (from == null || to == null) continue;
+      await maps.connect(
+        from,
+        to,
+        text: _text(edge, _words),
+        look: {...?edge[_look] as Map<String, dynamic>?},
       );
     }
   }
@@ -366,17 +522,20 @@ class Demo {
   /// demo looks the same whenever it is opened:
   ///
   /// - `date`: `MM-DD`, the next such day from today on — birthdays, holidays;
+  /// - `week` and `weekday`: that weekday (1, Monday, if none) of the week that many
+  ///   weeks after this one — or, with `date` as well, after the week of the next such
+  ///   day: the days a calendar week on a pinboard shows, in the season they are for;
   /// - `weekday`: 1 (Monday) to 7, the next such weekday from today on — a weekly
   ///   series starts on a day its rule holds;
   /// - `day`: that many days from today.
   static DateTime _dayOf(Map<String, dynamic> event, DateTime today) {
-    if (event[_date] case final String date) {
-      final [month, day] = date.split(_dateSeparator).map(int.parse).toList();
-      final thisYear = DateTime(today.year, month, day);
-      return thisYear.isBefore(today)
-          ? DateTime(today.year + 1, month, day)
-          : thisYear;
+    if (event[_week] case final int weeks) {
+      return addDays(
+        _weekOf(event, today),
+        weeks * DateTime.daysPerWeek + (event[_weekday] as int? ?? 1) - 1,
+      );
     }
+    if (event[_date] case final String date) return _next(date, today);
     if (event[_weekday] case final int weekday) {
       return DateTime(
         today.year,
@@ -390,6 +549,23 @@ class Demo {
       today.day + (event[_day] as int? ?? 0),
     );
   }
+
+  /// The next `MM-DD` [date] from [today] on.
+  static DateTime _next(String date, DateTime today) {
+    final [month, day] = date.split(_dateSeparator).map(int.parse).toList();
+    final thisYear = DateTime(today.year, month, day);
+    return thisYear.isBefore(today)
+        ? DateTime(today.year + 1, month, day)
+        : thisYear;
+  }
+
+  /// The Monday weeks are counted from: of the next `date` an [entry] names, or of
+  /// this week.
+  static DateTime _weekOf(Map<String, dynamic> entry, DateTime today) =>
+      startOfWeek(switch (entry[_date]) {
+        final String date => _next(date, today),
+        _ => today,
+      });
 
   /// [day] at `HH:MM`.
   static DateTime _at(DateTime day, String time) {

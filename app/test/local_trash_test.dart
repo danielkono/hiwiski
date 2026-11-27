@@ -20,7 +20,7 @@ import 'package:hiwiski/data/admin/local_trash.dart';
 import 'package:hiwiski/data/calendar/calendar_repository.dart';
 import 'package:hiwiski/data/media/media_repository.dart';
 import 'package:hiwiski/data/todo/todo_repository.dart';
-import 'package:hiwiski/data/wiki/mindmap_repository.dart';
+import 'package:hiwiski/data/wiki/pinboard_repository.dart';
 import 'package:hiwiski/data/wiki/wiki_repository.dart';
 import 'package:hiwiski/domain/calendar/event_draft.dart';
 
@@ -91,25 +91,25 @@ void main() {
     expect(await todos.watchTodos(other).first, hasLength(1));
   });
 
-  test('a mind map comes back with its page — and goes out in full', () async {
+  test('a pinboard comes back with its page — and goes out in full', () async {
     final wiki = WikiRepository(
       db: db,
       writes: writes,
       api: HiwiskiApi(tokens: NoTokens()),
       currentMemberId: () => 'anna',
     );
-    final maps = MindmapRepository(
+    final maps = PinboardRepository(
       db: db,
       writes: writes,
       currentMemberId: () => 'anna',
     );
     final pageId = await wiki.createPage(
       title: 'Urlaub',
-      kind: PageKinds.mindmap,
+      kind: PageKinds.pinboard,
     );
     Future<String> element(String text) => maps.addNode(
       pageId: pageId,
-      kind: MindmapKinds.plain,
+      kind: PinboardKinds.plain,
       x: 0,
       y: 0,
       width: 100,
@@ -147,7 +147,7 @@ void main() {
     expect(
       jsonDecode(revived.fields),
       allOf(
-        containsPair(WireFields.kind, MindmapKinds.plain),
+        containsPair(WireFields.kind, PinboardKinds.plain),
         containsPair(WireFields.text, 'Meer'),
       ),
     );

@@ -117,11 +117,11 @@ abstract final class FailureCodes {
   static const syncBoardGone = 'sync.board_gone';
   static const syncContainerNotFound = 'sync.container_not_found';
 
-  /// A mind map element or connection for a page that is no mind map, or is gone.
-  static const wikiNotAMindmap = 'wiki.not_a_mindmap';
+  /// A pinboard element or connection for a page that is no pinboard, or is gone.
+  static const wikiNotAPinboard = 'wiki.not_a_pinboard';
 
-  /// A mind map connection whose element is gone, on another page, or at both ends.
-  static const wikiMindmapElementGone = 'wiki.mindmap_element_gone';
+  /// A pinboard connection whose element is gone, on another page, or at both ends.
+  static const wikiPinboardElementGone = 'wiki.pinboard_element_gone';
 
   static const trashContainerGone = 'trash.container_gone';
   static const trashItemNotFound = 'trash.item_not_found';

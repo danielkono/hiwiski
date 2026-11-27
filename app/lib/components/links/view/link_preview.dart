@@ -44,7 +44,7 @@ class LinkPreview extends StatelessWidget {
   final Widget body;
   final VoidCallback onOpenFull;
 
-  /// Shown within something else — a mind map's element — not in a sheet of its own:
+  /// Shown within something else — a pinboard's element — not in a sheet of its own:
   /// without the sheet's buttons — "Close" there closed what lay under the element —
   /// and a tap on the title does [onOpenFull].
   final bool inline;

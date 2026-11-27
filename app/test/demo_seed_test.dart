@@ -14,6 +14,7 @@ import 'package:hiwiski/core/storage/local_settings.dart';
 import 'package:hiwiski/domain/calendar/occurrence.dart';
 import 'package:hiwiski/domain/common/calendar_days.dart';
 import 'package:hiwiski/domain/session/session_state.dart';
+import 'package:hiwiski/domain/wiki/pinboard.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 
@@ -43,7 +44,8 @@ void main() {
           'description' ||
           'me' ||
           'label' ||
-          'location' => '',
+          'location' ||
+          'text' => '',
           'unit' => value == null ? null : '',
           _ => shape(value),
         },
@@ -198,11 +200,100 @@ void main() {
     final widgets = await db.select(db.widgets).get();
     expect(widgets, hasLength((data['start'] as List).length));
 
-    // Reset: the same again, nothing twice.
+    // The pinboard: every element and connection; its pictures kept on the device,
+    // its links and members pointing where a link picker would have them point.
+    List<Map<String, dynamic>> flat(Object? entries) => [
+      for (final page
+          in (entries as List? ?? const []).cast<Map<String, dynamic>>()) ...[
+        page,
+        ...flat(page['children']),
+      ],
+    ];
+    final sampled = flat(data['pages'])
+        .singleWhere((page) => page['pinboard'] != null);
+    final pinboard = sampled['pinboard'] as Map<String, dynamic>;
+    final sampledNodes = (pinboard['nodes'] as List)
+        .cast<Map<String, dynamic>>();
+    final mapPage = rows.singleWhere((row) => row.kind == PageKinds.pinboard);
+    expect(mapPage.title, equals(sampled['title']));
+    Future<List<PinboardNodeRow>> nodes() => (db.select(
+      db.pinboardNodes,
+    )..where((node) => node.pageId.equals(mapPage.id))).get();
+    final placed = await nodes();
+    expect(placed, hasLength(sampledNodes.length));
+    expect(
+      await (db.select(
+        db.pinboardEdges,
+      )..where((edge) => edge.pageId.equals(mapPage.id))).get(),
+      hasLength((pinboard['edges'] as List).length),
+    );
+    final kept = await db.select(db.localImages).get();
+    expect(
+      kept,
+      hasLength(sampledNodes.where((node) => node['image'] != null).length),
+    );
+    final memberIds = {
+      for (final member in await db.select(db.members).get()) member.id,
+    };
+    final calendarIds = {
+      for (final calendar in await db.select(db.calendars).get()) calendar.id,
+    };
+    for (final node in placed) {
+      switch (node.kind) {
+        case PinboardKinds.image:
+          // Named, for a screen reader; kept here, for the demo has no server.
+          expect(pictureNameOf(node.body), isNotNull, reason: node.body);
+          expect(
+            kept.where((image) => node.body.contains(':${image.id})')),
+            hasLength(1),
+            reason: node.body,
+          );
+        case PinboardKinds.link:
+          expect(
+            node.target,
+            anyOf(
+              startsWith('hiwiski://wiki_page/'),
+              startsWith('hiwiski://todo_list/'),
+            ),
+          );
+        case PinboardKinds.member:
+          expect(memberIds, contains(memberIdOf(node.target)));
+        case PinboardKinds.drawing:
+          expect(node.points, isNotEmpty);
+        case PinboardKinds.calendar:
+          // Calendars the demo has, and a week that holds their events.
+          expect(calendarIds, containsAll(calendarIdsOf(node.calendars)));
+          final monday = mondayOfIsoWeek(node.week ?? '');
+          expect(monday, isNotNull, reason: node.week);
+          final inWeek = [
+            for (final event in events)
+              if (calendarIdsOf(node.calendars).contains(event.calendarId))
+                if (event.startsAt?.toLocal() ?? event.startDate
+                    case final start?)
+                  if (!start.isBefore(monday!) &&
+                      start.isBefore(addDays(monday, DateTime.daysPerWeek)))
+                    event,
+          ];
+          expect(inWeek, isNotEmpty, reason: node.week);
+      }
+    }
+    expect(
+      placed.where((node) => node.shape == PinboardShapes.arrow),
+      hasLength(sampledNodes.where((node) => node['pen'] != null).length),
+    );
+
+    // Reset: the same again, nothing twice — and the pictures in memory gone with
+    // the media repository, which the map's pictures were kept through.
+    final media = container.read(mediaRepositoryProvider);
     await container.read(demoProvider).reset();
+    expect(container.read(mediaRepositoryProvider), isNot(same(media)));
     expect(
       await db.select(db.todoLists).get(),
       hasLength((data['lists'] as List).length),
+    );
+    expect(
+      await db.select(db.pinboardNodes).get(),
+      hasLength(sampledNodes.length),
     );
   });
 }

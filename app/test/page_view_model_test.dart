@@ -9,7 +9,7 @@ import 'package:hiwiski/core/storage/local_settings.dart';
 import 'package:hiwiski/features/wiki/page/page_view_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// **A page is built from what it shows** — a mind map's page from its map and what
+/// **A page is built from what it shows** — a pinboard's page from its map and what
 /// that links to, any other page without them.
 void main() {
   late HiwiskiDatabase db;
@@ -61,15 +61,15 @@ void main() {
     expect(built, isEmpty);
   });
 
-  test('a mind map page shows its map', () async {
+  test('a pinboard page shows its map', () async {
     final pageId = await container
         .read(wikiRepositoryProvider)
-        .createPage(title: 'Urlaub', kind: PageKinds.mindmap);
+        .createPage(title: 'Urlaub', kind: PageKinds.pinboard);
     await container
-        .read(mindmapRepositoryProvider)
+        .read(pinboardRepositoryProvider)
         .addNode(
           pageId: pageId,
-          kind: MindmapKinds.plain,
+          kind: PinboardKinds.plain,
           x: 0,
           y: 0,
           width: 100,
@@ -82,6 +82,6 @@ void main() {
     addTearDown(held.close);
     final state = await container.read(provider.future);
 
-    expect(state?.mindmap.nodes.single.text, equals('Meer'));
+    expect(state?.pinboard.nodes.single.text, equals('Meer'));
   });
 }

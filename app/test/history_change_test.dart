@@ -99,7 +99,7 @@ void main() {
     expect(historyFieldLabel(de, 'kind'), equals('Art'));
     expect(historyFieldLabel(de, 'imageId'), equals('Bild'));
     expect(historyFieldLabel(de, 'exceptions'), equals('Einzelne Termine'));
-    // A mind map's: an element turned, a connection drawn another way.
+    // A pinboard's: an element turned, a connection drawn another way.
     expect(historyFieldLabel(de, 'rotation'), equals('Drehung'));
     expect(historyFieldLabel(de, 'line'), equals('Linienart'));
     expect(historyFieldLabel(de, 'arrows'), equals('Linienart'));

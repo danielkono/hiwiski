@@ -33,7 +33,7 @@ class HsvColorPicker extends StatelessWidget {
       children: [
         Semantics(
           slider: true,
-          label: l.mindmapColorBrightness,
+          label: l.pinboardColorBrightness,
           value: _percent(color.value),
           increasedValue: _percent((color.value + _step).clamp(0, 1)),
           decreasedValue: _percent((color.value - _step).clamp(0, 1)),
@@ -72,7 +72,7 @@ class HsvColorPicker extends StatelessWidget {
         const SizedBox(height: HiwiskiMetrics.space12),
         Semantics(
           slider: true,
-          label: l.mindmapColorHue,
+          label: l.pinboardColorHue,
           value: '${color.hue.round()}°',
           increasedValue: '${((color.hue + _hueStep) % _circle).round()}°',
           decreasedValue: '${((color.hue - _hueStep) % _circle).round()}°',
@@ -105,7 +105,7 @@ class HsvColorPicker extends StatelessWidget {
           const SizedBox(height: HiwiskiMetrics.space12),
           Semantics(
             slider: true,
-            label: l.mindmapColorOpacity,
+            label: l.pinboardColorOpacity,
             value: _percent(color.alpha),
             increasedValue: _percent((color.alpha + _step).clamp(0, 1)),
             decreasedValue: _percent((color.alpha - _step).clamp(0, 1)),

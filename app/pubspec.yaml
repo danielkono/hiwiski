@@ -56,7 +56,7 @@ dependencies:
   # Markdown with an insert toolbar -- no WYSIWYG.
   flutter_markdown_plus: ^1.0.12
   # The HCT colour space Flutter's own theming is built on (Apache-2.0, shipped with
-  # Flutter already): a mind map's own colours keep their hue and change only their
+  # Flutter already): a pinboard's own colours keep their hue and change only their
   # tone until they read on the light and on the dark canvas.
   material_color_utilities: ^0.13.0
   # The parser behind it, directly: a reference is recognized as its own inline rule --
@@ -148,8 +148,10 @@ flutter:
     # The catalogue a device without a server starts from -- the server's own seed,
     # kept identical by test/catalog_seed_test.dart.
     - assets/catalog/
-    # The demo's sample data, one file per language.
+    # The demo's sample data, one file per language, and the pictures on its
+    # pinboard -- a family's own photos, without their location and camera data.
     - assets/demo/
+    - assets/demo/images/
     # The app icon for the logo on the sign-in and setup screens.
     - assets/brand/
 

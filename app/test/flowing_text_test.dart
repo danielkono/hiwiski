@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hiwiski/core/common/wire.dart';
 import 'package:hiwiski/core/ui/flowing_text.dart';
-import 'package:hiwiski/features/wiki/view/mindmap/mindmap_outline.dart';
+import 'package:hiwiski/features/wiki/view/pinboard/pinboard_outline.dart';
 
 /// **Text fills its outline line by line**: in a box every line is as wide as the
 /// box; in a circle or a diamond each line as wide as the shape is at its height,
@@ -67,7 +67,7 @@ void main() {
     final text = await lay(
       tester,
       words,
-      outline: const MindmapOutline(MindmapShapes.ellipse, pad: 8),
+      outline: const PinboardOutline(PinboardShapes.ellipse, pad: 8),
       place: AlignmentDirectional.center,
     );
     expect(shown(text), equals(words));
@@ -102,7 +102,7 @@ void main() {
     final text = await lay(
       tester,
       words,
-      outline: const MindmapOutline(MindmapShapes.diamond, pad: 8),
+      outline: const PinboardOutline(PinboardShapes.diamond, pad: 8),
       place: AlignmentDirectional.topCenter,
       size: diamond,
     );
@@ -136,7 +136,7 @@ void main() {
     final text = await lay(
       tester,
       words,
-      outline: const MindmapOutline(MindmapShapes.diamond, pad: 8),
+      outline: const PinboardOutline(PinboardShapes.diamond, pad: 8),
       place: AlignmentDirectional.topCenter,
     );
     expect(shown(text), isNot(words));
@@ -150,7 +150,7 @@ void main() {
       final text = await lay(
         tester,
         '$long Ende',
-        outline: const MindmapOutline(MindmapShapes.ellipse, pad: 8),
+        outline: const PinboardOutline(PinboardShapes.ellipse, pad: 8),
       );
       expect(text.lines.map((line) => line.text).join(), contains(long));
       expect(text.lines.last.text, endsWith('Ende'));

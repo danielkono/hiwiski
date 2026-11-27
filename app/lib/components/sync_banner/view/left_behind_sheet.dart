@@ -57,7 +57,7 @@ class _LeftBehindList extends ConsumerWidget {
     EntityTypes.wikiPage => HiwiskiSymbols.description,
     EntityTypes.tag => HiwiskiSymbols.sell,
     EntityTypes.board || EntityTypes.widget => HiwiskiSymbols.dashboard,
-    EntityTypes.mindmapNode || EntityTypes.mindmapEdge => HiwiskiSymbols.hub,
+    EntityTypes.pinboardNode || EntityTypes.pinboardEdge => HiwiskiSymbols.hub,
     _ => HiwiskiSymbols.backup,
   };
 

@@ -13,7 +13,7 @@ import '../../core/common/wire.dart';
 import '../../domain/common/item_ref.dart';
 import '../../domain/todo/todo_items.dart';
 import '../../domain/transfer/transfer_bundle.dart';
-import '../../domain/wiki/mindmap.dart';
+import '../../domain/wiki/pinboard.dart';
 import '../../domain/wiki/wiki_page.dart';
 
 part 'export_view_model.g.dart';
@@ -41,10 +41,10 @@ class const ExportState({
   final int images = 0,
   final int imagesWithSubpages = 0,
 
-  /// The mind maps among them — the page itself, and with its subpages — each of
+  /// The pinboards among them — the page itself, and with its subpages — each of
   /// which can go along as a picture.
-  final int mindmaps = 0,
-  final int mindmapsWithSubpages = 0,
+  final int pinboards = 0,
+  final int pinboardsWithSubpages = 0,
 });
 
 @riverpod
@@ -80,9 +80,9 @@ class ExportViewModel extends _$ExportViewModel {
         subpages: branch.length - 1,
         images: branchImageIds([page]).length,
         imagesWithSubpages: branchImageIds(branch).length,
-        mindmaps: page.kind == PageKinds.mindmap ? 1 : 0,
-        mindmapsWithSubpages: branch
-            .where((page) => page.kind == PageKinds.mindmap)
+        pinboards: page.kind == PageKinds.pinboard ? 1 : 0,
+        pinboardsWithSubpages: branch
+            .where((page) => page.kind == PageKinds.pinboard)
             .length,
       );
     }
@@ -100,20 +100,20 @@ class ExportViewModel extends _$ExportViewModel {
   }
 
   /// Builds the file. [withDone] is a list's choice, [withSubpages] and [withImages]
-  /// are a page's; [drawMindmap], where given, draws each mind map among the pages
+  /// are a page's; [drawPinboard], where given, draws each pinboard among the pages
   /// as a picture that goes along.
   @command
   Future<ExportedFile> export({
     bool withDone = true,
     bool withSubpages = false,
     bool withImages = false,
-    MindmapDrawing? drawMindmap,
+    PinboardDrawing? drawPinboard,
   }) async {
     // All taken before the first wait: the sheet may close while the file is built.
     final todo = ref.read(todoRepositoryProvider);
     final wiki = ref.read(wikiRepositoryProvider);
     final media = ref.read(mediaRepositoryProvider);
-    final mindmaps = ref.read(mindmapRepositoryProvider);
+    final pinboards = ref.read(pinboardRepositoryProvider);
     final family = ref.read(familyRepositoryProvider);
     final index = ref.read(linkIndexProvider);
     final tagNames = {
@@ -174,22 +174,22 @@ class ExportViewModel extends _$ExportViewModel {
     }
 
     final pictures = <String, Uint8List>{};
-    if (drawMindmap != null) {
+    if (drawPinboard != null) {
       Map<String, Member>? members;
       for (final page in branch) {
-        if (page.kind != PageKinds.mindmap) continue;
-        final map = await mindmaps.watchMap(page.id).first;
+        if (page.kind != PageKinds.pinboard) continue;
+        final map = await pinboards.watchMap(page.id).first;
         if (map.nodes.isEmpty) continue;
         members ??= await membersOf();
         // On the device before the drawing waits for them.
         for (final node in map.nodes) {
           if (node.imageId case final id?) await image(id);
         }
-        pictures[page.id] = await drawMindmap((
+        pictures[page.id] = await drawPinboard((
           title: page.title,
           map: map,
           members: members,
-          targets: mindmapTargetsOf(map, index),
+          targets: pinboardTargetsOf(map, index),
         ));
       }
     }
@@ -198,7 +198,7 @@ class ExportViewModel extends _$ExportViewModel {
         branch: branch,
         tagNames: tagNames,
         images: images,
-        mindmaps: pictures,
+        pinboards: pictures,
       ),
       name: page.title,
     );

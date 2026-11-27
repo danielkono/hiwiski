@@ -12,7 +12,7 @@ import '../../domain/links/link_index.dart';
 import '../../domain/sync/sync_items.dart';
 import '../../domain/todo/kanban.dart';
 import '../../domain/todo/todo_items.dart';
-import '../../domain/wiki/mindmap.dart';
+import '../../domain/wiki/pinboard.dart';
 
 part 'sync_banner_view_model.g.dart';
 
@@ -34,16 +34,16 @@ class const SyncBannerState({
   /// the sheet names the column instead of showing its id.
   required final Map<String, List<KanbanColumn>> boards,
 
-  /// For a conflict on a mind map's element or connection: its page by conflict id,
+  /// For a conflict on a pinboard's element or connection: its page by conflict id,
   /// so the sheet can show it there — an element has no page of its own.
-  final Map<String, String> mindmaps = const {},
+  final Map<String, String> pinboards = const {},
 
   /// The conflicts decided together with one in [conflicts], by its id: an element's
   /// x and y lost against the same move and are one conflict to the person, its width
   /// and height too.
   final Map<String, List<SyncConflict>> partners = const {},
 
-  /// The family's names by member id — for a conflict over whom a mind map's member
+  /// The family's names by member id — for a conflict over whom a pinboard's member
   /// element shows: its address names a member, whom the link index does not know.
   final Map<String, String> members = const {},
 
@@ -97,22 +97,22 @@ class SyncBannerViewModel extends _$SyncBannerViewModel {
       final list = await ref.watch(_listProvider(listId).future);
       boards[conflict.id] = parseColumns(list?.columns);
     }
-    final maps = ref.read(mindmapRepositoryProvider);
-    final mindmaps = <String, String>{};
+    final maps = ref.read(pinboardRepositoryProvider);
+    final pinboards = <String, String>{};
     for (final conflict in conflicts) {
-      if (conflict.entityType != EntityTypes.mindmapNode &&
-          conflict.entityType != EntityTypes.mindmapEdge) {
+      if (conflict.entityType != EntityTypes.pinboardNode &&
+          conflict.entityType != EntityTypes.pinboardEdge) {
         continue;
       }
       final pageId = await maps.pageOf(conflict.entityType, conflict.entityId);
-      if (pageId != null) mindmaps[conflict.id] = pageId;
+      if (pageId != null) pinboards[conflict.id] = pageId;
     }
     // Only for a conflict over an element's target — the banner stands on every
     // page — and not waited for: the names come from the server, and offline they
     // may never come.
     final aboutTargets = conflicts.any(
       (conflict) =>
-          conflict.entityType == EntityTypes.mindmapNode &&
+          conflict.entityType == EntityTypes.pinboardNode &&
           conflict.field == WireFields.target,
     );
     final members = aboutTargets
@@ -129,7 +129,7 @@ class SyncBannerViewModel extends _$SyncBannerViewModel {
       webUpdate: webUpdate,
       index: index,
       boards: boards,
-      mindmaps: mindmaps,
+      pinboards: pinboards,
       partners: {
         for (final group in groups)
           if (group.length > 1) group.first.id: group.sublist(1),

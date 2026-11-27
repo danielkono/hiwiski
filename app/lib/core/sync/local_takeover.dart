@@ -52,11 +52,11 @@ class LocalTakeover {
     EntityTypes.todo: 3,
     EntityTypes.event: 3,
     EntityTypes.widget: 3,
-    EntityTypes.mindmapNode: 3,
+    EntityTypes.pinboardNode: 3,
     EntityTypes.todoOccurrence: 4,
     // After both of its elements: the server refuses a connection to one it does
     // not know.
-    EntityTypes.mindmapEdge: 4,
+    EntityTypes.pinboardEdge: 4,
     EntityTypes.comment: 5,
     EntityTypes.listOrder: 6,
   };

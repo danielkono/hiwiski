@@ -39,6 +39,23 @@
   </section>
   {{- end }}
 
+  {{- /* Below the three areas: what brings them together on one surface. */}}
+  {{- with .Params.pinboard }}
+  <section class="card connect">
+    <div>
+      <h2 class="headline">{{ .title }}</h2>
+      <p class="lead">{{ .text | markdownify }}</p>
+      {{- $button := .button }}
+      {{- with site.GetPage .page }}
+      <p class="actions"><a class="button tonal" href="{{ .RelPermalink }}">{{ $button }}{{ partial "icon.html" "arrow_forward" }}</a></p>
+      {{- end }}
+    </div>
+    <div class="collage">
+      <div class="big">{{ partial "poster.html" (dict "name" "pinboard" "lang" $lang "alt" .alt) }}</div>
+    </div>
+  </section>
+  {{- end }}
+
   {{- with .Params.connect }}
   <section class="card connect">
     <div>

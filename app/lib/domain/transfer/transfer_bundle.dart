@@ -133,16 +133,16 @@ Set<String> branchImageIds(List<WikiPage> branch) => {
 /// The files of [branch] (as [exportBranch] returns it): one per page, and one per
 /// image in [images] that a page shows.
 ///
-/// A mind map's picture in [mindmaps] (by the page's id) is an image like any other,
+/// A pinboard's picture in [pinboards] (by the page's id) is an image like any other,
 /// at the top of its page: outside the app the map is seen, and an import makes an
 /// ordinary page of it, with the picture.
 List<TransferFile> pageExportFiles({
   required List<WikiPage> branch,
   required Map<String, String> tagNames,
   required Map<String, Uint8List> images,
-  Map<String, Uint8List> mindmaps = const {},
+  Map<String, Uint8List> pinboards = const {},
 }) {
-  images = {...images, ...mindmaps};
+  images = {...images, ...pinboards};
   final inBranch = {for (final page in branch) page.id};
   final paths = <String, String>{};
   final taken = <String>{};
@@ -194,7 +194,7 @@ List<TransferFile> pageExportFiles({
         tags: _tagNames(page.tags, tagNames),
         properties: properties,
         content: exportContent(
-          mindmaps.containsKey(page.id)
+          pinboards.containsKey(page.id)
               ? '${imageMarkdown(page.title, page.id)}\n\n${page.content}'
               : page.content,
           path: path,
