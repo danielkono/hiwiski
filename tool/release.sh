@@ -3,13 +3,15 @@
 # step ends by naming what to push.
 #
 #   tool/release.sh candidate 2026.2.0   release/2026.2.0 from main, which goes on towards 2026.3.0
-#   tool/release.sh candidate 2026.2.1   release/2026.2.1 from the release v2026.2.0: a patch
+#   tool/release.sh candidate 2026.2.1   release/2026.2.1 from the release v2026.2.0: a fix
 #   tool/release.sh rc                   the next candidate tag, on the release branch checked out
 #   tool/release.sh final                the release's commit, on the release branch checked out
 #
-# The branch is where the next version's number is decided: a patch starts from the
-# release before it, so that nothing of main comes along; any other version starts
-# from main.
+# The branch is where the next version's number is decided. The version main works
+# towards -- its dev tag -- or any above it starts from main, which then goes on towards
+# the next minor version: the patch numbers after the candidate stay free for its
+# fixes. A patch number below it is such a fix and starts from the release before it,
+# so that nothing of main comes along.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -81,6 +83,17 @@ merge_into_main() { # version
   git switch --quiet "$branch"
 }
 
+# The version main works towards: its highest dev tag, empty if it has none.
+main_version() {
+  git tag --merged main --list 'v*-dev' |
+    sed -nE 's/^v([0-9]+)\.([0-9]+)\.([0-9]+)-dev$/\1 \2 \3/p' |
+    sort -n -k1,1 -k2,2 -k3,3 | tail -n 1 | tr ' ' .
+}
+# Whether the version $1 orders below the version $2.
+below() {
+  [[ "$1" != "$2" && "$(printf '%s\n' "$1" "$2" | sort -t . -k1,1n -k2,2n -k3,3n | head -n 1)" == "$1" ]]
+}
+
 # The highest candidate tag of a version, empty if there is none.
 last_candidate() {
   git tag --list "v$1-rc.*" | sed -nE 's/^v.*-rc\.([0-9]+)$/\1 &/p' | sort -n | tail -n 1 | cut -d ' ' -f 2
@@ -98,13 +111,17 @@ case "${1:-}" in
     fetch_tags
     has_branch "$branch" && fail "$branch exists already"
     has_tag "v$version" && fail "v$version is released already"
-    if ((patch == 0)); then
+    current=$(main_version)
+    [[ -n "$current" ]] || fail "main has no dev tag -- git tag v<version>-dev on main first"
+    if ! below "$version" "$current"; then
       start=main
       next=$year.$((minor + 1)).0
       has_tag "v$next-dev" && fail "v$next-dev exists already"
     else
+      ((patch > 0)) ||
+        fail "$version is below $current, which main works towards: below it only a fix of a release, a patch number, starts a branch"
       start=v$year.$minor.$((patch - 1))
-      has_tag "$start" || fail "a patch starts from the release before it, and there is no $start"
+      has_tag "$start" || fail "a fix starts from the release before it, and there is no $start"
     fi
 
     git switch --quiet -c "$branch" "$start"
@@ -120,7 +137,7 @@ case "${1:-}" in
       push+=("v$version-dev")
     fi
 
-    if ((patch == 0)); then
+    if [[ "$start" == main ]]; then
       # main takes the start of the branch in at once: Unreleased there is the
       # candidate's now. Its dev tag for the version after sits on the merge, which
       # the release branch does not contain.
@@ -133,7 +150,7 @@ $branch starts the release candidate $version, from main; main goes on towards $
 EOF
     else
       cat << EOF
-$branch starts the patch $version, from $start. The fixes go into it as fix/… branches,
+$branch starts the fix $version, from $start. The fixes go into it as fix/… branches,
 each with its entry in the section "$version — Release candidate" of CHANGELOG.md.
 EOF
     fi
