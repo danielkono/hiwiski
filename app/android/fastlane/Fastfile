@@ -2,6 +2,41 @@ default_platform(:android)
 
 APP_DIR = File.expand_path("../..", __dir__)
 BUNDLE = File.join(APP_DIR, "build/app/outputs/bundle/release/app-release.aab")
+METADATA = File.join(__dir__, "metadata/android")
+
+# The public tests' closed tracks, by their names in the Play Console: the released
+# version's, and the preview's for the release candidates (docs/releasing.md, "The
+# public tests"). Testers join each through a Google Group.
+TEST_TRACKS = {
+  "public" => "Public test",
+  "preview" => "Public preview test",
+}.freeze
+
+# A release's notes are changelogs/default.txt; a release candidate's point to the
+# website's preview page instead (changelogs/candidate.txt). supply takes the notes of a
+# version code from <code>.txt where there is one, so for a candidate the block runs with
+# that file in place.
+def with_release_notes(version_name, version_code)
+  return yield unless version_name.match?(/-rc\.\d+\z/)
+
+  notes = Dir[File.join(METADATA, "*/changelogs/candidate.txt")].map do |candidate|
+    File.join(File.dirname(candidate), "#{version_code}.txt").tap { |path| FileUtils.cp(candidate, path) }
+  end
+  begin
+    yield
+  ensure
+    FileUtils.rm_f(notes)
+  end
+end
+
+# The release run's build number, the same for the web app, Android and iOS, so one
+# build is found on every platform by it.
+def version_code_from(options)
+  UI.user_error!("No build:<number> -- the release run passes its build number") unless options[:build]
+  code = Integer(options[:build].to_s, 10, exception: false)
+  UI.user_error!("build:#{options[:build]} is not a build number") unless code&.positive?
+  code
+end
 
 platform :android do
   # fastlane internal version:2026.2.0-dev.7 build:57
@@ -19,13 +54,9 @@ platform :android do
     UI.user_error!("No version:<version> -- the release run passes it") unless options[:version]
     version_name = options[:version]
 
-    # The release run's build number, the same for the web app, Android and iOS, so one
-    # build is found on every platform by it. Play takes every version code once; the
-    # run number it comes from rises with every run, so it does as long as every upload
-    # comes from one.
-    UI.user_error!("No build:<number> -- the release run passes its build number") unless options[:build]
-    version_code = Integer(options[:build].to_s, 10, exception: false)
-    UI.user_error!("build:#{options[:build]} is not a build number") unless version_code&.positive?
+    # Play takes every version code once; the run number the build number comes from
+    # rises with every run, so it does as long as every upload comes from one.
+    version_code = version_code_from(options)
     UI.message("Version #{version_name} (#{version_code})")
 
     Dir.chdir(APP_DIR) do
@@ -33,16 +64,60 @@ platform :android do
          "--build-name=#{version_name}", "--build-number=#{version_code}")
     end
 
-    upload_to_play_store(
-      track: "internal",
-      aab: BUNDLE,
-      release_status: options[:status] || "completed",
-      # The release notes go with every build: changelogs/default.txt, which points
-      # to the website's "What's new". The listing is the metadata lane's.
-      skip_upload_metadata: true,
-      skip_upload_images: true,
-      skip_upload_screenshots: true,
-    )
+    with_release_notes(version_name, version_code) do
+      upload_to_play_store(
+        track: "internal",
+        aab: BUNDLE,
+        release_status: options[:status] || "completed",
+        # The release notes go with every build (with_release_notes), pointing to the
+        # website. The listing is the metadata lane's.
+        skip_upload_metadata: true,
+        skip_upload_images: true,
+        skip_upload_screenshots: true,
+      )
+    end
+  end
+
+  # fastlane testers version:2026.2.0-rc.1 build:57 to:preview       -- a candidate
+  # fastlane testers version:2026.2.0 build:57 to:public,preview     -- a release
+  # fastlane testers version:2026.2.0 build:57 to:preview check:true -- Play only checks it
+  #
+  # Run by the release workflow for a tag, after `internal`: the build it uploaded goes
+  # to the public tests' closed tracks (TEST_TRACKS) too, with its release notes.
+  # Google reviews it before the testers get it. The build is named by its version
+  # code, not looked up on the internal track, which a later run may have moved on.
+  desc "Release an uploaded build to the public tests' closed tracks"
+  lane :testers do |options|
+    version_name = options[:version].to_s
+    unless version_name.match?(/\A\d+\.\d+\.\d+(-rc\.\d+)?\z/)
+      UI.user_error!("version:#{version_name} is neither a release nor a release candidate")
+    end
+    version_code = version_code_from(options)
+
+    tests = options[:to].to_s.split(",")
+    UI.user_error!("No to:<test>[,<test>] -- one of #{TEST_TRACKS.keys.join(", ")}") if tests.empty?
+    tracks = tests.map do |test|
+      TEST_TRACKS.fetch(test) { UI.user_error!("No test #{test} -- one of #{TEST_TRACKS.keys.join(", ")}") }
+    end
+
+    with_release_notes(version_name, version_code) do
+      tracks.each do |track|
+        UI.message("#{version_name} (#{version_code}) to #{track}")
+        upload_to_play_store(
+          track: "internal",
+          track_promote_to: track,
+          track_promote_force: true,
+          version_code: version_code,
+          version_name: version_name,
+          skip_upload_apk: true,
+          skip_upload_aab: true,
+          skip_upload_metadata: true,
+          skip_upload_images: true,
+          skip_upload_screenshots: true,
+          validate_only: options[:check].to_s == "true",
+        )
+      end
+    end
   end
 
   # fastlane metadata                 -- texts, screenshots, feature graphic and icon

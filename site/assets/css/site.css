@@ -311,6 +311,14 @@ a.card:hover { background: var(--surface-high); }
 /* Release notes */
 .changelog h2 { font-size: 1.5rem; }
 
+/* --- What's new: the preview's ways to try it, the roadmap ----------------------- */
+.try { margin: 8px 0 16px; }
+.roadmap-items { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.roadmap-items li { margin: 0; padding: 20px 24px; }
+.roadmap-head { display: flex; gap: 12px; align-items: start; justify-content: space-between; }
+.roadmap-head .title { margin: 0; font-size: 1.125rem; }
+.roadmap-head + p { margin-top: 8px; }
+
 /* --- Apps: one card per platform ---------------------------------------------- */
 .apps { max-width: 60rem; }
 .apps .prose { max-width: none; margin-top: 16px; }

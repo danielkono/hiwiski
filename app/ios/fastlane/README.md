@@ -23,6 +23,14 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 Build the app and upload it to TestFlight
 
+### ios testers
+
+```sh
+[bundle exec] fastlane ios testers
+```
+
+Give an uploaded build to the public tests' groups in TestFlight
+
 ### ios metadata
 
 ```sh

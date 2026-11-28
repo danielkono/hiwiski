@@ -1,0 +1,50 @@
+{{- /* The roadmap: what is planned, grouped by when -- now, next, later -- without
+       dates. The entries are data/roadmap.toml, in both languages; a release candidate
+       brings its own copy of the file to the website (docs/development/website.md). An
+       entry the page could not place stops the build rather than going missing. */ -}}
+{{ define "main" }}
+{{- $items := hugo.Data.roadmap.items | default slice }}
+{{- $priorities := slice "now" "next" "later" }}
+{{- $headings := dict "now" "roadmapNow" "next" "roadmapNext" "later" "roadmapLater" }}
+{{- $statuses := dict "preview" "roadmapPreview" "in-progress" "roadmapInProgress" "planned" "roadmapPlanned" }}
+{{- range $i, $item := $items }}
+{{- if not (in $priorities .priority) }}{{ errorf "data/roadmap.toml, entry %d: priority %q is none of now, next, later" (add $i 1) .priority }}{{ end }}
+{{- with .status }}{{ if not (index $statuses .) }}{{ errorf "data/roadmap.toml, entry %d: status %q is none of preview, in-progress, planned" (add $i 1) . }}{{ end }}{{ end }}
+{{- range hugo.Sites }}
+{{- if not (index $item .Language.Lang "title") }}{{ errorf "data/roadmap.toml, entry %d: no %s.title" (add $i 1) .Language.Lang }}{{ end }}
+{{- end }}
+{{- end }}
+<div class="doc">
+  {{ partial "sidebar.html" . }}
+  <article class="prose">
+    <header class="page-head">
+      <h1 class="display">{{ .Title }}</h1>
+      {{- with .Params.lead }}<p class="lead">{{ . | markdownify }}</p>{{ end }}
+    </header>
+    {{- if $items }}
+    {{- range $priority := $priorities }}
+    {{- with where $items "priority" $priority }}
+    <section class="roadmap">
+      <h2>{{ T (index $headings $priority) }}</h2>
+      <ul class="roadmap-items">
+        {{- range . }}
+        {{- $text := index . site.Language.Lang }}
+        <li class="card low">
+          <div class="roadmap-head">
+            <h3 class="title">{{ $text.title }}</h3>
+            {{- with .status }}<span class="chip">{{ T (index $statuses .) }}</span>{{ end }}
+          </div>
+          {{- with $text.text }}<p>{{ . | markdownify }}</p>{{ end }}
+        </li>
+        {{- end }}
+      </ul>
+    </section>
+    {{- end }}
+    {{- end }}
+    {{- else }}
+    <p class="note">{{ T "roadmapEmpty" }}</p>
+    {{- end }}
+    {{ .Content }}
+  </article>
+</div>
+{{ end }}

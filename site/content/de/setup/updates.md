@@ -16,7 +16,7 @@ docker compose up -d
 
 **Der Server sichert von selbst**, wenn er mit einer anderen Version startet als zuletzt — bevor er die Datenbank anfasst. Bis diese Sicherung geschrieben ist, ist die App noch nicht erreichbar; im Protokoll steht *„Backing up before the update to …“*. Schlägt die Sicherung fehl (meist eine volle Platte), migriert der Server nichts und startet nicht; die alte Version startet weiter wie vorher.
 
-Was eine Version mitbringt und ob beim Update etwas zu beachten ist, steht unter [Neuigkeiten]({{< relref "whats-new" >}}) im Abschnitt *Upgrade notes*.
+Was eine Version mitbringt und ob beim Update etwas zu beachten ist, steht unter [Neuigkeiten]({{< relref "whats-new" >}}) im Abschnitt *Upgrade notes*. Die nächste Version lässt sich vorab testen, als Vorabversion mit eigenem Image – wie, steht unter [Vorschau]({{< relref "/whats-new/preview" >}}).
 
 ## Zurück zur alten Version
 

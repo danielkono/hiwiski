@@ -23,8 +23,9 @@ pages and keys) and `hugo --panicOnWarning`.
 
 | Path | What |
 | --- | --- |
-| `hugo.toml` | configuration: languages, menus, parameters (`version`, `indexable`, the demo's address, the apps' links) |
+| `hugo.toml` | configuration: languages, menus, parameters (`version`, `candidate`, `indexable`, the demo's address, the apps' and the preview's links) |
 | `content/de/`, `content/en/` | the pages, one tree per language |
+| `data/roadmap.toml` | the roadmap's entries, in both languages ("What's new", below) |
 | `i18n/de.toml`, `i18n/en.toml` | short UI texts: buttons, menus, footer |
 | `layouts/` | templates; `_partials/` for header, footer, meta tags, icons; `_shortcodes/` for `scene` and `steps` |
 | `assets/` | CSS and the site's small scripts |
@@ -107,22 +108,82 @@ The QR code beside the cards opens the page on a phone. Hugo draws it at build t
 (`images.QR`), so the page loads nothing from elsewhere; it is hidden on narrow screens,
 where the links can be tapped.
 
-## Release notes
+## What's new
 
-`CHANGELOG.md` at the root is rendered as the "What's new" page
-(`layouts/changelog.html`), each version with its own anchor (`#2026.1.0`).
+"What's new" is a section of three pages with a sidebar, like the features:
+
+| Page | What | Layout |
+| --- | --- | --- |
+| `whats-new/_index.md` | the released versions of `CHANGELOG.md`, each with its anchor (`#2026.1.0`) | `changelog.html` |
+| `whats-new/preview.md` | the release candidates: the ways to try them, going back, and their notes | `preview.html` |
+| `whats-new/roadmap.md` | what is planned, from `data/roadmap.toml` | `roadmap.html` |
+
+Both lists of versions come from `_partials/release-notes.html`, which splits
+`CHANGELOG.md` at its version headings: `## <version> — <date>` is released,
+`## <version> — Release candidate` a candidate, `## Unreleased` is not shown.
 
 - Format after *Keep a Changelog*: `## Unreleased` with `### Added`, `### Changed`,
   `### Fixed` and `### Upgrade notes` (what an administrator must do or know: a new
   `.env` variable, a change to the compose file, a minimum app version, a rollback that
   is not possible).
 - **Every `feat/…` and `fix/…` branch adds its entry** under `## Unreleased`, written for
-  a family's administrator, not as a commit subject. CI on `main` fails a merge of such a
+  a family's administrator, not as a commit subject — on a release branch in the
+  candidate's section instead. CI on `main` and on `release/…` fails a merge of such a
   branch that does not touch the file. `chore/…`, `refactor/…`, `ci/…` add none.
 - **No raw HTML.** The build stops if the rendered `CHANGELOG.md` or `LICENSE.md`
   contains a tag Markdown does not write itself (`_partials/no-raw-html.html`).
-- At a release `tool/changelog.sh` turns `## Unreleased` into the version
-  ([`../releasing.md`](../releasing.md)).
+- At the start of a release branch `tool/changelog.sh candidate` turns `## Unreleased`
+  into the candidate's section; at the release `tool/changelog.sh release` gives it its
+  date ([`../releasing.md`](../releasing.md)). The anchor stays the version, so a link
+  to it keeps working from the preview to the released list.
+
+### A candidate's website
+
+The website describes the released version: the stores, the setup files and the
+setup pages are the released version's until the release. At a candidate tag the
+release workflow therefore builds the site from the **latest release tag** and takes
+only `CHANGELOG.md` and `data/roadmap.toml` from the candidate (`release.yml`, job
+`site-build`, step *The released version's pages*). The preview page then shows the
+candidate's notes and the roadmap is current, while feature pages, setup pages and
+scenes stay the released version's. `params.version` is the release there,
+`params.candidate` the candidate (`HUGO_PARAMS_CANDIDATE`).
+
+- A release from before the candidates has no `data/roadmap.toml` and no page for a
+  candidate; the site of a candidate after it is the candidate's own.
+- While two candidates run at once — a patch beside the next minor version — the site
+  shows the changelog of the one tagged last.
+- A change to the pages themselves, the roadmap's layout included, reaches the
+  website with the next release.
+
+### The preview page
+
+Like the apps page, the texts are the page's (front matter `try`: one card per way to
+try the candidate) and the links are `params.preview` in `hugo.toml`:
+
+| Parameter | What |
+| --- | --- |
+| `demo` | the release candidate's demo, `https://preview.hiwiski.app/` |
+| `ios` | TestFlight's public link of the group that gets the candidates |
+| `android` | the Google Group that Google Play's track for the candidates admits; its members opt in on the released version's test page (`apps.android.test`) |
+
+Each button of a card names its link by its path in the parameters (`preview.ios`,
+`apps.android.test`); `release` is the candidate's pre-release on GitHub. A card whose
+links are not all set says it is not set up yet, rather than show half its steps. The
+server's card names the image to set, `HIWISKI_VERSION=<candidate>`. While the
+changelog holds no candidate, the page says so and shows no ways to try one.
+
+Below the cards: going back. The apps cannot be set back to an older version — the
+app is deleted and installed again, after its data is synced — while the server goes
+back as after any update.
+
+### The roadmap
+
+`data/roadmap.toml` holds one `[[items]]` block per feature, in the order the page lists
+them: `priority` (`now`, `next`, `later` — the group), optionally `status` (`preview`,
+`in-progress`, `planned` — a chip), and `de` and `en` with a `title` and optionally a
+`text` in Markdown. An unknown priority or status, or a missing title, stops the build.
+Without entries the page says the roadmap is coming. A change goes public with the next
+candidate or release.
 
 ## Search engines and previews
 

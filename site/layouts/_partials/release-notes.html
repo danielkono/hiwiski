@@ -1,0 +1,28 @@
+{{- /* The versions of CHANGELOG.md: the released ones, or with `candidates` the release
+       candidates -- the sections headed `## <version> — Release candidate`, which
+       become released ones at their release (tool/changelog.sh). The file's own title
+       and introduction are for the repository, and Unreleased is not even a candidate
+       yet: neither is shown.
+
+       {{ partial "release-notes.html" (dict "page" . "candidates" true) }} */ -}}
+{{- $page := .page }}
+{{- $candidates := .candidates }}
+{{- with resources.Get "CHANGELOG.md" }}
+{{- partial "no-raw-html.html" (dict "name" "CHANGELOG.md" "text" .Content "page" $page) }}
+{{- $sections := slice }}
+{{- range after 1 (split .Content "\n## ") }}
+{{- if hasPrefix . "Unreleased" }}{{ continue }}{{ end }}
+{{- $candidate := in (index (split . "\n") 0) " — Release candidate " }}
+{{- if eq $candidate $candidates }}{{ $sections = $sections | append . }}{{ end }}
+{{- end }}
+{{- if $sections }}
+<section class="changelog" lang="en">
+  {{- if ne site.Language.Lang "en" }}<p class="note">{{ T "releaseNotesEnglish" }}</p>{{ end }}
+  {{- range $sections }}
+  {{ printf "## %s" . | $page.RenderString (dict "display" "block") }}
+  {{- end }}
+</section>
+{{- else if $candidates }}
+<p class="note">{{ T "noCandidate" }}</p>
+{{- end }}
+{{- end }}

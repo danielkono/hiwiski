@@ -546,8 +546,9 @@ its tone until it reads on what it stands on.
   server version and `minClientVersion`. An app below it says so and offers the update
   instead of failing somewhere.
 - **Migrations are forward compatible**: the previous server version must still start
-  on the new schema, or a rollback is not one. And **a released migration is never
-  edited**, not even a comment: Flyway's checksum would stop every existing server.
+  on the new schema, or a rollback is not one. And **a migration that a release or a
+  release candidate shipped is never edited**, not even a comment: Flyway's checksum
+  would stop every existing server.
 - **The client skips what it does not know**: unknown entity types in a pull, unknown
   widget kinds, unknown color tokens, unknown error codes (shown as the code).
 

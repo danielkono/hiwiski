@@ -1,0 +1,72 @@
+# The roadmap on the website: "What's new" → "Roadmap". What is planned, grouped by
+# when, without dates.
+#
+# A release candidate's website takes this file from the candidate, so a change here
+# goes public with the next candidate or release (docs/development/website.md).
+#
+# One [[items]] block per feature, in the order the page lists them:
+#
+#   priority   now | next | later                    the group it is listed under
+#   status     preview | in-progress | planned       optional: the chip beside its title
+#   de, en     title, and optionally text: Markdown, a sentence or two on what a
+#              family gets from it -- in both languages, or the build stops
+#
+# The roadmap is public: what is planned, not how it was decided.
+#
+# [[items]]
+# priority = 'now'
+# status = 'in-progress'
+# de.title = 'Titel'
+# de.text = 'Ein, zwei Sätze, was die Familie davon hat.'
+# en.title = 'Title'
+# en.text = 'A sentence or two on what the family gets.'
+
+
+
+[[items]]
+priority = 'now'
+status = 'in-progress'
+de.title = 'Pinnwand als Dashboard'
+de.text = 'Du kannst eine Pinnwand als Dashboard wählen.'
+en.title = 'A pinboard as the dashboard'
+en.text = 'You can choose a pinboard as a dashboard.'
+
+[[items]]
+priority = 'next'
+status = 'planned'
+de.title = 'Protokoll der App'
+de.text = 'Du kannst das Protokoll der App exportieren und so helfen, Fehler zu finden.'
+en.title = "The app's log"
+en.text = "You can export the app's log and so help to find bugs."
+
+[[items]]
+priority = 'next'
+status = 'planned'
+de.title = 'Lesemodus'
+de.text = 'Ein Lesemodus zeigt nur das, worauf es ankommt, und blendet alles andere aus.'
+en.title = 'Reading mode'
+en.text = 'A reading mode shows only what matters and hides everything else.'
+
+[[items]]
+priority = 'later'
+status = 'planned'
+de.title = 'Mehrzeilige Aufgaben'
+de.text = 'Du kannst den Text einer Aufgabe über mehrere Zeilen bearbeiten.'
+en.title = 'Tasks over several lines'
+en.text = "You can edit a task's text over several lines."
+
+[[items]]
+priority = 'later'
+status = 'planned'
+de.title = 'Mehr auf einen Blick in der Aufgabenliste'
+de.text = 'Auf Wunsch zeigen Aufgaben ihre Beschreibung gleich in der Liste.'
+en.title = 'More at a glance in the task list'
+en.text = 'If you like, tasks show their description right in the list.'
+
+[[items]]
+priority = 'later'
+status = 'planned'
+de.title = 'Kategorien je Geschäft'
+de.text = 'Du kannst die Kategorien für einzelne Geschäfte einrichten und in der Einkaufsliste das Geschäft wählen.'
+en.title = 'Categories for each shop'
+en.text = 'You can set up the categories for particular shops and choose the shop in a shopping list.'

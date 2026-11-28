@@ -45,7 +45,7 @@ The app can also be used without a server: everything stays on the device, and n
 
 ## Test versions
 
-Until the apps are in the App Store and on Google Play, they come as test versions, through Apple's TestFlight and a test on Google Play. New versions arrive by themselves; what changed is under [What's new]({{< relref "/whats-new" >}}). Once the apps are in the stores, this page links there.
+Until the apps are in the App Store and on Google Play, they come as test versions, through Apple's TestFlight and a test on Google Play. New versions arrive by themselves; what changed is under [What's new]({{< relref "/whats-new" >}}). Once the apps are in the stores, this page links there. The next version, ahead of its release, is in the [Preview]({{< relref "/whats-new/preview" >}}).
 
 The testers group on Google Play only tells Google Play who may install the test. Nothing is posted in it.
 

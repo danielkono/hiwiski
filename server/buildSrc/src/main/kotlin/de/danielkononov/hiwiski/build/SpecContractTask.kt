@@ -67,8 +67,8 @@ abstract class SpecContractTask : DefaultTask() {
                     appendLine("meaning, never make required after the fact. Only extend enums.")
                     appendLine()
                     appendLine("If this is a deliberate break, it is called /api/v2 and comes at the")
-                    appendLine("turn of the year. If this is a release, ./gradlew :api:acceptSpecBaseline")
-                    appendLine("moves the baseline forward.")
+                    appendLine("turn of the year. If this is a release or a release candidate,")
+                    appendLine("tool/release.sh moves the baseline forward (./gradlew :api:acceptSpecBaseline).")
                 },
             )
         }

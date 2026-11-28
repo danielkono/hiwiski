@@ -1,0 +1,60 @@
+{{- /* The next version before its release: the ways to try the release candidate, then
+       what it brings. The texts are the page's (front matter, `try`); the links are
+       site.Params -- each button names one by its path there (`preview.ios`), and
+       `release` is the candidate's pre-release on GitHub. A way whose links are not all
+       set shows the page's `soonText` instead of half its steps: the Android track
+       needs its group before the test page offers the candidate.
+
+       While no candidate is in the changelog, there is nothing to try that the
+       released version does not have: the page says so and shows no ways. */ -}}
+{{ define "main" }}
+{{- $candidate := site.Params.candidate }}
+{{- $testing := false }}
+{{- with resources.Get "CHANGELOG.md" }}{{ $testing = findRE `(?m)^## [0-9]+\.[0-9]+\.[0-9]+ — Release candidate ` .Content 1 }}{{ end }}
+<div class="doc">
+  {{ partial "sidebar.html" . }}
+  <article class="prose">
+    <header class="page-head">
+      <h1 class="display">{{ .Title }}</h1>
+      {{- with .Params.lead }}<p class="lead">{{ . | markdownify }}</p>{{ end }}
+      {{- with $candidate }}<p class="label">{{ T "version" }} {{ . }}</p>{{ end }}
+    </header>
+
+    {{- if $testing }}
+    <div class="grid two try">
+      {{- range .Params.try }}
+      {{- $buttons := slice }}
+      {{- $ready := true }}
+      {{- range .buttons }}
+      {{- $url := "" }}
+      {{- if eq .link "release" }}
+      {{- with $candidate }}{{ $url = printf "%s/releases/tag/v%s" site.Params.github . }}{{ end }}
+      {{- else }}
+      {{- $url = index site.Params (split .link ".") }}
+      {{- end }}
+      {{- if $url }}{{ $buttons = $buttons | append (dict "url" $url "text" .text) }}{{ else }}{{ $ready = false }}{{ end }}
+      {{- end }}
+      <section class="card platform">
+        <div class="platform-head">
+          <span class="icon-chip">{{ partial "icon.html" .icon }}</span>
+          <div><h2 class="title">{{ .name }}</h2></div>
+        </div>
+        {{- if $ready }}
+        <p>{{ .text | markdownify }}</p>
+        {{- if .version }}{{ with $candidate }}<p><code>HIWISKI_VERSION={{ . }}</code></p>{{ end }}{{ end }}
+        <p class="actions">
+          {{- range $buttons }}<a class="button tonal" href="{{ .url }}">{{ .text }}</a>{{ end }}
+        </p>
+        {{- else }}
+        <p>{{ $.Params.soonText | markdownify }}</p>
+        {{- end }}
+      </section>
+      {{- end }}
+    </div>
+    {{ .Content }}
+    {{- end }}
+
+    {{ partial "release-notes.html" (dict "page" . "candidates" true) }}
+  </article>
+</div>
+{{ end }}

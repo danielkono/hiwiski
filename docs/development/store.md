@@ -14,9 +14,14 @@ The release notes are the same text for every version: the app keeps growing, an
 what changed is on the website's "What's new" (`release_notes.txt`, and Play's
 `changelogs/default.txt`, which goes up with every build).
 
+A release candidate's builds point to the website's preview page instead, for the
+public tests' testers ([`releasing.md`](../releasing.md), "The public tests"): Play's
+`changelogs/candidate.txt` and TestFlight's *What to Test*,
+`app/ios/fastlane/testflight/{de-DE,en-US}/candidate.txt`.
+
 `tool/store_metadata.py` checks them against the stores' limits (Play's release
-notes: 500 characters), and that Play's description and release notes are the App
-Store's. CI runs it.
+notes: 500 characters), and that Play's description and release notes, a candidate's
+too, are the App Store's and TestFlight's. CI runs it.
 
 ## Pictures
 
