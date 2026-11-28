@@ -115,9 +115,9 @@ val updateBundledSpec = tasks.register("updateBundledSpec") {
  * The barrier against breaking changes to the contract.
  *
  * The comparison is against `api/openapi.baseline.yaml` -- the last **published**
- * state. The baseline is moved forward explicitly (`acceptSpecBaseline`), at release
- * time and not during development: a baseline that every build drags along checks
- * nothing anymore.
+ * state. The baseline is moved forward explicitly (`acceptSpecBaseline`), by
+ * tool/release.sh at the start of a release branch and at the release, and not during
+ * development: a baseline that every build drags along checks nothing anymore.
  */
 val specBaseline = rootProject.layout.projectDirectory.file("../api/openapi.baseline.yaml")
 

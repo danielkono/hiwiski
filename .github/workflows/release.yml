@@ -2,11 +2,16 @@ name: Release
 
 # A release tag `v<version>` releases everything: the server image (with the web build inside),
 # the demo image and the website's image go to ghcr.io, the Android app to Play's internal
-# test track, the iOS app to TestFlight, the store listings follow (their pictures only
-# when they changed), and a GitHub release carries the files an
-# instance is set up with and the version's section of CHANGELOG.md. The product comes
-# as one: without both apps there is no GitHub release. The maintainer's servers follow
-# (the job deploy).
+# test track, the iOS app to TestFlight -- both on to the public tests -- the store
+# listings follow (their pictures only when they changed), and a GitHub release carries
+# the files an instance is set up with and the version's section of CHANGELOG.md. The
+# product comes as one: without both apps there is no GitHub release. The maintainer's
+# servers follow (the job deploy).
+#
+# A release candidate tag `v<version>-rc.<n>` builds the same, for testing before the
+# release (docs/releasing.md): its apps go to the preview's public test, its GitHub
+# release is a pre-release, the store listings stay with the released version, and the
+# website is the released version's with the candidate's notes and roadmap.
 #
 # The tags are the only place a version is kept (tool/version.sh). The build number is
 # the run's number plus a fixed offset (the job version), the same for every build of a
@@ -74,6 +79,10 @@ jobs:
     runs-on: ubuntu-slim
     outputs:
       version: ${{ steps.version.outputs.version }}
+      # `true` for a release candidate tag.
+      candidate: ${{ steps.version.outputs.candidate }}
+      # The public tests the apps go to, `public,preview`, `preview`, `public` or none.
+      testers: ${{ steps.testers.outputs.testers }}
       build-number: ${{ steps.build-number.outputs.build-number }}
     steps:
       # The whole history with its tags: the version is read from them.
@@ -86,11 +95,45 @@ jobs:
         run: |
           version=$(tool/version.sh)
           if [[ "$GITHUB_REF_TYPE" == "tag" && "$GITHUB_REF_NAME" != "v$version" ]]; then
-            echo "::error::Tag $GITHUB_REF_NAME is not a release tag v<major>.<minor>.<patch>"
+            echo "::error::Tag $GITHUB_REF_NAME is neither a release tag v<year>.<minor>.<patch> nor a release candidate tag v<year>.<minor>.<patch>-rc.<n>"
             exit 1
           fi
+          candidate=false
+          if [[ "$GITHUB_REF_TYPE" == "tag" && "$version" == *-rc.* ]]; then
+            candidate=true
+          fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "candidate=$candidate" >> "$GITHUB_OUTPUT"
           echo "Version: $version" >> "$GITHUB_STEP_SUMMARY"
+
+      # The public tests a tag's apps go to (docs/releasing.md, "The public tests"): a
+      # release to the released version's and to the preview's, whose testers would
+      # otherwise stay on its last candidate; a candidate to the preview's only. An
+      # intermediate build stays with the internal testers. Neither test gets a version
+      # older than one it has had -- its testers would install it over the newer one, and
+      # the apps cannot go back to an older version: a patch, or its candidates, while
+      # the next version is a candidate leave the preview's test alone.
+      - name: Testers
+        id: testers
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          CANDIDATE: ${{ steps.version.outputs.candidate }}
+        run: |
+          testers=()
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            newest() { sort -t . -k1,1n -k2,2n -k3,3n | tail -n 1; }
+            releases=$(git tag --list 'v*' | sed -nE 's/^v([0-9]+\.[0-9]+\.[0-9]+)$/\1/p')
+            candidates=$(git tag --list 'v*' | sed -nE 's/^v([0-9]+\.[0-9]+\.[0-9]+)-rc\.[0-9]+$/\1/p')
+            if [[ "$CANDIDATE" != true && "$(newest <<< "$releases")" == "${VERSION%%-*}" ]]; then
+              testers+=(public)
+            fi
+            if [[ "$(printf '%s\n' "$releases" "$candidates" | newest)" == "${VERSION%%-*}" ]]; then
+              testers+=(preview)
+            fi
+          fi
+          list=$(IFS=,; echo "${testers[*]}")
+          echo "testers=$list" >> "$GITHUB_OUTPUT"
+          echo "Public tests: ${list:-none, the internal testers only}" >> "$GITHUB_STEP_SUMMARY"
 
       # The stores already hold builds numbered up to 12, uploaded by this workflow's
       # runs in the repository before this one; here the run number starts at 1 again.
@@ -355,9 +398,31 @@ jobs:
       VERSION: ${{ needs.version.outputs.version }}
       BUILD_NUMBER: ${{ needs.version.outputs.build-number }}
     steps:
+      # The whole history with its tags: a candidate's site is built from the release
+      # before it.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
+
+      # Until its release, a candidate is for testers: the stores, the setup files and
+      # the website describe the released version. So a candidate's site is the
+      # released version's -- its feature pages, setup pages and scenes -- with the
+      # candidate's changelog, for its notes under "Preview", and its roadmap. A
+      # release from before the candidates has no page for one; the site of the first
+      # candidate is then the candidate's own.
+      - name: The released version's pages
+        if: needs.version.outputs.candidate == 'true'
+        run: |
+          released=$(git tag --merged HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)
+          echo "SITE_VERSION=${released#v}" >> "$GITHUB_ENV"
+          if git cat-file -e "$released:site/data/roadmap.toml" 2> /dev/null; then
+            git checkout --quiet "$released"
+            git checkout --quiet "$GITHUB_SHA" -- CHANGELOG.md site/data/roadmap.toml
+            echo "Website: $released, with the notes and the roadmap of $GITHUB_REF_NAME" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Website: $GITHUB_REF_NAME itself -- $released has no page for a candidate" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Flutter version
         id: flutter-version
@@ -389,9 +454,12 @@ jobs:
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
 
       # The pages first, the search index over them, then the scenes' build beside them.
+      # The apps page names the released version; the preview page names the
+      # candidate, whose image and pre-release it links to.
       - name: Site
         env:
-          HUGO_PARAMS_VERSION: ${{ env.VERSION }}
+          HUGO_PARAMS_VERSION: ${{ env.SITE_VERSION || env.VERSION }}
+          HUGO_PARAMS_CANDIDATE: ${{ needs.version.outputs.candidate == 'true' && env.VERSION || '' }}
         run: |
           (cd site && hugo --panicOnWarning --destination ../deploy/site-image/public)
           pagefind --site deploy/site-image/public
@@ -657,17 +725,115 @@ jobs:
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
         run: bundle exec fastlane beta version:"${VERSION%%-*}" build:"$BUILD_NUMBER"
 
+  # The public tests (the job version names them): the builds the jobs android and ios
+  # uploaded go to the tests' closed tracks and TestFlight groups, which the website
+  # links, and through the stores' reviews to their testers. Jobs of their own, so that
+  # a test that refuses a build stops neither the GitHub release nor the deployment;
+  # the lane can be run again by hand (docs/releasing.md, "The public tests").
+  play-testers:
+    name: Testers, Google Play
+    needs: [version, android]
+    if: needs.version.outputs.testers != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: play
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      BUILD_NUMBER: ${{ needs.version.outputs.build-number }}
+      TESTERS: ${{ needs.version.outputs.testers }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Keys
+        env:
+          PLAY_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          umask 077
+          printf '%s' "$PLAY_SERVICE_ACCOUNT" > "$RUNNER_TEMP/play.json"
+          printf '%s\n' "HIWISKI_PLAY_KEY=$RUNNER_TEMP/play.json" >> "$GITHUB_ENV"
+
+      - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+          working-directory: app
+
+      - name: fastlane
+        working-directory: app
+        run: |
+          bundle config set --global path "$RUNNER_TEMP/bundle"
+          bundle config set --global frozen true
+          bundle install
+
+      - name: To the tests
+        working-directory: app/android
+        run: bundle exec fastlane testers version:"$VERSION" build:"$BUILD_NUMBER" to:"$TESTERS"
+
+  # On Linux: after the upload Apple processes a build for a while, often half an hour,
+  # and the lane waits for that before the build can go to a group -- minutes a Mac
+  # would count ten times.
+  testflight-testers:
+    name: Testers, TestFlight
+    needs: [version, ios]
+    if: needs.version.outputs.testers != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    environment: apple
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      BUILD_NUMBER: ${{ needs.version.outputs.build-number }}
+      TESTERS: ${{ needs.version.outputs.testers }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Keys
+        env:
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          umask 077
+          printf '%s\n' "$APP_STORE_CONNECT_KEY" > "$RUNNER_TEMP/app-store-connect.p8"
+          jq -n --arg id "$APP_STORE_CONNECT_KEY_ID" --arg issuer "$APP_STORE_CONNECT_ISSUER_ID" \
+            --arg path "$RUNNER_TEMP/app-store-connect.p8" \
+            '{key_id: $id, issuer_id: $issuer, key_filepath: $path}' \
+            > "$RUNNER_TEMP/app-store-connect.json"
+          printf '%s\n' "HIWISKI_APP_STORE_KEY=$RUNNER_TEMP/app-store-connect.json" >> "$GITHUB_ENV"
+
+      - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+          working-directory: app
+
+      - name: fastlane
+        working-directory: app
+        run: |
+          bundle config set --global path "$RUNNER_TEMP/bundle"
+          bundle config set --global frozen true
+          bundle install
+
+      - name: To the tests
+        working-directory: app/ios
+        run: bundle exec fastlane testers version:"$VERSION" build:"$BUILD_NUMBER" to:"$TESTERS"
+
   # The store listing: texts and pictures in the App Store and on Google Play, from
   # this tag (docs/development/store.md). The pictures are drawn and uploaded only
   # when something they show changed since the last release -- the goldens, the store
   # texts or the icon; Apple gets the texts and release notes of every new version.
+  #
+  # Releases only: the listing is what the stores show of the released version, and
+  # for a candidate Apple would open the next version's page early. The two uploads
+  # need this job, so they are skipped with it.
   #
   # The pictures are drawn in a job without any keys, like the website's; the uploads
   # get them as an artifact.
   store-pictures:
     name: Store pictures
     needs: version
-    if: github.ref_type == 'tag'
+    if: github.ref_type == 'tag' && needs.version.outputs.candidate != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -681,10 +847,12 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      # The last release, not the last tag: the candidates before this release sit on
+      # its parent and changed nothing the stores have.
       - name: Changed since the last release
         id: changed
         run: |
-          previous=$(git describe --tags --abbrev=0 --match 'v*' --exclude 'v*-dev' \
+          previous=$(git describe --tags --abbrev=0 --match 'v*' --exclude 'v*-*' \
             "$GITHUB_REF_NAME^" 2>/dev/null || true)
           if [[ -z "$previous" ]] || ! git diff --quiet "$previous" HEAD -- \
               app/test/store/goldens app/ios/fastlane/metadata \
@@ -832,7 +1000,10 @@ jobs:
 
   # The maintainer's servers follow every release, once it is published: the deployment
   # refuses a version that has no GitHub release yet, and the GitHub release waits for
-  # both apps, so the pushed images alone are not enough to start it.
+  # both apps, so the pushed images alone are not enough to start it. A release goes
+  # everywhere (`all`); a candidate (`candidate`) to the preview of the next version,
+  # the review instance -- the stores' beta reviews of its apps sign in there, and a
+  # newer server serves the released apps as well -- and the website, for its notes.
   deploy:
     name: Deploy
     needs: [version, server-image, demo-image, site-image, release]
@@ -852,13 +1023,14 @@ jobs:
           GH_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
           DEPLOY_REPO: ${{ secrets.DEPLOY_REPO }}
           VERSION: ${{ needs.version.outputs.version }}
+          TARGET: ${{ needs.version.outputs.candidate == 'true' && 'candidate' || 'all' }}
         run: |
           if [[ -z "$GH_TOKEN" || -z "$DEPLOY_REPO" ]]; then
             echo "No DEPLOY_REPO or DEPLOY_TOKEN -- nothing to deploy to."
             exit 0
           fi
           gh workflow run deploy.yml --repo "$DEPLOY_REPO" --ref main \
-            -f version="$VERSION" -f target=all > /dev/null
+            -f version="$VERSION" -f target="$TARGET" > /dev/null
           echo "Deployment of $VERSION requested." >> "$GITHUB_STEP_SUMMARY"
 
   release:
@@ -870,6 +1042,7 @@ jobs:
       contents: write
     env:
       VERSION: ${{ needs.version.outputs.version }}
+      CANDIDATE: ${{ needs.version.outputs.candidate }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -884,7 +1057,14 @@ jobs:
           # The notes are the version's section of the changelog: a release without one
           # stops here (tool/changelog.sh release, before the tag).
           tool/changelog.sh notes "$VERSION" > "$RUNNER_TEMP/notes.md"
+          # A candidate is a pre-release: GitHub's "Latest", and whoever asks its API for
+          # the latest release, stay with the released version.
+          prerelease=()
+          if [[ "$CANDIDATE" == true ]]; then
+            prerelease=(--prerelease)
+          fi
           gh release create "$GITHUB_REF_NAME" dist/* \
             --title "Hiwiski $VERSION" \
             --notes-file "$RUNNER_TEMP/notes.md" \
+            "${prerelease[@]}" \
             --verify-tag

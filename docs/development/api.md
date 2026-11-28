@@ -14,8 +14,8 @@ api/
 ```
 
 The bundled file is checked in: it is what the Dart generator reads (it does not
-follow references to other files), and after a release it becomes the baseline the
-next changes are checked against.
+follow references to other files), and from a version's first release candidate on it
+is the baseline the next changes are checked against.
 
 ## Changing it
 
@@ -70,9 +70,11 @@ contract, in two tasks hooked onto `check`:
 Both say in plain text which spot breaks. Their rules are tested on a miniature contract
 in `buildSrc/src/test`.
 
-**The baseline moves only at a release** (`./gradlew :api:acceptSpecBaseline`, see
-[`../releasing.md`](../releasing.md)). A baseline every build drags along checks
-nothing. Before the first release there is no baseline, and both tasks are skipped.
+**The baseline moves only with a version** (`./gradlew :api:acceptSpecBaseline`, which
+`tool/release.sh` runs): at the start of its release branch, since its candidates'
+apps and servers are out there from then on, and once more at its release, for what
+the fixes added ([`../releasing.md`](../releasing.md)). A baseline every build drags
+along checks nothing. Before the first release there is no baseline, and both tasks are skipped.
 
 ## Conventions
 

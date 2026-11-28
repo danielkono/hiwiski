@@ -1,5 +1,6 @@
 # The public website. Built with `hugo` in this directory; the
-# release workflow sets HUGO_PARAMS_VERSION to the released version.
+# release workflow sets HUGO_PARAMS_VERSION to the released version and, for a release
+# candidate, HUGO_PARAMS_CANDIDATE.
 
 # The site's one address. The earlier hiwiski.danielkononov.de still serves the same
 # pages, but every page's canonical link names this one, so search engines list the
@@ -18,6 +19,9 @@ defaultContentLanguageInSubdir = true
   indexable = true
   # The released version, shown on the apps page. Empty for a local build.
   version = ''
+  # The release candidate the site was built for, e.g. 2026.2.0-rc.1: the preview page
+  # names its image and links its pre-release. Empty for a release and a local build.
+  candidate = ''
   # Where the scenes' web build is served.
   embedBase = '/embed/'
   demo = 'https://demo.hiwiski.app/'
@@ -42,6 +46,17 @@ defaultContentLanguageInSubdir = true
     # A closed test admits only the members of this group, which anyone may join. Empty
     # once the test is open to everyone: the step that asks to join then disappears.
     group = 'https://groups.google.com/g/hiwiski-testers'
+
+  # Where the next version can be tried before its release, for the preview page under
+  # "What's new". A way whose link is empty says it is not set up yet.
+  [params.preview]
+    # The demo of the release candidate.
+    demo = 'https://preview.hiwiski.app/'
+    # TestFlight's public link of the group that gets the candidates.
+    ios = 'https://testflight.apple.com/join/hwFBRCs4'
+    # The Google Group that Google Play's track for the candidates admits; its members
+    # opt in on the same test page as for the released version (`apps.android.test`).
+    android = 'https://groups.google.com/g/hiwiski-preview-testers'
 
 [languages.de]
   label = 'Deutsch'

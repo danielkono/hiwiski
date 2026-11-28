@@ -1,14 +1,17 @@
 # Changelog
 
 What changed from one version to the next, for the administrator of a family's
-instance. The website shows the released versions (docs/website.md, "What's new");
-the GitHub release of a version carries its section.
+instance. The website shows the released versions under "What's new" and the release
+candidates under "Preview" (docs/development/website.md, "What's new"); the GitHub
+release of a version, or the pre-release of a candidate, carries its section.
 
-Every `feat/…` or `fix/…` branch adds its entry under **Unreleased**, written for a
-family administrator rather than as a commit subject. *Upgrade notes* say what has to
-be done or known when updating: a new `.env` variable, a change to the compose file
-or the Caddyfile, a rollback that is not possible, a minimum app version. A release
-turns **Unreleased** into the version (`tool/changelog.sh`).
+Every `feat/…` or `fix/…` branch adds its entry under **Unreleased** — on a release
+branch in its candidate's section — written for a family administrator rather than as
+a commit subject. *Upgrade notes* say what has to be done or known when updating: a
+new `.env` variable, a change to the compose file or the Caddyfile, a rollback that is
+not possible, a minimum app version. A release branch turns **Unreleased** into the
+candidate's section, and the release gives it its date (`tool/changelog.sh`,
+docs/releasing.md).
 
 ## Unreleased
 
@@ -59,6 +62,15 @@ turns **Unreleased** into the version (`tool/changelog.sh`).
   *Upgrade notes:* update the server before the apps. An older app shows a pinboard as
   an ordinary page and leaves its canvas alone; an older server refuses the elements
   an app places, and they wait in the app's list of changes that could not sync.
+- **Release candidates.** Every version is now tested before its release, as a release
+  candidate. Its server image is `ghcr.io/danielkono/hiwiski:<version>-rc.<n>`, with
+  the setup files in a pre-release on GitHub; the apps come through preview groups in
+  TestFlight and on Google Play, and its demo runs at `preview.hiwiski.app`. The
+  website's *What's new* has three pages now: the released versions, the **preview** —
+  what the next version brings and how to try it — and the **roadmap**. A server
+  stays on the released versions unless its `HIWISKI_VERSION` names a candidate, and
+  goes back from one like after any update; the apps go back from a candidate only by
+  being deleted and installed again.
 
 ### Fixed
 

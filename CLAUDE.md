@@ -35,9 +35,10 @@ bigger picture; never to anything outside the repository.
   for the iOS widgets `app/tool/generate_widget_client.sh`).
   Fields are only added and optional; enums only grow; nothing is renamed
   (`docs/development/api.md`).
-- **A released Flyway migration is never edited**, not even a comment: its checksum
-  would stop every existing server. Fix forward with a new migration, and keep it
-  forward compatible (the previous server must still start on the new schema).
+- **A Flyway migration that a release or a release candidate shipped is never
+  edited**, not even a comment: its checksum would stop every existing server. Fix
+  forward with a new migration, and keep it forward compatible (the previous server
+  must still start on the new schema).
 - **The client never writes synced data past the local database.** Every change goes
   through `LocalWrites` (row and outbox entry in one transaction); only changed fields
   are sent; `baseVersion` is never incremented locally.
@@ -95,7 +96,9 @@ cd app/ios && xcodebuild test -workspace Runner.xcworkspace -scheme Runner -dest
 
 ## Branches and the changelog
 
-Branches are `feat/…`, `fix/…`, `refactor/…`, `chore/…`, `ci/…`, `docs/…`. Every
-`feat/…` and `fix/…` branch adds its entry under `## Unreleased` in `CHANGELOG.md`,
+Branches are `feat/…`, `fix/…`, `refactor/…`, `chore/…`, `ci/…`, `docs/…`, and
+`release/<version>` for a version's release candidates, made by `tool/release.sh`
+(`docs/releasing.md`). Every `feat/…` and `fix/…` branch adds its entry under
+`## Unreleased` in `CHANGELOG.md` — on a release branch in its candidate's section —
 written for a family's administrator, with *Upgrade notes* when an update needs anything
-done. CI checks it on `main`.
+done. CI checks it on `main` and on `release/…`.

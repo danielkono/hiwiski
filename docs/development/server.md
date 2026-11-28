@@ -97,7 +97,8 @@ The cross-cutting modules know no domain types. A domain module registers beans:
   dumped from a database the 36 migrations before it had built, with the rows they
   seeded. A database from before is taken over at its first start by Flyway's repair
   (`BaselineTakeover`); nothing is run. The next migration is `V037`.
-- **A released migration is never edited** — not a statement, not a comment. Flyway
+- **A released migration is never edited** — not a statement, not a comment, and
+  "released" starts with the first release candidate, whose image is public. Flyway
   checks a checksum on every start; a changed file stops every server that already ran
   it. Fix forward, with a new migration.
 - **Forward compatible**: the previous server version must still start on the new

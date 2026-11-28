@@ -4,8 +4,8 @@
 App Store Connect and the Play Console refuse a text that is a character too long,
 and they only say so during the upload, long after the change was merged. Both stores
 count characters, not bytes. The long description is written once and used by both
-stores, and so are the release notes; this also keeps the copies from drifting
-apart.
+stores, and so are the release notes, a release candidate's too; this also keeps the
+copies from drifting apart.
 
     tool/store_metadata.py
 """
@@ -34,9 +34,15 @@ ANDROID_LIMITS = {
     "title.txt": 30,
     "short_description.txt": 80,
     "full_description.txt": 4000,
-    # The release notes of every build (the internal lane uploads them with it).
+    # The release notes of every build (the internal lane uploads them with it), and
+    # those of a release candidate's.
     "changelogs/default.txt": 500,
+    "changelogs/candidate.txt": 500,
 }
+# What a release candidate's testers read under "What to Test" in TestFlight (a
+# release's is release_notes.txt).
+TESTFLIGHT = ROOT / "app/ios/fastlane/testflight"
+TESTFLIGHT_LIMITS = {"candidate.txt": 4000}
 
 
 def text(path: pathlib.Path) -> str:
@@ -64,12 +70,12 @@ def main() -> int:
     for locale in LOCALES:
         check(IOS / locale, IOS_LIMITS, problems)
         check(ANDROID / locale, ANDROID_LIMITS, problems)
-        for ios_name, android_name in [
-            ("description.txt", "full_description.txt"),
-            ("release_notes.txt", "changelogs/default.txt"),
+        check(TESTFLIGHT / locale, TESTFLIGHT_LIMITS, problems)
+        for ios, android in [
+            (IOS / locale / "description.txt", ANDROID / locale / "full_description.txt"),
+            (IOS / locale / "release_notes.txt", ANDROID / locale / "changelogs/default.txt"),
+            (TESTFLIGHT / locale / "candidate.txt", ANDROID / locale / "changelogs/candidate.txt"),
         ]:
-            ios = IOS / locale / ios_name
-            android = ANDROID / locale / android_name
             if ios.is_file() and android.is_file() and text(ios) != text(android):
                 problems.append(
                     f"{android.relative_to(ROOT)} differs from {ios.relative_to(ROOT)}"

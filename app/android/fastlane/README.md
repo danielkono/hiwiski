@@ -23,6 +23,14 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 Build the app bundle and upload it to the internal test track
 
+### android testers
+
+```sh
+[bundle exec] fastlane android testers
+```
+
+Release an uploaded build to the public tests' closed tracks
+
 ### android metadata
 
 ```sh

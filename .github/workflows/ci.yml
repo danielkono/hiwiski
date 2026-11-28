@@ -3,10 +3,11 @@ name: CI
 # No `pull_request`: in a public repository that would run the code of anybody's fork.
 # A push needs write access, so every run is one the maintainer asked for -- or
 # Dependabot, whose branches live in this repository and whose runs get a read-only
-# token and no secrets. A branch of one's own is checked by hand (workflow_dispatch).
+# token and no secrets. A branch of one's own is checked by hand (workflow_dispatch);
+# a release branch on every push, since its candidates are tagged from it.
 on:
   push:
-    branches: [main, "dependabot/**"]
+    branches: [main, "release/**", "dependabot/**"]
   workflow_dispatch:
 
 # One running build per branch is enough.
@@ -244,7 +245,9 @@ jobs:
             -destination "platform=iOS Simulator,id=$device" CODE_SIGNING_ALLOWED=NO
 
   # The website: every page in both languages, a build that warns of
-  # nothing, and on main every merged branch saying in the changelog what it does.
+  # nothing, and on main and the release branches every merged branch saying in the
+  # changelog what it does -- a fix merged into a release branch reaches main only
+  # inside the release branch's merge, where the check on main does not look.
   site:
     name: Site
     runs-on: ubuntu-latest
@@ -267,7 +270,7 @@ jobs:
         run: tool/store_metadata.py
 
       - name: Every branch says what it does
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.before != '0000000000000000000000000000000000000000'
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) && github.event.before != '0000000000000000000000000000000000000000'
         env:
           BEFORE: ${{ github.event.before }}
         run: tool/changelog.sh check "$BEFORE" "$GITHUB_SHA"
