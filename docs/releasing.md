@@ -78,10 +78,15 @@ main ──●──●──M (v2026.3.0-dev) ──●──●─────
 **The branch decides the version.** `release/<version>` starts the candidates of that
 version:
 
-- **A minor version or a new year** — `2026.2.0`, `2027.1.0` — starts from `main`, which
-  then goes on towards the version after.
-- **A patch** — `2026.2.1` — starts from the release before it, `v2026.2.0`, so that
-  nothing of `main` comes along.
+- **The version `main` works towards, or any above it,** starts from `main`. `main`'s
+  dev tag says which version that is — `v2026.2.0-dev`, say, for `2026.2.0`; above it
+  is a jump to `2026.3.0` or `2027.1.0`. `main` then goes on towards the next minor
+  version, `2026.3.0`, so that the patch numbers after the candidate stay free for its
+  fixes. A patch number works as well: `2026.1.16` from `main` at `v2026.1.16-dev`
+  moves `main` on to `2026.2.0`.
+- **A fix of a release** — a patch number below the version `main` works towards,
+  `2026.2.1` — starts from the release before it, `v2026.2.0`, so that nothing of `main`
+  comes along.
 
 On the branch go **fixes only**: `fix/…` branches from the release branch, merged back
 into it. The release branch is merged into `main` at every step, `main` never into it.
@@ -89,7 +94,7 @@ into it. The release branch is merged into `main` at every step, `main` never in
 
 ```sh
 tool/release.sh candidate 2026.2.0   # release/2026.2.0 from main; main → v2026.3.0-dev
-tool/release.sh candidate 2026.2.1   # a patch: release/2026.2.1 from v2026.2.0
+tool/release.sh candidate 2026.2.1   # a fix: release/2026.2.1 from v2026.2.0
 # push what it names; once CI passed for the release branch:
 tool/release.sh rc                   # v2026.2.0-rc.1 on the branch, merged into main
 # fixes on the branch, then the next candidate:
@@ -100,9 +105,9 @@ git tag v2026.2.0 release/2026.2.0   # once CI passed for that commit
 ```
 
 - `candidate` turns `## Unreleased` into `## 2026.2.0 — Release candidate {#2026.2.0}`
-  (`tool/changelog.sh candidate`; for a patch the section starts empty), moves the
-  contract's baseline, sets the dev tags, and for a minor version merges the branch
-  into `main` at once, with `main`'s next dev tag on that merge.
+  (`tool/changelog.sh candidate`; for a fix the section starts empty), moves the
+  contract's baseline, sets the dev tags, and for a version from `main` merges the
+  branch into `main` at once, with `main`'s next dev tag on that merge.
 - `rc` tags the commit checked out as the next candidate; a candidate whose section in
   the changelog says nothing is refused.
 - `final` is allowed only on the last candidate's commit, so that the release is what
