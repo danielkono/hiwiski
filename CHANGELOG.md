@@ -15,6 +15,8 @@ docs/releasing.md).
 
 ## Unreleased
 
+## 2026.1.16 — Release candidate {#2026.1.16}
+
 ### Added
 
 - **Pinboards.** A new kind of wiki page: its text as on any page, and below it a

@@ -3408,6 +3408,177 @@ components:
           example: BLUE
           type: string
       type: object
+    PinboardNodeFields:
+      description: |
+        Entity type `PINBOARD_NODE`. An element on the canvas of a page of the kind
+        `PINBOARD`; its container is the page (`containerType` `WIKI_PAGE`), whose share it
+        inherits.
+
+        An item of its own rather than a property of the page, so that two people changing
+        different elements never collide: each field of each element has its own conflict
+        check.
+      properties:
+        kind:
+          description: |
+            `PLAIN` (text without formatting), `NOTE` (Markdown), `IMAGE`, `LINK`, `MEMBER`
+            (a member of the family, shown by their picture), `DRAWING` (a stroke drawn by
+            hand), `CALENDAR` (a week of calendars, side by side). The list may grow; an app
+            shows a kind it does not know as a placeholder.
+          example: NOTE
+          type: string
+        x:
+          description: "The left edge on the canvas, in logical pixels at a zoom of\
+            \ 1."
+          type: integer
+        "y":
+          description: The top edge on the canvas.
+          type: integer
+        width:
+          minimum: 1
+          type: integer
+        height:
+          minimum: 1
+          type: integer
+        layer:
+          description: |
+            The stacking order, higher above lower; on a tie the later created element is
+            above. A fraction, so that moving one step writes one element only.
+          type: number
+        text:
+          description: |
+            The text of a `PLAIN` element, the Markdown of a `NOTE`; the picture of an
+            `IMAGE` element as a Markdown image (`![](hiwiski-image:<id>)`), uploaded for
+            the page.
+          type: string
+        target:
+          description: |
+            The item a `LINK` element points to, as `hiwiski://<type>/<uuid>`; the member a
+            `MEMBER` element shows, as `hiwiski://member/<uuid>`. Only a `LINK` element's
+            target counts as a link of the page.
+          example: hiwiski://todo/0190c1d4-7a1b-7c3d-9e8f-123456789abc
+          type: string
+        linkView:
+          description: |
+            What a `LINK` element shows of its target: `TITLE` (its symbol and title) or
+            `CONTENT` (the target as its preview shows it). The list may grow; an unknown
+            one is shown as `TITLE`. Empty: `TITLE`.
+          type: string
+        color:
+          description: |
+            An accent token (`BLUE`, `RUST`, `VIOLET`, `GREEN`, `PINK`, `OCHRE`, `TEAL`,
+            `SLATE`; the list may grow) or a colour of the family's own as `#RRGGBB`, which
+            the app adapts to the light and the dark theme — `#RRGGBBAA` where the canvas
+            shows through it, `00` see-through to `FF` covering. Empty: the theme's own.
+          example: "#3B6939"
+          type: string
+        shape:
+          description: |
+            `RECTANGLE`, `ROUNDED`, `ELLIPSE`, `PILL`, `DIAMOND`. The list may grow; an
+            unknown shape is drawn rounded. On a `DRAWING` element: the shape its stroke was
+            drawn as — `RECTANGLE`, `ELLIPSE`, `TRIANGLE`, `DIAMOND`, `LINE`, `ARROW` —
+            which the app lets be resized; empty: drawn freehand.
+          type: string
+        textSize:
+          description: |
+            `S`, `M`, `L` or `XL` — or a size of its own in logical pixels, 4 to 400 (`18`).
+            A name an app does not know is shown as `M`.
+          type: string
+        textColor:
+          description: |
+            The colour of the element's text, given as `color` is. Empty: the theme's own,
+            or the one that reads best on the element's colour.
+          example: SLATE
+          type: string
+        points:
+          description: |
+            A `DRAWING` element's stroke, drawn by hand: its points in order, each as two
+            whole numbers from 0 to 10000 across the element's width and height, as
+            `x,y x,y …` — so it scales with the element. At most 100,000 characters. Each
+            stroke is an element of its own, drawn in the element's `color`.
+          example: "0,5000 2500,1200 5000,4000 10000,9000"
+          type: string
+        strokeWidth:
+          description: "How thick a `DRAWING` element's stroke is drawn, on the canvas."
+          maximum: 1000
+          minimum: 1
+          type: integer
+        rotation:
+          description: |
+            How far the element is turned clockwise about its centre, in whole degrees.
+            Empty: not turned. Connections still meet its unturned outline.
+          maximum: 359
+          minimum: 0
+          type: integer
+        textAlign:
+          description: |
+            Where a note's text stands inside it: `TOP_LEFT`, `TOP_CENTER`, `TOP_RIGHT`,
+            `MIDDLE_LEFT`, `CENTER`, `MIDDLE_RIGHT`, `BOTTOM_LEFT`, `BOTTOM_CENTER` or
+            `BOTTOM_RIGHT`. Empty: top left. Other names in capitals are taken and shown
+            top left by an app that does not know them.
+          type: string
+        textFlow:
+          description: |
+            What a note's lines fill: `BOX`, the largest box inside its shape, every line
+            as wide as it; or `SHAPE`, the shape itself, each line as wide as the shape is
+            at its height — round in an ellipse, pointed in a diamond. Empty: `BOX`. Other
+            names in capitals are taken and shown as `BOX` by an app that does not know
+            them.
+          type: string
+        calendars:
+          description: |
+            The calendars a `CALENDAR` element shows: their ids, separated by spaces, at
+            most 50. Where it is shown, a calendar its reader cannot see is left out, as is
+            one that is gone — the element shows what the calendar's own page would.
+          example: 0190c1d4-7a1b-7c3d-9e8f-123456789abc 0190c1d4-7a1b-7c3d-9e8f-123456789abd
+          type: string
+        week:
+          description: |
+            The week a `CALENDAR` element shows, Monday to Sunday, as ISO 8601 `YYYY-Www`
+            (`2027-W28`). Empty: the week it is for whoever looks — it moves on with the
+            days.
+          example: 2027-W28
+          type: string
+      type: object
+    PinboardEdgeFields:
+      description: |
+        Entity type `PINBOARD_EDGE`. A connection between two elements of the same pinboard,
+        drawn from centre to centre; its container is the page.
+
+        Both ends have to be living elements of the page, on every write: a connection whose
+        element is gone is refused with `wiki.pinboard_element_gone`. The ends never change.
+        A connection goes with either of its elements.
+      properties:
+        fromId:
+          format: uuid
+          type: string
+        toId:
+          format: uuid
+          type: string
+        text:
+          description: "A label, drawn at the middle of the line."
+          type: string
+        color:
+          description: |
+            Like an element's `color`. Empty: the theme's line colour.
+          type: string
+        strokeWidth:
+          description: |
+            How thick the line is drawn, on the canvas. Empty: the app's own.
+          maximum: 1000
+          minimum: 1
+          type: integer
+        line:
+          description: |
+            `SOLID`, `DASHED` or `DOTTED`. Empty: solid. Other names in capitals are taken
+            and drawn as a solid line by an app that does not know them.
+          type: string
+        arrows:
+          description: |-
+            Arrow heads: `END` at the element the connection goes to (`toId`), `START` at
+            the one it comes from, `BOTH` or `NONE`. Empty: none. Other names in capitals
+            are taken and drawn without heads by an app that does not know them.
+          type: string
+      type: object
     Handshake:
       example:
         apiVersion: v1
